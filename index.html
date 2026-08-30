@@ -1,9 +1,17 @@
-﻿<!DOCTYPE html>
+
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            window.app = new PlaybookApp();
+        });
+    </script>
+</body>
+</html><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CHALKBOARD PRO | Cloud Football Playbook & Simulator</title>
+    <title>CHALKBOARD PRO | Football Playbook & Motion Simulator</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -27,8 +35,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; user-select: none; }
-        .canvas-container { position: relative; width: 100%; aspect-ratio: 16/9; max-height: 68vh; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; }
+        .canvas-container { position: relative; width: 100%; aspect-ratio: 16/9; max-height: 65vh; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
@@ -36,12 +44,11 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
 
-
     <!-- ========================================== -->
-    <!-- 1. LANDING & OPTIONAL AUTHENTICATION       -->
+    <!-- 1. LANDING & PROFILE SELECTION SCREEN      -->
     <!-- ========================================== -->
     <div id="authScreen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4 overflow-y-auto">
-        <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6">
+        <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-5">
             
             <!-- Branding Header -->
             <div class="text-center space-y-2">
@@ -49,22 +56,19 @@
                     <i class="fa-solid fa-clipboard-list text-3xl"></i>
                 </div>
                 <h1 class="text-2xl font-black tracking-tight text-white">CHALKBOARD PRO</h1>
-                <p class="text-xs text-slate-400">Cloud Playbook Studio & Motion Simulator</p>
+                <p class="text-xs text-slate-400">Playbook Studio & Tactical Motion Simulator</p>
                 
-                <!-- Cloud Sync Status Badge -->
                 <div class="pt-1">
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-950 text-emerald-300 border border-emerald-800">
-                        <i class="fa-solid fa-cloud text-xs animate-pulse"></i> Multi-Device Cloud Sync Ready
+                        <i class="fa-solid fa-circle-check text-xs"></i> Ready for Mobile & Desktop
                     </span>
                 </div>
             </div>
 
-
-            <!-- Quick Start Option (Zero Friction) -->
-            <button id="btnQuickStart" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2 border border-emerald-400/30">
+            <!-- Quick Start Button -->
+            <button id="btnQuickStart" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2 border border-emerald-400/30">
                 <i class="fa-solid fa-bolt text-amber-300"></i> Enter Studio & Start Drawing Immediately
             </button>
-
 
             <div class="relative flex py-1 items-center">
                 <div class="flex-grow border-t border-slate-800"></div>
@@ -72,21 +76,18 @@
                 <div class="flex-grow border-t border-slate-800"></div>
             </div>
 
-
             <!-- Auth Mode Switcher -->
             <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
-                <button id="tabSignup" class="flex-1 py-2 rounded-lg text-white bg-slate-800 transition">Coach Profile</button>
-                <button id="tabLogin" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition">Sign In</button>
+                <button id="tabSignup" type="button" class="flex-1 py-2 rounded-lg text-white bg-slate-800 transition">Coach Profile</button>
+                <button id="tabLogin" type="button" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition">Sign In</button>
             </div>
 
-
-            <!-- SIGN UP FORM (ALL PROFILE FIELDS OPTIONAL) -->
+            <!-- SIGN UP FORM -->
             <form id="signupForm" class="space-y-3">
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Coach Name <span class="text-slate-500 font-normal">(Optional)</span></label>
                     <input type="text" id="signupName" placeholder="Coach Vance" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
                 </div>
-
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -104,7 +105,6 @@
                     </div>
                 </div>
 
-
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Offensive Base <span class="text-slate-500 font-normal">(Optional)</span></label>
                     <select id="signupPhilosophy" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-blue-500">
@@ -116,12 +116,16 @@
                     </select>
                 </div>
 
-
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg text-xs font-bold transition shadow-lg flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Save Profile & Launch Cloud Studio
-                </button>
+                <div class="space-y-2 pt-1">
+                    <button type="submit" id="btnSaveProfile" class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white py-2.5 rounded-lg text-xs font-bold transition shadow-lg flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Profile & Launch Studio
+                    </button>
+                    <!-- NEW REQUESTED BUTTON -->
+                    <button type="button" id="btnFinishSignup" class="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-800 text-emerald-400 border border-emerald-500/40 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-circle-check"></i> Finish Sign Up & Get Started
+                    </button>
+                </div>
             </form>
-
 
             <!-- LOGIN FORM -->
             <form id="loginForm" class="space-y-3 hidden">
@@ -130,16 +134,13 @@
                     <input type="text" id="loginEmail" placeholder="coach@program.com" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
                 </div>
 
-
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg text-xs font-bold transition shadow-lg flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-right-to-bracket"></i> Connect Playbook Sync
+                <button type="submit" id="btnLoginSubmit" class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white py-2.5 rounded-lg text-xs font-bold transition shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Sign In & Open Playbook
                 </button>
             </form>
 
-
         </div>
     </div>
-
 
     <!-- ========================================== -->
     <!-- 2. MAIN APPLICATION WORKSPACE              -->
@@ -156,17 +157,15 @@
                     <div class="flex items-center gap-2">
                         <h1 class="font-bold text-base text-white leading-tight">CHALKBOARD PRO</h1>
                         <span id="syncIndicator" class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                            <i class="fa-solid fa-cloud-check"></i> Cloud Synced
+                            <i class="fa-solid fa-circle-check"></i> Playbook Studio
                         </span>
                     </div>
-                    <p class="text-xs text-slate-400" id="coachTeamSubtext">Interactive Cloud Playbook Studio</p>
+                    <p class="text-xs text-slate-400" id="coachTeamSubtext">Interactive Playbook Studio</p>
                 </div>
             </div>
 
-
             <!-- Level Selector & Global Action Controls -->
             <div class="flex items-center gap-2.5 flex-wrap">
-                <!-- Coaching Level Dropdown -->
                 <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-700">
                     <i class="fa-solid fa-graduation-cap text-amber-400 text-xs"></i>
                     <label for="levelSelect" class="text-xs font-semibold text-slate-300">Level:</label>
@@ -177,103 +176,90 @@
                     </select>
                 </div>
 
-
-                <button id="btnOpenNewPlayModal" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition shadow-md">
+                <button id="btnOpenNewPlayModal" type="button" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition shadow-md">
                     <i class="fa-solid fa-plus-circle"></i> New Play
                 </button>
-                <button id="btnSavePlay" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Sync Play
+                <button id="btnSavePlay" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Play
                 </button>
-                <button id="btnDeletePlay" class="bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition">
+                <button id="btnDeletePlay" type="button" class="bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition">
                     <i class="fa-solid fa-trash"></i> Delete
+                </button>
+                <button id="btnLogout" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition ml-1">
+                    <i class="fa-solid fa-right-from-bracket"></i> Exit
                 </button>
             </div>
         </header>
 
-
         <!-- Main Workspace -->
         <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
             
-            <!-- Sidebar - Play Selector & Control Panel -->
+            <!-- Sidebar -->
             <aside class="w-full lg:w-80 bg-slate-900 border-r border-slate-800 flex flex-col p-4 overflow-y-auto gap-4">
                 
-                <!-- Play Selection -->
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Cloud Playbook Library</label>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Playbook Library</label>
                     <select id="playSelect" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2 text-sm font-medium focus:outline-none focus:border-blue-500">
-                        <!-- Dynamic Options -->
                     </select>
                 </div>
 
-
-                <!-- Mode Selector: Drag Players vs Draw Tools -->
                 <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2">
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Interactivity Mode</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <button id="btnModeMove" class="mode-btn bg-blue-600 text-white p-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5 active">
+                        <button id="btnModeMove" type="button" class="mode-btn bg-blue-600 text-white p-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5 active">
                             <i class="fa-solid fa-up-down-left-right"></i> Drag Players
                         </button>
-                        <button id="btnModeDraw" class="mode-btn bg-slate-800 text-slate-300 hover:bg-slate-700 p-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5">
+                        <button id="btnModeDraw" type="button" class="mode-btn bg-slate-800 text-slate-300 hover:bg-slate-700 p-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-pen-nib"></i> Draw Tools
                         </button>
                     </div>
                     <p id="modeDesc" class="text-[11px] text-slate-400 italic mt-1">Click & drag any player circle or square to adjust starting formation alignment.</p>
                 </div>
 
-
-                <!-- Drawing & Telestrator Controls -->
                 <div class="space-y-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
                         <i class="fa-solid fa-pen-ruler"></i> Tactical Drawing Palette
                     </h3>
 
-
                     <div class="grid grid-cols-2 gap-2">
-                        <button id="btnToolDraw" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2">
+                        <button id="btnToolDraw" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2">
                             <i class="fa-solid fa-pencil text-amber-400 w-4 text-center"></i> Freehand
                         </button>
-                        <button id="btnToolArrow" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2">
+                        <button id="btnToolArrow" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2">
                             <i class="fa-solid fa-arrow-up text-blue-400 w-4 text-center"></i> Route Arrow
                         </button>
-                        <button id="btnToolBlock" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2">
+                        <button id="btnToolBlock" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2">
                             <i class="fa-solid fa-t text-emerald-400 w-4 text-center"></i> Block (T-Bar)
                         </button>
-                        <button id="btnToolMotion" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2">
+                        <button id="btnToolMotion" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2">
                             <i class="fa-solid fa-ellipsis text-amber-400 w-4 text-center"></i> Motion Line
                         </button>
-                        <button id="btnToolStunt" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 col-span-2">
+                        <button id="btnToolStunt" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 col-span-2">
                             <i class="fa-solid fa-shuffle text-purple-400 w-4 text-center"></i> Defensive Stunt Curve
                         </button>
                     </div>
 
-
-                    <!-- Clear Telestrator -->
-                    <button id="btnToolClear" class="w-full bg-rose-950/90 hover:bg-rose-900 border border-rose-800 p-2 rounded text-xs text-rose-200 font-semibold flex items-center justify-center gap-2 transition">
+                    <button id="btnToolClear" type="button" class="w-full bg-rose-950/90 hover:bg-rose-900 border border-rose-800 p-2 rounded text-xs text-rose-200 font-semibold flex items-center justify-center gap-2 transition">
                         <i class="fa-solid fa-eraser"></i> Clear Board / Reset Drawings
                     </button>
 
-
-                    <!-- Color Palette -->
                     <div class="flex items-center justify-between pt-1">
                         <span class="text-xs text-slate-400">Color:</span>
                         <div class="flex gap-1.5">
-                            <button data-color="#f59e0b" class="color-btn w-6 h-6 rounded-full bg-amber-500 ring-2 ring-white"></button>
-                            <button data-color="#3b82f6" class="color-btn w-6 h-6 rounded-full bg-blue-500"></button>
-                            <button data-color="#10b981" class="color-btn w-6 h-6 rounded-full bg-emerald-500"></button>
-                            <button data-color="#ef4444" class="color-btn w-6 h-6 rounded-full bg-red-500"></button>
-                            <button data-color="#a855f7" class="color-btn w-6 h-6 rounded-full bg-purple-500"></button>
-                            <button data-color="#ffffff" class="color-btn w-6 h-6 rounded-full bg-white"></button>
+                            <button type="button" data-color="#f59e0b" class="color-btn w-6 h-6 rounded-full bg-amber-500 ring-2 ring-white"></button>
+                            <button type="button" data-color="#3b82f6" class="color-btn w-6 h-6 rounded-full bg-blue-500"></button>
+                            <button type="button" data-color="#10b981" class="color-btn w-6 h-6 rounded-full bg-emerald-500"></button>
+                            <button type="button" data-color="#ef4444" class="color-btn w-6 h-6 rounded-full bg-red-500"></button>
+                            <button type="button" data-color="#a855f7" class="color-btn w-6 h-6 rounded-full bg-purple-500"></button>
+                            <button type="button" data-color="#ffffff" class="color-btn w-6 h-6 rounded-full bg-white"></button>
                         </div>
                     </div>
                 </div>
 
-
-                <!-- Defensive Front & Coverage Settings -->
                 <div class="space-y-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-2">
                         <i class="fa-solid fa-shield-halved"></i> Defensive Schematics
                     </h3>
-
 
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Defensive Front Preset</label>
@@ -286,7 +272,6 @@
                         </select>
                     </div>
 
-
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Coverage Shell</label>
                         <select id="coverageSelect" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-1.5 text-xs">
@@ -297,7 +282,6 @@
                             <option value="Cover0">Cover 0 Blitz</option>
                         </select>
                     </div>
-
 
                     <div>
                         <label class="block text-xs font-semibold text-purple-400 mb-1 flex items-center justify-between">
@@ -316,8 +300,6 @@
                     </div>
                 </div>
 
-
-                <!-- Display Toggles -->
                 <div class="space-y-2 text-xs text-slate-300">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="chkRoutes" checked class="rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-0">
@@ -329,11 +311,9 @@
                     </label>
                 </div>
 
-
             </aside>
 
-
-            <!-- Center Workspace: Canvas & Field Controls -->
+            <!-- Center Workspace -->
             <main class="flex-1 flex flex-col bg-slate-950 relative overflow-hidden">
                 
                 <div class="flex-1 flex items-center justify-center p-2 sm:p-4 bg-slate-950">
@@ -342,18 +322,17 @@
                     </div>
                 </div>
 
-
                 <!-- Play Control Bar -->
                 <div class="bg-slate-900 border-t border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                     
                     <div class="flex items-center gap-2">
-                        <button id="btnPlay" class="bg-emerald-600 hover:bg-emerald-500 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg transition shadow-lg">
+                        <button id="btnPlay" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg transition shadow-lg">
                             <i class="fa-solid fa-play"></i>
                         </button>
-                        <button id="btnPause" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-full flex items-center justify-center text-lg transition border border-slate-700">
+                        <button id="btnPause" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-full flex items-center justify-center text-lg transition border border-slate-700">
                             <i class="fa-solid fa-pause"></i>
                         </button>
-                        <button id="btnReset" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-full flex items-center justify-center text-lg transition border border-slate-700">
+                        <button id="btnReset" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-full flex items-center justify-center text-lg transition border border-slate-700">
                             <i class="fa-solid fa-rotate-left"></i>
                         </button>
                         
@@ -363,15 +342,13 @@
                         </div>
                     </div>
 
-
                     <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
                         <span class="text-slate-500 px-2 font-semibold">Speed:</span>
-                        <button data-speed="0.5" class="speed-btn px-2 py-1 rounded text-slate-400 hover:text-white">0.5x</button>
-                        <button data-speed="1.0" class="speed-btn px-2 py-1 rounded bg-slate-800 text-white font-bold">1.0x</button>
-                        <button data-speed="1.5" class="speed-btn px-2 py-1 rounded text-slate-400 hover:text-white">1.5x</button>
+                        <button type="button" data-speed="0.5" class="speed-btn px-2 py-1 rounded text-slate-400 hover:text-white">0.5x</button>
+                        <button type="button" data-speed="1.0" class="speed-btn px-2 py-1 rounded bg-slate-800 text-white font-bold">1.0x</button>
+                        <button type="button" data-speed="1.5" class="speed-btn px-2 py-1 rounded text-slate-400 hover:text-white">1.5x</button>
                     </div>
                 </div>
-
 
                 <!-- Tactical Breakdown Panel -->
                 <div class="bg-slate-900/90 border-t border-slate-800 p-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs overflow-y-auto max-h-44">
@@ -380,7 +357,6 @@
                         <h4 id="playTitle" class="font-bold text-sm text-blue-400 mb-1">Play Name</h4>
                         <p id="playDesc" class="text-slate-300 leading-relaxed">Select a play to view tactical execution notes and quarterback progression breakdown.</p>
                     </div>
-
 
                     <div class="bg-slate-950 p-3 rounded border border-slate-800">
                         <h4 class="font-bold text-amber-400 mb-1 flex items-center gap-1">
@@ -391,7 +367,6 @@
                         </ul>
                     </div>
 
-
                     <div class="bg-slate-950 p-3 rounded border border-purple-900/40">
                         <h4 class="font-bold text-purple-400 mb-1 flex items-center gap-1">
                             <i class="fa-solid fa-shield-cat"></i> OL Protection & Stunt Rules
@@ -401,14 +376,11 @@
                         </div>
                     </div>
 
-
                 </div>
-
 
             </main>
         </div>
     </div>
-
 
     <!-- NEW PLAY BUILDER MODAL -->
     <div id="newPlayModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
@@ -417,18 +389,16 @@
                 <h3 class="text-lg font-bold text-white flex items-center gap-2">
                     <i class="fa-solid fa-square-plus text-blue-500"></i> Build New Custom Play
                 </h3>
-                <button id="btnCloseModal" class="text-slate-400 hover:text-white p-1">
+                <button id="btnCloseModal" type="button" class="text-slate-400 hover:text-white p-1">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-
 
             <div class="space-y-4 text-xs">
                 <div>
                     <label class="block text-slate-300 font-semibold mb-1">Play Name</label>
                     <input type="text" id="modalPlayName" value="Gun Trips Right - Dig Concept" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2 text-sm focus:outline-none focus:border-blue-500">
                 </div>
-
 
                 <div>
                     <label class="block text-slate-300 font-semibold mb-1">Play Category</label>
@@ -440,7 +410,6 @@
                         <option value="Custom">Custom Scheme</option>
                     </select>
                 </div>
-
 
                 <div>
                     <label class="block text-slate-300 font-semibold mb-1">Offensive Formation Preset</label>
@@ -454,7 +423,6 @@
                     </select>
                 </div>
 
-
                 <div>
                     <label class="block text-slate-300 font-semibold mb-1">Defensive Front Preset</label>
                     <select id="modalDefensePreset" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2">
@@ -467,42 +435,17 @@
                 </div>
             </div>
 
-
             <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
-                <button id="btnCancelModal" class="px-4 py-2 rounded text-slate-400 hover:text-white font-semibold text-xs">Cancel</button>
-                <button id="btnCreatePlaySubmit" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded text-xs font-bold transition flex items-center gap-2">
+                <button id="btnCancelModal" type="button" class="px-4 py-2 rounded text-slate-400 hover:text-white font-semibold text-xs">Cancel</button>
+                <button id="btnCreatePlaySubmit" type="button" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded text-xs font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-check"></i> Create Play & Start Editing
                 </button>
             </div>
         </div>
     </div>
 
-
-    <!-- Application Engine Logic (Modular Firebase Import for Real-Time Cloud Syncing) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-
-        // Firebase Initialization
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'football-playbook-app';
-        let firebaseConfig = {};
-        try {
-            if (typeof __firebase_config !== 'undefined') {
-                firebaseConfig = JSON.parse(__firebase_config);
-            }
-        } catch(e) {
-            console.warn("Using fallback environment config");
-        }
-
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-
-        // FORMATION PRESETS ENGINE
+    <!-- Application Engine Logic -->
+    <script>
         const OFFENSE_PRESETS = {
             spread2x2: [
                 { id: 1, label: '1', role: 'WR', x: 0.12, y: 0.60, route: [{x:0.12, y:0.60}, {x:0.12, y:0.25}] },
@@ -575,7 +518,6 @@
             ]
         };
 
-
         const DEFAULT_PLAYS = [
             {
                 id: 'p1',
@@ -602,7 +544,6 @@
                 ]
             }
         ];
-
 
         const DEFENSIVE_FRONTS = {
             '4-3': [
@@ -647,7 +588,6 @@
             'blank': []
         };
 
-
         const STUNT_CONFIGS = {
             'None': { name: 'Straight Pass Rush', protectionRule: 'Standard Slide or Fan Protection. OL matches up 1-on-1.', tracks: {} },
             'TE-Twist': {
@@ -676,19 +616,16 @@
             }
         };
 
-
         class PlaybookApp {
             constructor() {
-                this.user = null;
-                this.plays = [];
-                this.currentPlay = null;
+                this.plays = JSON.parse(localStorage.getItem('chalkboard_plays_store')) || [...DEFAULT_PLAYS];
+                this.currentPlay = this.plays[0];
                 this.selectedLevel = 'highschool';
                 this.selectedFront = '4-3';
                 this.selectedCoverage = 'Cover2';
                 this.selectedStunt = 'None';
                 
                 this.currentDefense = JSON.parse(JSON.stringify(DEFENSIVE_FRONTS['4-3']));
-
 
                 this.isPlaying = false;
                 this.progress = 0;
@@ -702,11 +639,8 @@
                 this.currentLine = null;
                 this.draggedPlayer = null;
 
-
                 this.initDOM();
-                this.initAuth();
             }
-
 
             initDOM() {
                 this.authScreen = document.getElementById('authScreen');
@@ -716,6 +650,7 @@
                 this.loginForm = document.getElementById('loginForm');
                 this.signupForm = document.getElementById('signupForm');
                 this.btnQuickStart = document.getElementById('btnQuickStart');
+                this.btnFinishSignup = document.getElementById('btnFinishSignup');
                 
                 this.levelSelect = document.getElementById('levelSelect');
                 this.playSelect = document.getElementById('playSelect');
@@ -732,10 +667,8 @@
                 this.stuntBadge = document.getElementById('stuntBadge');
                 this.modeDesc = document.getElementById('modeDesc');
 
-
                 this.chkRoutes = document.getElementById('chkRoutes');
                 this.chkStunts = document.getElementById('chkStunts');
-
 
                 this.newPlayModal = document.getElementById('newPlayModal');
                 this.modalPlayName = document.getElementById('modalPlayName');
@@ -743,37 +676,37 @@
                 this.modalOffensePreset = document.getElementById('modalOffensePreset');
                 this.modalDefensePreset = document.getElementById('modalDefensePreset');
 
-
                 this.setupAuthHandlers();
             }
 
-
-            async initAuth() {
-                // RULE 3 - Auth Before Queries
-                const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                };
-                await initAuth();
-
-
-                onAuthStateChanged(auth, (user) => {
-                    this.user = user;
-                    if (user) {
-                        this.setupRealtimeSync();
-                    }
-                });
-            }
-
-
             setupAuthHandlers() {
-                this.btnQuickStart.addEventListener('click', () => {
-                    this.launchWorkspace({ name: 'Coach', level: 'highschool', team: 'Varsity' });
-                });
+                const launch = (name, level, team) => {
+                    this.selectedLevel = level || 'highschool';
+                    this.levelSelect.value = this.selectedLevel === 'youth' ? 'highschool' : this.selectedLevel;
+                    document.getElementById('coachTeamSubtext').textContent = `${name || 'Coach'} • ${team || 'Program'}`;
+                    
+                    this.authScreen.classList.add('hidden');
+                    this.appScreen.classList.remove('hidden');
 
+                    this.initCanvas();
+                    this.populatePlaySelect();
+                    if (this.plays.length > 0) this.loadPlay(this.plays[0].id);
+                    this.setupEvents();
+                    this.startAnimationLoop();
+
+                    setTimeout(() => this.resizeCanvas(), 100);
+                };
+
+                this.btnQuickStart.addEventListener('click', () => launch('Coach', 'highschool', 'Varsity'));
+                
+                if (this.btnFinishSignup) {
+                    this.btnFinishSignup.addEventListener('click', () => {
+                        const name = document.getElementById('signupName').value.trim() || 'Coach';
+                        const level = document.getElementById('signupLevel').value || 'highschool';
+                        const team = document.getElementById('signupTeam').value.trim() || 'Program';
+                        launch(name, level, team);
+                    });
+                }
 
                 this.tabLogin.addEventListener('click', () => {
                     this.tabLogin.className = 'flex-1 py-2 rounded-lg text-white bg-slate-800 transition';
@@ -782,7 +715,6 @@
                     this.signupForm.classList.add('hidden');
                 });
 
-
                 this.tabSignup.addEventListener('click', () => {
                     this.tabSignup.className = 'flex-1 py-2 rounded-lg text-white bg-slate-800 transition';
                     this.tabLogin.className = 'flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition';
@@ -790,104 +722,25 @@
                     this.loginForm.classList.add('hidden');
                 });
 
-
                 this.signupForm.addEventListener('submit', (e) => {
                     e.preventDefault();
-                    // All profile fields are optional
-                    const coachName = document.getElementById('signupName').value.trim() || 'Coach';
-                    const coachLevel = document.getElementById('signupLevel').value || 'highschool';
-                    const coachTeam = document.getElementById('signupTeam').value.trim() || 'Football Program';
-
-
-                    this.launchWorkspace({ name: coachName, level: coachLevel, team: coachTeam });
+                    const name = document.getElementById('signupName').value.trim() || 'Coach';
+                    const level = document.getElementById('signupLevel').value || 'highschool';
+                    const team = document.getElementById('signupTeam').value.trim() || 'Program';
+                    launch(name, level, team);
                 });
-
 
                 this.loginForm.addEventListener('submit', (e) => {
                     e.preventDefault();
                     const handle = document.getElementById('loginEmail').value.trim() || 'Coach';
-                    this.launchWorkspace({ name: handle, level: 'highschool', team: 'Program' });
+                    launch(handle, 'highschool', 'Program');
+                });
+
+                document.getElementById('btnLogout').addEventListener('click', () => {
+                    this.appScreen.classList.add('hidden');
+                    this.authScreen.classList.remove('hidden');
                 });
             }
-
-
-            launchWorkspace(profile) {
-                this.selectedLevel = profile.level || 'highschool';
-                this.levelSelect.value = this.selectedLevel === 'youth' ? 'highschool' : this.selectedLevel;
-
-
-                document.getElementById('coachTeamSubtext').textContent = `${profile.name} • ${profile.team}`;
-
-
-                this.authScreen.classList.add('hidden');
-                this.appScreen.classList.remove('hidden');
-
-
-                this.initCanvas();
-                this.setupEvents();
-                this.startAnimationLoop();
-            }
-
-
-            // Real-Time Cloud Storage Sync (RULE 1 & RULE 2 Compliant)
-            setupRealtimeSync() {
-                if (!this.user) return;
-                
-                // RULE 1 Path: /artifacts/{appId}/users/{userId}/plays
-                const playsCollectionRef = collection(db, 'artifacts', appId, 'users', this.user.uid, 'plays');
-
-
-                // Real-time snapshot listener
-                onSnapshot(playsCollectionRef, (snapshot) => {
-                    const loadedPlays = [];
-                    snapshot.forEach(docSnap => {
-                        loadedPlays.push({ id: docSnap.id, ...docSnap.data() });
-                    });
-
-
-                    if (loadedPlays.length === 0) {
-                        // Populate default initial plays into cloud
-                        DEFAULT_PLAYS.forEach(p => {
-                            const dRef = doc(db, 'artifacts', appId, 'users', this.user.uid, 'plays', p.id);
-                            setDoc(dRef, p);
-                        });
-                        this.plays = [...DEFAULT_PLAYS];
-                    } else {
-                        this.plays = loadedPlays;
-                    }
-
-
-                    this.populatePlaySelect();
-                    if (this.plays.length > 0 && !this.currentPlay) {
-                        this.loadPlay(this.plays[0].id);
-                    }
-                }, (error) => {
-                    console.error("Cloud Sync Error:", error);
-                });
-            }
-
-
-            async syncPlayToCloud(playObj) {
-                if (!this.user || !playObj) return;
-                try {
-                    const playRef = doc(db, 'artifacts', appId, 'users', this.user.uid, 'plays', playObj.id);
-                    await setDoc(playRef, playObj);
-                } catch(err) {
-                    console.error("Failed to sync play:", err);
-                }
-            }
-
-
-            async deletePlayFromCloud(playId) {
-                if (!this.user || !playId) return;
-                try {
-                    const playRef = doc(db, 'artifacts', appId, 'users', this.user.uid, 'plays', playId);
-                    await deleteDoc(playRef);
-                } catch(err) {
-                    console.error("Failed to delete play:", err);
-                }
-            }
-
 
             populatePlaySelect() {
                 this.playSelect.innerHTML = '';
@@ -899,7 +752,6 @@
                 });
             }
 
-
             initCanvas() {
                 this.canvas = document.getElementById('fieldCanvas');
                 this.ctx = this.canvas.getContext('2d');
@@ -907,21 +759,20 @@
                 window.addEventListener('resize', () => this.resizeCanvas());
             }
 
-
             resizeCanvas() {
+                if (!this.canvas) return;
                 const rect = this.canvas.parentElement.getBoundingClientRect();
                 this.canvas.width = rect.width;
                 this.canvas.height = rect.height;
                 this.render();
             }
 
-
             loadPlay(playId) {
                 const found = this.plays.find(p => p.id === playId);
                 if (found) {
                     this.currentPlay = JSON.parse(JSON.stringify(found));
                     this.playTitle.textContent = this.currentPlay.name;
-                    this.playDesc.textContent = this.currentPlay.desc || 'Custom Play Concept';
+                    this.playDesc.textContent = this.currentPlay.desc || 'Custom Tactical Play Alignment';
                     
                     this.qbProgression.innerHTML = '';
                     (this.currentPlay.qbKeys || ['Read progression keys']).forEach(key => {
@@ -930,18 +781,22 @@
                         this.qbProgression.appendChild(li);
                     });
 
-
                     this.resetAnimation();
                 }
             }
 
+            savePlays() {
+                localStorage.setItem('chalkboard_plays_store', JSON.stringify(this.plays));
+            }
 
             setupEvents() {
+                if (this.eventsBound) return;
+                this.eventsBound = true;
+
                 this.levelSelect.addEventListener('change', (e) => {
                     this.selectedLevel = e.target.value;
                     this.render();
                 });
-
 
                 this.playSelect.addEventListener('change', (e) => this.loadPlay(e.target.value));
                 this.frontSelect.addEventListener('change', (e) => {
@@ -968,14 +823,12 @@
                     this.render();
                 });
 
-
                 document.getElementById('btnModeMove').addEventListener('click', () => {
                     this.interactionMode = 'move';
                     document.getElementById('btnModeMove').className = 'mode-btn bg-blue-600 text-white p-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5 active';
                     document.getElementById('btnModeDraw').className = 'mode-btn bg-slate-800 text-slate-300 hover:bg-slate-700 p-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5';
                     this.modeDesc.textContent = 'Click & drag any player circle or square to adjust starting formation alignment.';
                 });
-
 
                 document.getElementById('btnModeDraw').addEventListener('click', () => {
                     this.interactionMode = 'draw';
@@ -984,18 +837,15 @@
                     this.modeDesc.textContent = 'Select a drawing tool below to sketch routes, blocks, or motion paths onto the field.';
                 });
 
-
                 document.getElementById('btnPlay').addEventListener('click', () => this.isPlaying = true);
                 document.getElementById('btnPause').addEventListener('click', () => this.isPlaying = false);
                 document.getElementById('btnReset').addEventListener('click', () => this.resetAnimation());
-
 
                 this.scrubber.addEventListener('input', (e) => {
                     this.progress = parseFloat(e.target.value) / 100;
                     this.timeDisplay.textContent = (this.progress * 4.0).toFixed(1) + 's';
                     this.render();
                 });
-
 
                 const toolBtns = [
                     { id: 'btnToolDraw', tool: 'draw' },
@@ -1013,12 +863,10 @@
                     });
                 });
 
-
                 document.getElementById('btnToolClear').addEventListener('click', () => {
                     this.drawnLines = [];
                     this.render();
                 });
-
 
                 document.querySelectorAll('.color-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
@@ -1027,7 +875,6 @@
                         this.penColor = e.target.dataset.color;
                     });
                 });
-
 
                 document.getElementById('btnOpenNewPlayModal').addEventListener('click', () => {
                     this.newPlayModal.classList.remove('hidden');
@@ -1039,13 +886,11 @@
                     this.newPlayModal.classList.add('hidden');
                 });
 
-
-                document.getElementById('btnCreatePlaySubmit').addEventListener('click', async () => {
+                document.getElementById('btnCreatePlaySubmit').addEventListener('click', () => {
                     const name = this.modalPlayName.value.trim() || 'Custom Play';
                     const category = this.modalCategory.value;
                     const offKey = this.modalOffensePreset.value;
                     const defKey = this.modalDefensePreset.value;
-
 
                     const newPlayObj = {
                         id: 'play_' + Date.now(),
@@ -1056,11 +901,11 @@
                         offense: JSON.parse(JSON.stringify(OFFENSE_PRESETS[offKey] || OFFENSE_PRESETS.blank))
                     };
 
-
-                    await this.syncPlayToCloud(newPlayObj);
-                    this.currentPlay = newPlayObj;
+                    this.plays.push(newPlayObj);
+                    this.savePlays();
+                    this.populatePlaySelect();
+                    this.playSelect.value = newPlayObj.id;
                     this.loadPlay(newPlayObj.id);
-
 
                     if (DEFENSIVE_FRONTS[defKey]) {
                         this.selectedFront = defKey;
@@ -1068,34 +913,33 @@
                         this.currentDefense = JSON.parse(JSON.stringify(DEFENSIVE_FRONTS[defKey]));
                     }
 
-
                     this.drawnLines = [];
                     this.newPlayModal.classList.add('hidden');
                 });
 
-
-                document.getElementById('btnSavePlay').addEventListener('click', async () => {
-                    if (this.currentPlay) {
-                        await this.syncPlayToCloud(this.currentPlay);
-                        alert('Play synced to cloud across all devices!');
+                document.getElementById('btnSavePlay').addEventListener('click', () => {
+                    const idx = this.plays.findIndex(p => p.id === this.currentPlay.id);
+                    if (idx !== -1) {
+                        this.plays[idx] = JSON.parse(JSON.stringify(this.currentPlay));
                     }
+                    this.savePlays();
+                    alert('Play saved to local playbook storage!');
                 });
 
-
-                document.getElementById('btnDeletePlay').addEventListener('click', async () => {
+                document.getElementById('btnDeletePlay').addEventListener('click', () => {
                     if (this.plays.length > 1 && this.currentPlay) {
-                        await this.deletePlayFromCloud(this.currentPlay.id);
-                        this.currentPlay = null;
+                        this.plays = this.plays.filter(p => p.id !== this.currentPlay.id);
+                        this.savePlays();
+                        this.populatePlaySelect();
+                        this.loadPlay(this.plays[0].id);
                     } else {
                         alert('Cannot delete the last remaining play.');
                     }
                 });
 
-
                 this.canvas.addEventListener('mousedown', (e) => this.handlePointerDown(e));
                 this.canvas.addEventListener('mousemove', (e) => this.handlePointerMove(e));
                 this.canvas.addEventListener('mouseup', () => this.handlePointerUp());
-
 
                 this.canvas.addEventListener('touchstart', (e) => {
                     e.preventDefault();
@@ -1108,14 +952,12 @@
                 this.canvas.addEventListener('touchend', () => this.handlePointerUp());
             }
 
-
             handlePointerDown(e) {
                 const rect = this.canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
                 const w = this.canvas.width;
                 const h = this.canvas.height;
-
 
                 if (this.interactionMode === 'move') {
                     if (this.currentPlay && this.currentPlay.offense) {
@@ -1129,7 +971,6 @@
                             }
                         }
                     }
-
 
                     if (this.currentDefense) {
                         for (let d of this.currentDefense) {
@@ -1152,14 +993,12 @@
                 }
             }
 
-
             handlePointerMove(e) {
                 const rect = this.canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
                 const w = this.canvas.width;
                 const h = this.canvas.height;
-
 
                 if (this.draggedPlayer) {
                     this.draggedPlayer.player.x = Math.max(0.02, Math.min(0.98, x / w));
@@ -1175,7 +1014,6 @@
                 }
             }
 
-
             handlePointerUp() {
                 if (this.draggedPlayer) {
                     this.draggedPlayer = null;
@@ -1188,7 +1026,6 @@
                 this.render();
             }
 
-
             resetAnimation() {
                 this.isPlaying = false;
                 this.progress = 0;
@@ -1197,13 +1034,14 @@
                 this.render();
             }
 
-
             startAnimationLoop() {
+                if (this.animating) return;
+                this.animating = true;
+
                 let lastTime = performance.now();
                 const animate = (now) => {
                     const dt = (now - lastTime) / 1000;
                     lastTime = now;
-
 
                     if (this.isPlaying) {
                         this.progress += (dt * 0.25) * this.speed;
@@ -1220,16 +1058,13 @@
                 requestAnimationFrame(animate);
             }
 
-
             render() {
                 if (!this.canvas || !this.ctx) return;
                 const w = this.canvas.width;
                 const h = this.canvas.height;
 
-
                 this.ctx.fillStyle = '#143d23';
                 this.ctx.fillRect(0, 0, w, h);
-
 
                 this.ctx.strokeStyle = '#1e5330';
                 this.ctx.lineWidth = 2;
@@ -1242,13 +1077,10 @@
                     this.ctx.stroke();
                 }
 
-
                 this.renderHashMarks(w, h, numYardLines);
-
 
                 const losY = h * 0.58;
                 const fdY = h * 0.35;
-
 
                 this.ctx.strokeStyle = '#f59e0b';
                 this.ctx.lineWidth = 3;
@@ -1259,14 +1091,12 @@
                 this.ctx.stroke();
                 this.ctx.setLineDash([]);
 
-
                 this.ctx.strokeStyle = '#3b82f6';
                 this.ctx.lineWidth = 3;
                 this.ctx.beginPath();
                 this.ctx.moveTo(0, losY);
                 this.ctx.lineTo(w, losY);
                 this.ctx.stroke();
-
 
                 if (this.chkRoutes.checked && this.currentPlay && this.currentPlay.offense) {
                     this.currentPlay.offense.forEach(p => {
@@ -1286,7 +1116,6 @@
                     });
                 }
 
-
                 if (this.currentDefense) {
                     this.currentDefense.forEach(d => {
                         const pos = { x: d.x * w, y: d.y * h };
@@ -1298,7 +1127,6 @@
                         this.ctx.fill();
                         this.ctx.stroke();
 
-
                         this.ctx.fillStyle = '#ffffff';
                         this.ctx.font = 'bold 10px system-ui';
                         this.ctx.textAlign = 'center';
@@ -1307,18 +1135,15 @@
                     });
                 }
 
-
                 if (this.currentPlay && this.currentPlay.offense) {
                     this.currentPlay.offense.forEach(p => {
                         let pos = { x: p.x * w, y: p.y * h };
-
 
                         if (p.motion && this.progress <= 0.3) {
                             pos = this.getPointAlongPath(p.motion, this.progress / 0.3, w, h);
                         } else if (p.route && this.progress > 0.3) {
                             pos = this.getPointAlongPath(p.route, (this.progress - 0.3) / 0.7, w, h);
                         }
-
 
                         this.ctx.fillStyle = '#2563eb';
                         this.ctx.strokeStyle = '#ffffff';
@@ -1328,7 +1153,6 @@
                         this.ctx.fill();
                         this.ctx.stroke();
 
-
                         this.ctx.fillStyle = '#ffffff';
                         this.ctx.font = 'bold 11px system-ui';
                         this.ctx.textAlign = 'center';
@@ -1337,10 +1161,8 @@
                     });
                 }
 
-
                 this.renderTelestrator();
             }
-
 
             renderHashMarks(w, h, numLines) {
                 let leftHashX, rightHashX;
@@ -1355,10 +1177,8 @@
                     rightHashX = w * 0.54;
                 }
 
-
                 this.ctx.strokeStyle = '#ffffff';
                 this.ctx.lineWidth = 1.5;
-
 
                 for (let i = 1; i < numLines * 4; i++) {
                     const y = (h / (numLines * 4)) * i;
@@ -1367,7 +1187,6 @@
                     this.ctx.lineTo(leftHashX + 5, y);
                     this.ctx.stroke();
 
-
                     this.ctx.beginPath();
                     this.ctx.moveTo(rightHashX - 5, y);
                     this.ctx.lineTo(rightHashX + 5, y);
@@ -1375,17 +1194,14 @@
                 }
             }
 
-
             renderTelestrator() {
                 const lines = [...this.drawnLines];
                 if (this.currentLine) lines.push(this.currentLine);
-
 
                 lines.forEach(line => {
                     if (line.points.length < 2) return;
                     this.ctx.strokeStyle = line.color;
                     this.ctx.lineWidth = 3;
-
 
                     if (line.type === 'motion') {
                         this.ctx.setLineDash([6, 6]);
@@ -1396,7 +1212,6 @@
                         this.ctx.setLineDash([]);
                     }
 
-
                     this.ctx.beginPath();
                     line.points.forEach((pt, idx) => {
                         if (idx === 0) this.ctx.moveTo(pt.x, pt.y);
@@ -1405,10 +1220,8 @@
                     this.ctx.stroke();
                     this.ctx.setLineDash([]);
 
-
                     const lastPt = line.points[line.points.length - 1];
                     const prevPt = line.points[line.points.length - 2];
-
 
                     if (line.type === 'arrow' || line.type === 'motion' || line.type === 'stunt') {
                         this.drawArrowhead(prevPt.x, prevPt.y, lastPt.x, lastPt.y, line.color);
@@ -1418,29 +1231,24 @@
                 });
             }
 
-
             getPointAlongPath(pts, ratio, w, h) {
                 if (!pts || pts.length === 0) return { x: 0, y: 0 };
                 if (pts.length === 1 || ratio <= 0) return { x: pts[0].x * w, y: pts[0].y * h };
                 if (ratio >= 1) return { x: pts[pts.length - 1].x * w, y: pts[pts.length - 1].y * h };
-
 
                 const totalSegments = pts.length - 1;
                 const scaledRatio = ratio * totalSegments;
                 const segIdx = Math.floor(scaledRatio);
                 const segRatio = scaledRatio - segIdx;
 
-
                 const p1 = pts[segIdx];
                 const p2 = pts[segIdx + 1];
-
 
                 return {
                     x: (p1.x + (p2.x - p1.x) * segRatio) * w,
                     y: (p1.y + (p2.y - p1.y) * segRatio) * h
                 };
             }
-
 
             drawArrowhead(fromX, fromY, toX, toY, color) {
                 const headlen = 12;
@@ -1454,18 +1262,15 @@
                 this.ctx.fill();
             }
 
-
             drawBlockCap(fromX, fromY, toX, toY, color) {
                 const capLen = 12;
                 const angle = Math.atan2(toY - fromY, toX - fromX);
                 const perp = angle + Math.PI / 2;
 
-
                 const x1 = toX + capLen * Math.cos(perp);
                 const y1 = toY + capLen * Math.sin(perp);
                 const x2 = toX - capLen * Math.cos(perp);
                 const y2 = toY - capLen * Math.sin(perp);
-
 
                 this.ctx.strokeStyle = color;
                 this.ctx.lineWidth = 4;
@@ -1474,12 +1279,4 @@
                 this.ctx.lineTo(x2, y2);
                 this.ctx.stroke();
             }
-        }
 
-
-        window.addEventListener('DOMContentLoaded', () => {
-            window.app = new PlaybookApp();
-        });
-    </script>
-</body>
-</html>
