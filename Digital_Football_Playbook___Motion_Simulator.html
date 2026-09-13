@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
-        .canvas-container { position: relative; width: 100%; aspect-ratio: 16/9; max-height: 62vh; }
+        .canvas-container { position: relative; width: 100%; aspect-ratio: 16/9; max-height: 78vh; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
@@ -341,7 +341,7 @@
         <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
             
             <!-- Sidebar -->
-            <aside class="w-full lg:w-80 bg-slate-900 border-r border-slate-800 flex flex-col p-4 overflow-y-auto gap-4">
+            <aside class="w-full lg:w-80 bg-slate-900 border-r border-slate-800 flex flex-col p-4 overflow-y-auto gap-4 order-last lg:order-none">
                 
                 <!-- PLAYBOOK CATEGORY / FOLDER FILTER -->
                 <div class="space-y-2">
@@ -542,6 +542,9 @@
                         <button id="btnToolCurveRoute" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
                             <i class="fa-solid fa-wave-square text-blue-300 w-4 text-center"></i> Curved Route
                         </button>
+                        <button id="btnToolEraseLine" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 col-span-2 cursor-pointer">
+                            <i class="fa-solid fa-eraser text-rose-400 w-4 text-center"></i> Tap a Route/Line to Delete It
+                        </button>
                     </div>
                     <p class="text-[10px] text-slate-500 italic -mt-1">Straight Line: tap to place each straight segment (e.g. a speed-out's stem then break); double-tap or hit Finish to cap it with an arrowhead. Curved Route: drag freehand for a bending path (speed-out, wheel, etc) — arrowhead added automatically when you release.</p>
 
@@ -568,6 +571,30 @@
                             <button type="button" data-color="#a855f7" class="color-btn w-6 h-6 rounded-full bg-purple-500"></button>
                             <button type="button" data-color="#000000" class="color-btn w-6 h-6 rounded-full bg-black border border-slate-600"></button>
                             <input type="color" id="customColorPicker" value="#f59e0b" class="w-6 h-6 rounded-full border-0 p-0 bg-transparent cursor-pointer" title="Custom color">
+                        </div>
+                    </div>
+
+                    <div class="space-y-1 pt-1">
+                        <span class="text-xs text-slate-400">End Style (applies to whichever tool you draw with next):</span>
+                        <div class="grid grid-cols-6 gap-1">
+                            <button id="endStyleNone" data-endstyle="none" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer" title="Plain line, no cap">
+                                <i class="fa-solid fa-minus text-slate-300"></i>
+                            </button>
+                            <button id="endStyleArrow" data-endstyle="arrow" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer ring-2 ring-white" title="Arrow">
+                                <i class="fa-solid fa-caret-up text-slate-300"></i>
+                            </button>
+                            <button id="endStyleBlock" data-endstyle="block" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer" title="T-Bar / Block">
+                                <i class="fa-solid fa-t text-slate-300"></i>
+                            </button>
+                            <button id="endStyleHookLeft" data-endstyle="hookLeft" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer" title="Curl Left">
+                                <i class="fa-solid fa-rotate-left text-slate-300"></i>
+                            </button>
+                            <button id="endStyleHookRight" data-endstyle="hookRight" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer" title="Curl Right">
+                                <i class="fa-solid fa-rotate-right text-slate-300"></i>
+                            </button>
+                            <button id="endStyleCircle" data-endstyle="circle" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer" title="Circle / Dot">
+                                <i class="fa-regular fa-circle text-slate-300"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -625,12 +652,16 @@
                         <input type="checkbox" id="chkStunts" checked class="rounded bg-slate-800 border-slate-700 text-purple-600 focus:ring-0">
                         <span>Show Defensive Stunt Vectors</span>
                     </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="chkYardValues" class="rounded bg-slate-800 border-slate-700 text-emerald-600 focus:ring-0">
+                        <span>Show Yard Values (route/line length)</span>
+                    </label>
                 </div>
 
             </aside>
 
             <!-- Center Workspace -->
-            <main class="flex-1 flex flex-col bg-slate-950 relative overflow-hidden">
+            <main class="flex-1 flex flex-col bg-slate-950 relative overflow-hidden order-first lg:order-none">
                 
                 <div class="flex-1 flex items-center justify-center p-2 sm:p-4 bg-slate-950">
                     <div class="canvas-container rounded-xl overflow-hidden border-2 border-slate-800 shadow-2xl bg-field">
@@ -805,7 +836,7 @@
                 { id: 2, label: '2', role: 'Slot', speed: 4.50, release: 'jab', x: 0.28, y: 0.60, route: [{x:0.28, y:0.60}, {x:0.28, y:0.40}] },
                 { id: 3, label: '3', role: 'Slot', speed: 4.55, release: 'none', x: 0.72, y: 0.60, route: [{x:0.72, y:0.60}, {x:0.72, y:0.40}] },
                 { id: 4, label: '4', role: 'WR', speed: 4.45, release: 'none', x: 0.88, y: 0.60, route: [{x:0.88, y:0.60}, {x:0.88, y:0.25}] },
-                { id: 5, label: '5', role: 'QB', speed: 4.70, release: 'none', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.50, y:0.75}] },
+                { id: 5, label: 'QB', role: 'QB', speed: 4.70, release: 'none', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.50, y:0.75}] },
                 { id: 'LT', label: 'LT', role: 'OL', speed: 5.00, release: 'none', x: 0.42, y: 0.58 },
                 { id: 'LG', label: 'LG', role: 'OL', speed: 5.00, release: 'none', x: 0.46, y: 0.58 },
                 { id: 'C',  label: 'C',  role: 'OL', speed: 5.00, release: 'none', x: 0.50, y: 0.58 },
@@ -817,7 +848,7 @@
                 { id: 2, label: '2', role: 'Slot', speed: 4.45, release: 'jab', x: 0.68, y: 0.60, route: [{x:0.68, y:0.60}, {x:0.68, y:0.35}] },
                 { id: 3, label: '3', role: 'Slot', speed: 4.50, release: 'none', x: 0.78, y: 0.60, route: [{x:0.78, y:0.60}, {x:0.78, y:0.35}] },
                 { id: 4, label: '4', role: 'WR', speed: 4.42, release: 'none', x: 0.88, y: 0.60, route: [{x:0.88, y:0.60}, {x:0.88, y:0.25}] },
-                { id: 5, label: '5', role: 'QB', speed: 4.70, release: 'none', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.50, y:0.75}] },
+                { id: 5, label: 'QB', role: 'QB', speed: 4.70, release: 'none', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.50, y:0.75}] },
                 { id: 6, label: 'RB', role: 'RB', speed: 4.48, release: 'none', x: 0.44, y: 0.70, route: [{x:0.44, y:0.70}, {x:0.35, y:0.55}] },
                 { id: 'LT', label: 'LT', role: 'OL', speed: 5.00, release: 'none', x: 0.42, y: 0.58 },
                 { id: 'LG', label: 'LG', role: 'OL', speed: 5.00, release: 'none', x: 0.46, y: 0.58 },
@@ -845,7 +876,7 @@
                     { id: 2, label: '2', role: 'Slot', speed: 4.45, release: 'jab', x: 0.25, y: 0.60, motion: [{x:0.25, y:0.60}, {x:0.18, y:0.60}, {x:0.55, y:0.60}], route: [{x:0.55, y:0.60}, {x:0.45, y:0.52}] },
                     { id: 3, label: '3', role: 'TE', speed: 4.65, release: 'none', x: 0.62, y: 0.60, route: [{x:0.62, y:0.60}, {x:0.80, y:0.63}] },
                     { id: 4, label: '4', role: 'WR', speed: 4.42, release: 'none', x: 0.88, y: 0.60, route: [{x:0.88, y:0.60}, {x:0.55, y:0.52}] },
-                    { id: 5, label: '5', role: 'QB', speed: 4.75, release: 'none', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.52, y:0.75}] },
+                    { id: 5, label: 'QB', role: 'QB', speed: 4.75, release: 'none', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.52, y:0.75}] },
                     { id: 'LT', label: 'LT', role: 'OL', speed: 5.00, release: 'none', x: 0.42, y: 0.58 },
                     { id: 'LG', label: 'LG', role: 'OL', speed: 5.00, release: 'none', x: 0.46, y: 0.58 },
                     { id: 'C',  label: 'C',  role: 'OL', speed: 5.00, release: 'none', x: 0.50, y: 0.58 },
@@ -1011,6 +1042,7 @@
                 this.interactionMode = 'move';
                 this.activeTool = 'draw';
                 this.penColor = '#f59e0b';
+                this.penEndStyle = 'arrow';
                 
                 this.drawnLines = [];
                 this.currentLine = null;
@@ -1058,6 +1090,7 @@
 
                 this.chkRoutes = document.getElementById('chkRoutes');
                 this.chkStunts = document.getElementById('chkStunts');
+                this.chkYardValues = document.getElementById('chkYardValues');
                 this.chkAutoAlign = document.getElementById('chkAutoAlign');
 
                 this.formationWarningBanner = document.getElementById('formationWarningBanner');
@@ -1362,6 +1395,16 @@
                         if (stdPanel) stdPanel.classList.toggle('hidden', isRB);
                     } else {
                         document.getElementById('wrReleaseContainer').classList.add('hidden');
+                        // Route/assignment presets (both the WR/TE grid and the
+                        // RB-specific one) only apply to offense — previously
+                        // whichever panel was left visible from the last
+                        // offensive player selected stayed on screen even after
+                        // selecting a defender, showing route buttons that
+                        // don't apply to them.
+                        const rbPanel = document.getElementById('routePresetsRB');
+                        const stdPanel = document.getElementById('routePresetsStandard');
+                        if (rbPanel) rbPanel.classList.add('hidden');
+                        if (stdPanel) stdPanel.classList.add('hidden');
                     }
                 }
                 this.render();
@@ -1828,6 +1871,25 @@
             // between taps, unlike Freehand which follows the cursor); double-tap
             // near the last point, or the Finish Line button, caps it off with an
             // arrowhead at the final vertex.
+            // Puts a clean white box (ring) around whichever drawing tool is
+            // currently active — no fill/color change to the button itself,
+            // just the outline, matching the reference style. Clears it from
+            // every other tool button. Called both when a tool button is
+            // clicked AND when switching into Draw Tools mode, so the active
+            // tool is always marked — not just after you've explicitly
+            // clicked one.
+            updateToolButtonHighlight() {
+                if (!this.toolBtnDefs) return;
+                this.toolBtnDefs.forEach(b => {
+                    const el = document.getElementById(b.id);
+                    if (!el) return;
+                    el.classList.remove('ring-2', 'ring-white');
+                    if (b.tool === this.activeTool) {
+                        el.classList.add('ring-2', 'ring-white');
+                    }
+                });
+            }
+
             finishStraightLine() {
                 if (!this.isDrawingStraightLine) return;
                 // Use currentLine.points (committed vertices + whatever point the
@@ -1839,6 +1901,7 @@
                     this.drawnLines.push({
                         color: this.penColor,
                         type: 'straight',
+                        endStyle: this.penEndStyle,
                         points: [...finalPoints]
                     });
                 }
@@ -2226,6 +2289,7 @@
 
                 this.chkRoutes.addEventListener('change', () => this.render());
                 this.chkStunts.addEventListener('change', () => this.render());
+                if (this.chkYardValues) this.chkYardValues.addEventListener('change', () => this.render());
                 this.chkAutoAlign.addEventListener('change', () => {
                     this.autoAlignCoverageIfNeeded();
                     this.render();
@@ -2244,6 +2308,11 @@
                     document.getElementById('btnModeDraw').className = 'mode-btn bg-blue-600 text-white p-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5 active';
                     document.getElementById('btnModeMove').className = 'mode-btn bg-slate-800 text-slate-300 hover:bg-slate-700 p-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5';
                     this.modeDesc.textContent = 'Select a drawing tool below to sketch routes, blocks, or motion paths onto the field.';
+                    // Previously nothing got highlighted here, so switching into
+                    // Draw Tools left every tool button looking identical until
+                    // you clicked one — even though a tool (Freehand, by default)
+                    // was already active.
+                    this.updateToolButtonHighlight();
                 });
 
                 document.getElementById('btnPlay').addEventListener('click', () => this.isPlaying = true);
@@ -2263,8 +2332,10 @@
                     { id: 'btnToolMotion', tool: 'motion' },
                     { id: 'btnToolStunt', tool: 'stunt' },
                     { id: 'btnToolStraight', tool: 'straight' },
-                    { id: 'btnToolCurveRoute', tool: 'curve' }
+                    { id: 'btnToolCurveRoute', tool: 'curve' },
+                    { id: 'btnToolEraseLine', tool: 'eraseLine' }
                 ];
+                this.toolBtnDefs = toolBtns;
                 toolBtns.forEach(tb => {
                     document.getElementById(tb.id).addEventListener('click', () => {
                         if (this.isDrawingStraightLine && tb.tool !== 'straight') {
@@ -2272,10 +2343,12 @@
                         }
                         this.interactionMode = 'draw';
                         this.activeTool = tb.tool;
-                        toolBtns.forEach(b => document.getElementById(b.id).classList.remove('bg-blue-600', 'text-white'));
-                        document.getElementById(tb.id).classList.add('bg-blue-600', 'text-white');
+                        this.updateToolButtonHighlight();
                     });
                 });
+                // Mark whichever tool is active right away, rather than only
+                // after the person clicks one for the first time.
+                this.updateToolButtonHighlight();
 
                 if (this.btnFinishStraightLine) {
                     this.btnFinishStraightLine.addEventListener('click', () => this.finishStraightLine());
@@ -2304,6 +2377,15 @@
                         document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('ring-2', 'ring-white'));
                         e.target.classList.add('ring-2', 'ring-white');
                         this.penColor = e.target.dataset.color;
+                    });
+                });
+
+                document.querySelectorAll('.end-style-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const target = e.currentTarget;
+                        document.querySelectorAll('.end-style-btn').forEach(b => b.classList.remove('ring-2', 'ring-white'));
+                        target.classList.add('ring-2', 'ring-white');
+                        this.penEndStyle = target.dataset.endstyle;
                     });
                 });
 
@@ -2480,7 +2562,7 @@
                         this.saveHistoryState();
                         this.isDrawingStraightLine = true;
                         this.straightLinePoints = [{x, y}];
-                        this.currentLine = { color: this.penColor, type: 'straight', points: [{x, y}, {x, y}] };
+                        this.currentLine = { color: this.penColor, type: 'straight', endStyle: this.penEndStyle, points: [{x, y}, {x, y}] };
                         if (this.btnFinishStraightLine) this.btnFinishStraightLine.classList.remove('hidden');
                     } else {
                         this.straightLinePoints.push({x, y});
@@ -2490,12 +2572,15 @@
                     this.lastTapPos = {x, y};
                     this.lastTapTime = now;
                     this.render();
+                } else if (this.interactionMode === 'draw' && this.activeTool === 'eraseLine') {
+                    this.tryDeleteLineNear(x, y);
                 } else if (this.interactionMode === 'draw') {
                     this.saveHistoryState();
                     this.isDrawing = true;
                     this.currentLine = {
                         color: this.penColor,
                         type: this.activeTool,
+                        endStyle: this.penEndStyle,
                         points: [{x, y}]
                     };
                 }
@@ -2594,7 +2679,7 @@
 
                 this.ctx.strokeStyle = '#d1d5db';
                 this.ctx.lineWidth = 2;
-                const numYardLines = 8;
+                const numYardLines = 10;
                 for (let i = 1; i < numYardLines; i++) {
                     const y = (h / numYardLines) * i;
                     this.ctx.beginPath();
@@ -2663,6 +2748,11 @@
                                 this.getAdjustedX(lastPt.x, w), lastPt.y * h,
                                 routeColor
                             );
+
+                            if (this.chkYardValues && this.chkYardValues.checked) {
+                                const yards = this.computePathYards(p.route);
+                                this.drawYardLabel(this.getAdjustedX(lastPt.x, w), lastPt.y * h, yards, routeColor);
+                            }
                         }
                     });
                 }
@@ -2845,7 +2935,7 @@
             // fill) in soft gray so they read as reference marks rather than
             // competing visually with player icons/routes drawn over them.
             renderYardNumbers(w, h, numLines) {
-                const labels = ['10', '20', '30', '40', '50', '40', '30'];
+                const labels = ['10', '20', '30', '40', '50', '40', '30', '20', '10'];
                 this.ctx.font = 'bold 20px system-ui';
                 this.ctx.textBaseline = 'middle';
                 this.ctx.lineWidth = 1.5;
@@ -2893,12 +2983,131 @@
                     const lastPt = line.points[line.points.length - 1];
                     const prevPt = line.points[line.points.length - 2];
 
-                    if (line.type === 'arrow' || line.type === 'motion' || line.type === 'stunt' || line.type === 'straight' || line.type === 'curve') {
+                    // endStyle is the End Style picker's choice at the time this
+                    // line was drawn. Older lines (drawn before this existed)
+                    // fall back to the old type-based default so they still
+                    // render with a cap instead of silently losing one.
+                    const cap = line.endStyle || (
+                        ['arrow', 'motion', 'stunt', 'straight', 'curve'].includes(line.type) ? 'arrow' :
+                        line.type === 'block' ? 'block' : 'none'
+                    );
+
+                    if (cap === 'arrow') {
                         this.drawArrowhead(prevPt.x, prevPt.y, lastPt.x, lastPt.y, line.color);
-                    } else if (line.type === 'block') {
+                    } else if (cap === 'block') {
                         this.drawBlockCap(prevPt.x, prevPt.y, lastPt.x, lastPt.y, line.color);
+                    } else if (cap === 'circle') {
+                        this.drawCircleCap(lastPt.x, lastPt.y, line.color);
+                    } else if (cap === 'hookLeft') {
+                        this.drawHookCap(prevPt.x, prevPt.y, lastPt.x, lastPt.y, line.color, -1);
+                    } else if (cap === 'hookRight') {
+                        this.drawHookCap(prevPt.x, prevPt.y, lastPt.x, lastPt.y, line.color, 1);
+                    }
+                    // cap === 'none' -> plain line, no cap at all.
+
+                    if (this.chkYardValues && this.chkYardValues.checked) {
+                        const cw = this.canvas.width, ch = this.canvas.height;
+                        const yards = this.computePathYards(line.points.map(pt => ({ x: pt.x / cw, y: pt.y / ch })));
+                        this.drawYardLabel(lastPt.x, lastPt.y, yards, line.color);
                     }
                 });
+            }
+
+            // Converts a route/line's normalized (0-1) points into an
+            // approximate real-world yardage, using the field's actual scale:
+            // ~100 yards top-to-bottom (10 labeled 10-yard bands) and the
+            // standard 53.3-yard field width horizontally.
+            computePathYards(points) {
+                const FIELD_YARDS_V = 100;
+                const FIELD_YARDS_H = 53.3;
+                let total = 0;
+                for (let i = 1; i < points.length; i++) {
+                    const dxYds = (points[i].x - points[i - 1].x) * FIELD_YARDS_H;
+                    const dyYds = (points[i].y - points[i - 1].y) * FIELD_YARDS_V;
+                    total += Math.hypot(dxYds, dyYds);
+                }
+                return total;
+            }
+
+            drawYardLabel(x, y, yards, color) {
+                const text = yards.toFixed(1) + ' yds';
+                this.ctx.font = 'bold 10px system-ui';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'bottom';
+                this.ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                const padding = 3;
+                const metrics = this.ctx.measureText(text);
+                this.ctx.fillRect(x - metrics.width / 2 - padding, y - 14 - padding, metrics.width + padding * 2, 14 + padding);
+                this.ctx.fillStyle = color || '#374151';
+                this.ctx.fillText(text, x, y - 4);
+            }
+
+            // Shortest distance from point (px,py) to the segment (x1,y1)-(x2,y2).
+            pointToSegmentDist(px, py, x1, y1, x2, y2) {
+                const dx = x2 - x1, dy = y2 - y1;
+                const lenSq = dx * dx + dy * dy;
+                if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+                let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+                t = Math.max(0, Math.min(1, t));
+                return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+            }
+
+            // Finds whichever drawn line or player route/motion path is closest
+            // to (x,y), within threshold pixels. Checks drawnLines (telestrator,
+            // already in pixel space) and offensive player routes/motions
+            // (normalized 0-1, converted to pixel space here for comparison).
+            findLineNear(x, y, threshold) {
+                let best = null;
+                let bestDist = threshold;
+
+                this.drawnLines.forEach((line, idx) => {
+                    for (let i = 1; i < line.points.length; i++) {
+                        const d = this.pointToSegmentDist(x, y, line.points[i - 1].x, line.points[i - 1].y, line.points[i].x, line.points[i].y);
+                        if (d < bestDist) {
+                            bestDist = d;
+                            best = { kind: 'drawn', index: idx };
+                        }
+                    }
+                });
+
+                if (this.currentPlay && this.currentPlay.offense && this.canvas) {
+                    const w = this.canvas.width, h = this.canvas.height;
+                    this.currentPlay.offense.forEach(p => {
+                        ['route', 'motion'].forEach(field => {
+                            const path = p[field];
+                            if (path && path.length > 1) {
+                                for (let i = 1; i < path.length; i++) {
+                                    const x1 = this.getAdjustedX(path[i - 1].x, w), y1 = path[i - 1].y * h;
+                                    const x2 = this.getAdjustedX(path[i].x, w), y2 = path[i].y * h;
+                                    const d = this.pointToSegmentDist(x, y, x1, y1, x2, y2);
+                                    if (d < bestDist) {
+                                        bestDist = d;
+                                        best = { kind: field === 'route' ? 'playerRoute' : 'playerMotion', playerId: p.id };
+                                    }
+                                }
+                            }
+                        });
+                    });
+                }
+
+                return best;
+            }
+
+            tryDeleteLineNear(x, y) {
+                const found = this.findLineNear(x, y, 14);
+                if (!found) return;
+
+                this.saveHistoryState();
+                if (found.kind === 'drawn') {
+                    this.drawnLines.splice(found.index, 1);
+                } else if (found.kind === 'playerRoute') {
+                    const p = this.currentPlay.offense.find(pl => pl.id === found.playerId);
+                    if (p) delete p.route;
+                } else if (found.kind === 'playerMotion') {
+                    const p = this.currentPlay.offense.find(pl => pl.id === found.playerId);
+                    if (p) delete p.motion;
+                }
+                this.render();
             }
 
             getPointAlongPath(pts, ratio, w, h) {
@@ -2947,6 +3156,34 @@
                 this.ctx.beginPath();
                 this.ctx.moveTo(x1, y1);
                 this.ctx.lineTo(x2, y2);
+                this.ctx.stroke();
+            }
+
+            drawCircleCap(x, y, color) {
+                this.ctx.strokeStyle = color;
+                this.ctx.lineWidth = 2.5;
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, 5, 0, Math.PI * 2);
+                this.ctx.stroke();
+            }
+
+            // A small curling hook at the line's end — direction -1 curls back
+            // to the left of travel, +1 curls back to the right. Approximates
+            // Just Play's curl-left/curl-right end styles.
+            drawHookCap(fromX, fromY, toX, toY, color, direction) {
+                const angle = Math.atan2(toY - fromY, toX - fromX);
+                const hookRadius = 8;
+                const perp = angle + (Math.PI / 2) * direction;
+                const centerX = toX + hookRadius * Math.cos(perp);
+                const centerY = toY + hookRadius * Math.sin(perp);
+
+                const startAngle = angle + Math.PI - (Math.PI / 2) * direction;
+                const endAngle = startAngle + Math.PI * 1.3 * direction;
+
+                this.ctx.strokeStyle = color;
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, hookRadius, startAngle, endAngle, direction > 0);
                 this.ctx.stroke();
             }
         }
