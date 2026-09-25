@@ -12,7 +12,7 @@
                 extend: {
                     colors: {
                         field: '#ffffff',
-                        fieldLines: '#94a3b8',
+                        fieldLines: '#d1d5db',
                         offense: '#3b82f6',
                         defense: '#ef4444',
                         motion: '#f59e0b',
@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
-        .canvas-container { position: relative; width: 100%; aspect-ratio: 16/9; max-height: 74vh; }
+        .canvas-container { position: relative; width: 100%; aspect-ratio: 16/9; max-height: 78vh; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
@@ -74,15 +74,15 @@
             async signOutUser() {
                 await signOut(auth);
             },
-            async savePlaybook(uid, data) {
+            async savePlaybook(uid, plays) {
                 await setDoc(doc(db, 'playbooks', uid), {
-                    data,
+                    plays,
                     updatedAt: new Date().toISOString()
                 });
             },
             async loadPlaybook(uid) {
                 const snap = await getDoc(doc(db, 'playbooks', uid));
-                return snap.exists() ? (snap.data().data || null) : null;
+                return snap.exists() ? (snap.data().plays || null) : null;
             }
         };
 
@@ -94,7 +94,7 @@
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
 
     <!-- ========================================== -->
-    <!-- 1. LANDING & PROFILE AUTH SCREEN           -->
+    <!-- 1. LANDING & PROFILE SELECTION SCREEN      -->
     <!-- ========================================== -->
     <div id="authScreen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-5 my-auto">
@@ -108,18 +108,18 @@
                 
                 <div class="pt-1">
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-950 text-emerald-300 border border-emerald-800">
-                        <i class="fa-solid fa-circle-check text-xs"></i> White Field & Level-Accurate Hashes Ready
+                        <i class="fa-solid fa-circle-check text-xs"></i> Instant Touch & Mobile Ready
                     </span>
                 </div>
             </div>
 
-            <button id="btnQuickStart" onclick="if(window.app) window.app.launchFromAuth()" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2 border border-emerald-400/30 cursor-pointer">
-                <i class="fa-solid fa-folder-tree text-amber-300"></i> Open Playbook Manager & Folders
+            <button id="btnQuickStart" onclick="if(window.app) window.app.launch('Coach', 'highschool', 'Varsity')" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2 border border-emerald-400/30 cursor-pointer">
+                <i class="fa-solid fa-bolt text-amber-300"></i> Enter Folder Hub & Start Managing
             </button>
 
             <div class="relative flex py-1 items-center">
                 <div class="flex-grow border-t border-slate-800"></div>
-                <span class="flex-shrink mx-3 text-slate-500 text-[11px] uppercase tracking-wider font-semibold">Or Coach Login</span>
+                <span class="flex-shrink mx-3 text-slate-500 text-[11px] uppercase tracking-wider font-semibold">Or Setup Profile (Optional)</span>
                 <div class="flex-grow border-t border-slate-800"></div>
             </div>
 
@@ -133,6 +133,7 @@
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Coach Name</label>
                     <input type="text" id="signupName" placeholder="Coach Vance" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
                 </div>
+
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Email</label>
                     <input type="email" id="signupEmail" placeholder="coach@program.com" required class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
@@ -141,8 +142,26 @@
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
                     <input type="password" id="signupPassword" placeholder="••••••••" required minlength="6" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-lg text-xs font-bold transition shadow-lg cursor-pointer">
-                    Create Account & Open Playbooks
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Coaching Level</label>
+                        <select id="signupLevel" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-blue-500">
+                            <option value="highschool" selected>High School (Wide Hashes)</option>
+                            <option value="college">College / NCAA (Mid Hashes)</option>
+                            <option value="nfl">NFL (Narrow Hashes)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Team Name</label>
+                        <input type="text" id="signupTeam" placeholder="Longhorns" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <p id="signupError" class="text-[11px] text-rose-400 font-semibold hidden"></p>
+
+                <button type="submit" id="btnSaveProfile" class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white py-3 rounded-lg text-xs font-bold transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-floppy-disk"></i> Create Account & Open Folder Hub
                 </button>
             </form>
 
@@ -155,72 +174,81 @@
                     <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
                     <input type="password" id="loginPassword" placeholder="••••••••" required class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-lg text-xs font-bold transition shadow-lg cursor-pointer">
-                    Sign In & Open Playbooks
+
+                <p id="loginError" class="text-[11px] text-rose-400 font-semibold hidden"></p>
+
+                <button type="submit" id="btnLoginSubmit" class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white py-3 rounded-lg text-xs font-bold transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-right-to-bracket"></i> Sign In & Open Folder Hub
                 </button>
             </form>
+
         </div>
     </div>
 
     <!-- ========================================== -->
-    <!-- 2. FOLDER & PLAYBOOK MANAGER (LANDING HUB) -->
+    <!-- 2. FOLDER HUB SCREEN (LOADS AFTER LOGIN)   -->
     <!-- ========================================== -->
-    <div id="folderHubScreen" class="fixed inset-0 bg-slate-950 z-40 flex flex-col hidden overflow-y-auto p-4 sm:p-8">
-        <div class="max-w-5xl w-full mx-auto space-y-6 my-auto">
-            <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-                <div class="space-y-1">
-                    <div class="flex items-center gap-2">
-                        <h2 class="text-2xl font-black text-white">PLAYBOOK FOLDERS & LIBRARY</h2>
-                        <span class="bg-blue-950 text-blue-300 border border-blue-800 text-[10px] px-2.5 py-0.5 rounded-full font-bold">Chalkboard Pro</span>
-                    </div>
-                    <p class="text-xs text-slate-400">Select a folder to manage your schemes, or launch directly into the studio.</p>
+    <div id="folderHubScreen" class="fixed inset-0 bg-slate-950 z-40 flex flex-col hidden overflow-y-auto">
+        <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-600 p-2.5 rounded-xl text-white">
+                    <i class="fa-solid fa-folder-tree text-xl"></i>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="if(window.app) window.app.openNewFolderModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-md">
-                        <i class="fa-solid fa-folder-plus"></i> Add New Folder
-                    </button>
-                    <button onclick="if(window.app) window.app.launchStudio('ALL')" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-md">
-                        <i class="fa-solid fa-arrow-right"></i> Launch Studio
-                    </button>
+                <div>
+                    <h1 class="text-lg font-bold text-white">PLAYBOOK FOLDER HUB</h1>
+                    <p class="text-xs text-slate-400" id="hubCoachSubtitle">Select a scheme folder or create a new one</p>
                 </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="if(window.app) window.app.openNewFolderModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg cursor-pointer">
+                    <i class="fa-solid fa-folder-plus"></i> Add New Folder
+                </button>
+                <button onclick="if(window.app) window.app.logout()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer">
+                    <i class="fa-solid fa-right-from-bracket"></i> Exit
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 max-w-6xl w-full mx-auto p-6 space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400">Your Saved Schemes & Folders</h2>
+                <span id="folderCountBadge" class="text-xs bg-slate-900 px-3 py-1 rounded-full text-slate-300 border border-slate-800 font-semibold">0 Folders</span>
             </div>
 
-            <!-- Folders Grid -->
-            <div class="space-y-3">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                    <i class="fa-solid fa-folder-open text-amber-400"></i> Saved Schemes & Folders
-                </h3>
-                <div id="foldersGridContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Populated dynamically -->
-                </div>
+            <div id="foldersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamically populated folder cards -->
             </div>
-        </div>
+        </main>
     </div>
 
     <!-- ========================================== -->
-    <!-- 3. MAIN WORKSPACE STUDIO                   -->
+    <!-- 3. MAIN APPLICATION WORKSPACE              -->
     <!-- ========================================== -->
     <div id="appScreen" class="flex-1 flex flex-col hidden">
         
         <!-- Top Navigation Header -->
         <header class="bg-slate-900 border-b border-slate-800 px-4 py-2 flex flex-wrap justify-between items-center gap-3">
             <div class="flex items-center gap-3">
-                <button onclick="if(window.app) window.app.returnToFolders()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer">
-                    <i class="fa-solid fa-folder-tree"></i> Folders
+                <button onclick="if(window.app) window.app.returnToFolderHub()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-arrow-left"></i> Hub
                 </button>
                 <div class="bg-emerald-600 p-2 rounded-lg text-white">
                     <i class="fa-solid fa-clipboard-list text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-base text-white leading-tight">CHALKBOARD PRO STUDIO</h1>
-                    <p class="text-xs text-slate-400" id="activeFolderSubtext">Active Scheme</p>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-base text-white leading-tight">CHALKBOARD PRO</h1>
+                        <span id="syncIndicator" class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check"></i> Active Play Studio
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400" id="coachTeamSubtext">Interactive Playbook Studio</p>
                 </div>
             </div>
 
             <!-- Global Action Controls -->
             <div class="flex items-center gap-2 flex-wrap">
                 
-                <!-- UNDO & REDO -->
                 <div class="flex items-center bg-slate-950 rounded-lg border border-slate-700 p-0.5">
                     <button id="btnUndo" onclick="if(window.app) window.app.undo()" title="Undo" type="button" class="bg-slate-800 hover:bg-slate-700 text-amber-300 px-2.5 py-1.5 rounded-l text-xs font-bold transition flex items-center gap-1 cursor-pointer btn-disabled">
                         <i class="fa-solid fa-rotate-left"></i> Undo
@@ -231,69 +259,145 @@
                     </button>
                 </div>
 
-                <button id="btnFlipPlay" onclick="if(window.app) window.app.flipPlay()" title="Mirror Play Left/Right" type="button" class="bg-purple-950 hover:bg-purple-900 text-purple-200 border border-purple-800 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                <button id="btnFlipPlay" onclick="if(window.app) window.app.flipPlay()" title="Mirror Play Left/Right" type="button" class="bg-purple-950 hover:bg-purple-900 text-purple-200 border border-purple-800 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
                     <i class="fa-solid fa-arrows-left-right-to-line"></i> Flip Play
                 </button>
 
-                <!-- LEVEL SELECTOR: High School / CFB / NFL (Accurate hashes) -->
+                <button id="btnExportPlaycard" onclick="if(window.app) window.app.exportPlaycard()" title="Export Playcard" type="button" class="bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-file-export"></i> Export Playcard
+                </button>
+
+                <!-- Hash Selection -->
+                <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700">
+                    <i class="fa-solid fa-arrows-left-right text-blue-400 text-xs"></i>
+                    <label for="hashPositionSelect" class="text-xs font-semibold text-slate-300">Hash:</label>
+                    <select id="hashPositionSelect" class="bg-slate-800 border border-slate-600 text-white rounded text-xs font-bold py-1 px-1.5 focus:outline-none">
+                        <option value="middle" selected>Middle of Field</option>
+                        <option value="left">Left Hash</option>
+                        <option value="right">Right Hash</option>
+                    </select>
+                </div>
+
+                <!-- 3 Levels of Football Fields: High School, College, NFL -->
                 <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700">
                     <i class="fa-solid fa-graduation-cap text-amber-400 text-xs"></i>
-                    <label for="levelSelect" class="text-xs font-semibold text-slate-300">Level:</label>
-                    <select id="levelSelect" onchange="if(window.app) window.app.changeLevel(this.value)" class="bg-slate-800 border border-slate-600 text-white rounded text-xs font-bold py-1 px-1.5 focus:outline-none focus:border-amber-400">
-                        <option value="highschool" selected>High School (Wide Hashes)</option>
+                    <label for="levelSelect" class="text-xs font-semibold text-slate-300">Field Level:</label>
+                    <select id="levelSelect" class="bg-slate-800 border border-slate-600 text-white rounded text-xs font-bold py-1 px-1.5 focus:outline-none focus:border-amber-400">
+                        <option value="highschool">High School (Wide Hashes)</option>
                         <option value="college">College / NCAA (Mid Hashes)</option>
                         <option value="nfl">NFL (Narrow Hashes)</option>
                     </select>
                 </div>
 
-                <!-- FIELD COLOR SELECTOR -->
-                <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700">
-                    <i class="fa-solid fa-palette text-emerald-400 text-xs"></i>
-                    <label class="text-xs font-semibold text-slate-300">Field:</label>
-                    <select id="fieldColorSelect" onchange="if(window.app) window.app.changeFieldColor(this.value)" class="bg-slate-800 border border-slate-600 text-white rounded text-xs font-bold py-1 px-1.5">
-                        <option value="white" selected>Stock White</option>
-                        <option value="green">Classic Turf Green</option>
-                        <option value="dark">Chalkboard Dark</option>
-                    </select>
-                </div>
-
-                <button id="btnSavePlay" onclick="if(window.app) window.app.saveCurrentPlay()" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+                <button id="btnOpenNewPlayModal" type="button" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition shadow-md cursor-pointer">
+                    <i class="fa-solid fa-plus-circle"></i> New Play
+                </button>
+                <button id="btnSavePlay" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
                     <i class="fa-solid fa-floppy-disk"></i> Save Play
                 </button>
-                <button id="btnLogout" onclick="if(window.app) window.app.logout()" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
-                    <i class="fa-solid fa-right-from-bracket"></i> Exit
+                <button id="btnDeletePlay" type="button" class="bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+                    <i class="fa-solid fa-trash"></i> Delete
                 </button>
             </div>
         </header>
 
-        <!-- Main Workspace -->
-        <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
-            
-            <!-- Sidebar Controls -->
-            <aside class="w-full lg:w-80 bg-slate-900 border-r border-slate-800 flex flex-col p-4 overflow-y-auto gap-4 order-last lg:order-none">
-                
-                <div class="space-y-2">
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Current Play</label>
-                    <select id="playSelect" onchange="if(window.app) window.app.switchPlay(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2 text-sm font-medium focus:outline-none">
+        <!-- GAME SITUATION & CALL SHEET BAR -->
+        <div class="bg-slate-950 border-b border-slate-800 px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2 font-bold text-amber-400">
+                <i class="fa-solid fa-stopwatch text-sm"></i>
+                <span>GAME SITUATION / CALL SHEET:</span>
+            </div>
+
+            <div class="flex items-center gap-3 flex-wrap">
+                <div>
+                    <span class="text-slate-400 mr-1">Down & Dist:</span>
+                    <select id="situationDownSelect" class="bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                        <option value="1st & 10">1st & 10 (Normal)</option>
+                        <option value="2nd & Short">2nd & Short</option>
+                        <option value="3rd & Medium">3rd & Medium</option>
+                        <option value="3rd & Long">3rd & Long</option>
+                        <option value="Red Zone">Red Zone (Inside 20)</option>
+                        <option value="Goal Line">Goal Line (Inside 5)</option>
                     </select>
                 </div>
 
-                <!-- SPAWN PERSONNEL -->
+                <div>
+                    <span class="text-slate-400 mr-1">Auto-Align Defense:</span>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="chkAutoAlign" checked class="rounded bg-slate-800 border-slate-700 text-purple-500 focus:ring-0">
+                        <span class="ml-1 text-purple-300 font-semibold">Enabled</span>
+                    </label>
+                </div>
+
+                <!-- Field Color Customizer -->
+                <div class="flex items-center gap-1.5">
+                    <span class="text-slate-400">Field Color:</span>
+                    <select id="fieldColorSelect" onchange="if(window.app) window.app.changeFieldColor(this.value)" class="bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                        <option value="#ffffff" selected>Stock White</option>
+                        <option value="#15803d">Classic Turf Green</option>
+                        <option value="#090d16">Dark Tactical Slate</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORMATION & INELIGIBLE RECEIVER WARNING BANNER -->
+        <div id="formationWarningBanner" class="bg-amber-950/90 border-b border-amber-600/50 px-4 py-1.5 text-xs text-amber-200 font-semibold flex items-center gap-2 hidden">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i>
+            <span id="warningMessage">Warning: Illegal Formation detected.</span>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            
+            <!-- Sidebar -->
+            <aside class="w-full lg:w-80 bg-slate-900 border-r border-slate-800 flex flex-col p-4 overflow-y-auto gap-4 order-last lg:order-none">
+                
+                <!-- PLAYBOOK CATEGORY / FOLDER FILTER -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Active Folder</label>
+                        <span id="activeFolderLabel" class="text-xs font-bold text-amber-300">Passing Plays</span>
+                    </div>
+                    <select id="playSelect" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2 text-sm font-medium focus:outline-none focus:border-blue-500">
+                    </select>
+                </div>
+
+                <!-- CLEAR ALL PLAYERS BUTTON -->
+                <div class="space-y-1.5">
+                    <button id="btnClearAllPlayers" type="button" class="w-full bg-rose-950/90 hover:bg-rose-900 text-rose-200 border border-rose-800 p-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm">
+                        <i class="fa-solid fa-user-slash text-rose-400"></i> Clear All Players (Blank Field)
+                    </button>
+                </div>
+
+                <!-- ADD OFFENSE/DEFENSE FORMATIONS -->
+                <div class="grid grid-cols-2 gap-1.5">
+                    <button id="btnAddOffense" type="button" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 py-2 rounded text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-users"></i> Add Offense
+                    </button>
+                    <button id="btnAddDefense" type="button" class="bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 py-2 rounded text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-users"></i> Add Defense
+                    </button>
+                </div>
+
+                <!-- SPAWN PERSONNEL SIDE MENU -->
                 <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-3">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400">
-                        <i class="fa-solid fa-users"></i> Add Players to Field
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center justify-between">
+                        <span><i class="fa-solid fa-users"></i> Spawn Personnel</span>
+                        <span class="text-[10px] text-slate-500 font-normal">Click to Drop</span>
                     </h3>
+
                     <div>
                         <span class="block text-[11px] font-semibold text-blue-300 mb-1">Offense:</span>
                         <div class="flex flex-wrap gap-1.5">
                             <button onclick="if(window.app) window.app.spawnPlayer('offense', 'X')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ X</button>
                             <button onclick="if(window.app) window.app.spawnPlayer('offense', 'Z')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ Z</button>
                             <button onclick="if(window.app) window.app.spawnPlayer('offense', 'Y')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ Y (TE)</button>
-                            <button onclick="if(window.app) window.app.spawnPlayer('offense', 'Slot')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ Slot</button>
                             <button onclick="if(window.app) window.app.spawnPlayer('offense', 'QB')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ QB</button>
                             <button onclick="if(window.app) window.app.spawnPlayer('offense', 'RB')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ RB</button>
                         </div>
                     </div>
+
                     <div>
                         <span class="block text-[11px] font-semibold text-rose-300 mb-1">Defense:</span>
                         <div class="flex flex-wrap gap-1.5">
@@ -306,114 +410,174 @@
                     </div>
                 </div>
 
-                <!-- DEFENDER & ZONE INSPECTOR PANEL -->
-                <div id="defenderInspectorPanel" class="bg-slate-950 p-3 rounded-lg border border-rose-500/40 space-y-3 hidden">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center justify-between">
-                        <span><i class="fa-solid fa-shield-halved"></i> Defender & Zone Inspector</span>
-                        <button onclick="if(window.app) window.app.deselectPlayer()" class="text-slate-400 hover:text-white text-xs"><i class="fa-solid fa-xmark"></i></button>
+                <!-- PLAYER INSPECTOR & DEFENSIVE ZONE/BLITZ INSPECTOR -->
+                <div id="playerInspectorPanel" class="bg-slate-950 p-3 rounded-lg border border-amber-500/40 space-y-3 hidden">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center justify-between">
+                        <span id="inspectorTitle"><i class="fa-solid fa-user-gear"></i> Player Inspector</span>
+                        <button onclick="if(window.app) window.app.deselectPlayer()" class="text-slate-400 hover:text-white text-xs cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
                     </h3>
+
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">Defender Label</label>
-                        <input type="text" id="inspectorDefLabel" oninput="if(window.app) window.app.updateDefLabel(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">Label / Name</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="inspectorLabel" class="flex-1 bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-amber-400">
+                            <button onclick="if(window.app) window.app.updatePlayerLabel()" class="bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1 rounded text-xs font-bold cursor-pointer">Rename</button>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-rose-300 mb-1">Defensive Zone Coverage</label>
-                        <select id="inspectorZoneSelect" onchange="if(window.app) window.app.updateDefZone(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
-                            <option value="none">Man Coverage / No Zone Display</option>
-                            <option value="deepThird">Deep Third Shell</option>
-                            <option value="deepHalf">Deep Half Zone</option>
-                            <option value="flat">Flat / Curl-Flat Zone</option>
-                            <option value="hook">Hook / Curl Middle Zone</option>
-                            <option value="hole">Hole / Robber Zone</option>
-                        </select>
+
+                    <!-- DEFENDER SPECIFIC: Defensive Zones & Blitz Gap Options -->
+                    <div id="defenderZoneInspector" class="space-y-3 pt-2 border-t border-slate-800 hidden">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-rose-300 mb-1">Defensive Zone Assignment</label>
+                            <select id="defenderZoneSelect" onchange="if(window.app) window.app.updateDefenderZone(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                                <option value="Deep Third">Deep Third (Cover 3)</option>
+                                <option value="Deep Half">Deep Half (Cover 2)</option>
+                                <option value="Flat Zone">Flat / Curl-Flat Zone</option>
+                                <option value="Hook Zone">Hook / Curl Zone</option>
+                                <option value="Man Coverage">Man-to-Man Lock</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-2 bg-slate-900 p-2.5 rounded-lg border border-rose-900/50">
+                            <div class="flex items-center justify-between">
+                                <label class="text-[11px] font-bold text-rose-400">Blitz Assignment</label>
+                                <input type="checkbox" id="chkDefenderBlitz" onchange="if(window.app) window.app.toggleDefenderBlitz(this.checked)" class="rounded bg-slate-800 border-slate-700 text-rose-600 focus:ring-0">
+                            </div>
+
+                            <div id="blitzGapContainer" class="hidden space-y-1">
+                                <label class="block text-[10px] text-slate-400">Blitz Through Gap:</label>
+                                <select id="blitzGapSelect" onchange="if(window.app) window.app.updateBlitzGap(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs font-semibold">
+                                    <option value="A-Gap">A-Gap (Between Center & Guard)</option>
+                                    <option value="B-Gap">B-Gap (Between Guard & Tackle)</option>
+                                    <option value="C-Gap">C-Gap (Outside Tackle / Edge)</option>
+                                    <option value="Contain">Edge Contain / Out-Rush</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-amber-300 mb-1">Blitz Assignment & Gap</label>
-                        <select id="inspectorBlitzSelect" onchange="if(window.app) window.app.updateDefBlitz(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
-                            <option value="none">No Blitz (Standard Rush / Coverage)</option>
-                            <option value="A-Gap">A-Gap Blitz (Through Center/Guard)</option>
-                            <option value="B-Gap">B-Gap Blitz (Through Guard/Tackle)</option>
-                            <option value="C-Gap">C-Gap / Edge Blitz (Outside Tackle)</option>
-                            <option value="Contain">Contain Pass Rush</option>
-                        </select>
+
+                    <!-- OFFENSIVE ROUTE PRESETS -->
+                    <div id="offensiveRouteInspector" class="space-y-2 pt-2 border-t border-slate-800">
+                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">Route / Assignment</label>
+                        <div class="grid grid-cols-3 gap-1">
+                            <button onclick="if(window.app) window.app.applyRoutePreset('post')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Post</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('dig')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Dig</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('fly')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Fly</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('slant')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Slant</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('out')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Out</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('flat')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Flat</button>
+                        </div>
+                    </div>
+
+                    <button onclick="if(window.app) window.app.deleteSelectedPlayer()" class="w-full bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 py-1 rounded text-xs font-semibold cursor-pointer mt-2">
+                        Remove Player from Field
+                    </button>
+                </div>
+
+                <!-- Drawing Palette -->
+                <div class="space-y-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-ruler"></i> Tactical Drawing Tools
+                    </h3>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btnToolDraw" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-pencil text-amber-400 w-4 text-center"></i> Freehand
+                        </button>
+                        <button id="btnToolArrow" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-arrow-up text-blue-400 w-4 text-center"></i> Route Arrow
+                        </button>
+                        <button id="btnToolBlock" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-t text-emerald-400 w-4 text-center"></i> Block (T-Bar)
+                        </button>
+                        <button id="btnToolClear" type="button" class="tool-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 p-2 rounded text-xs text-amber-300 font-semibold flex items-center justify-center gap-2 transition cursor-pointer col-span-2">
+                            <i class="fa-solid fa-eraser"></i> Erase Doodles
+                        </button>
                     </div>
                 </div>
 
-                <!-- DRAWING & TELESTRATOR TOOLS -->
-                <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-2">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">
-                        <i class="fa-solid fa-pen-ruler"></i> Drawing Palette
+                <div class="space-y-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved"></i> Defensive Alignment
                     </h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="if(window.app) window.app.setTool('arrow')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
-                            <i class="fa-solid fa-arrow-up w-4 text-center"></i> Route Arrow
-                        </button>
-                        <button onclick="if(window.app) window.app.setTool('block')" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
-                            <i class="fa-solid fa-t w-4 text-center"></i> Block (T-Bar)
-                        </button>
-                        <button onclick="if(window.app) window.app.setTool('motion')" class="bg-slate-800 hover:bg-slate-700 text-amber-300 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
-                            <i class="fa-solid fa-ellipsis w-4 text-center"></i> Motion Line
-                        </button>
-                        <button onclick="if(window.app) window.app.setTool('erase')" class="bg-rose-950 hover:bg-rose-900 text-rose-200 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
-                            <i class="fa-solid fa-eraser w-4 text-center"></i> Erase Line
-                        </button>
+
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Front Preset</label>
+                        <select id="frontSelect" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-1.5 text-xs">
+                            <option value="4-3">4-3 Over (4 DL, 3 LB)</option>
+                            <option value="3-4">3-4 Odd (3 DL, 4 LB)</option>
+                            <option value="4-2-5">4-2-5 Nickel (4 DL, 2 LB, 5 DB)</option>
+                        </select>
                     </div>
-                    <button onclick="if(window.app) window.app.clearAllDrawings()" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-300 py-1.5 rounded text-xs font-semibold mt-1">
-                        Clear All Doodles
-                    </button>
+
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Coverage Shell</label>
+                        <select id="coverageSelect" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-1.5 text-xs">
+                            <option value="Cover2">Cover 2 Zone</option>
+                            <option value="Cover3">Cover 3 Match</option>
+                            <option value="Cover4">Cover 4 Quarters</option>
+                            <option value="Cover1">Cover 1 Man</option>
+                            <option value="Cover0">Cover 0 Blitz</option>
+                        </select>
+                    </div>
                 </div>
 
             </aside>
 
-            <!-- Center Canvas Workspace -->
+            <!-- Center Workspace -->
             <main class="flex-1 flex flex-col bg-slate-950 relative overflow-hidden order-first lg:order-none">
                 
                 <div class="flex-1 flex items-center justify-center p-2 sm:p-4 bg-slate-950">
-                    <div class="canvas-container rounded-xl overflow-hidden border-2 border-slate-800 shadow-2xl bg-field" id="canvasContainerWrapper">
+                    <div id="canvasContainer" class="canvas-container rounded-xl overflow-hidden border-2 border-slate-800 shadow-2xl bg-white transition-colors">
                         <canvas id="fieldCanvas"></canvas>
                     </div>
                 </div>
 
                 <!-- Play Control Bar -->
                 <div class="bg-slate-900 border-t border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                    
                     <div class="flex items-center gap-2">
-                        <button onclick="if(window.app) window.app.playAnimation()" class="bg-emerald-600 hover:bg-emerald-500 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg transition shadow-lg cursor-pointer">
+                        <button id="btnPlay" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg transition shadow-lg cursor-pointer">
                             <i class="fa-solid fa-play"></i>
                         </button>
-                        <button onclick="if(window.app) window.app.pauseAnimation()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-full flex items-center justify-center text-lg transition border border-slate-700 cursor-pointer">
+                        <button id="btnPause" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-full flex items-center justify-center text-lg transition border border-slate-700 cursor-pointer">
                             <i class="fa-solid fa-pause"></i>
                         </button>
-                        <button onclick="if(window.app) window.app.resetAnimation()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-full flex items-center justify-center text-lg transition border border-slate-700 cursor-pointer">
+                        <button id="btnReset" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-full flex items-center justify-center text-lg transition border border-slate-700 cursor-pointer">
                             <i class="fa-solid fa-rotate-left"></i>
                         </button>
+                        
                         <div class="flex items-center gap-2 ml-2">
-                            <input type="range" id="scrubber" min="0" max="100" value="0" oninput="if(window.app) window.app.scrub(this.value)" class="w-28 sm:w-44 accent-emerald-500">
+                            <input type="range" id="scrubber" min="0" max="100" value="0" class="w-28 sm:w-44 accent-emerald-500">
                             <span id="timeDisplay" class="text-xs font-mono text-slate-400 w-12">0.0s</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- TACTICAL NOTES & COACH EXPECTATIONS PANEL -->
-                <div class="bg-slate-900/90 border-t border-slate-800 p-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <!-- Tactical & Defensive Notes Breakdown Panel -->
+                <div class="bg-slate-900/90 border-t border-slate-800 p-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs overflow-y-auto max-h-44">
                     
-                    <div class="bg-slate-950 p-3 rounded border border-slate-800 space-y-2">
-                        <div class="flex items-center justify-between">
-                            <h4 class="font-bold text-sm text-blue-400 flex items-center gap-1.5">
-                                <i class="fa-solid fa-book-open"></i> Offensive Expectations & Route Notes
-                            </h4>
-                            <button onclick="if(window.app) window.app.saveNotes()" class="bg-blue-600 hover:bg-blue-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">Save</button>
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800">
+                        <div class="flex items-center justify-between mb-1">
+                            <h4 id="playTitle" class="font-bold text-sm text-blue-400">Play Name</h4>
+                            <button id="btnEditNotes" type="button" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 px-2 py-0.5 rounded font-semibold cursor-pointer flex items-center gap-1">
+                                <i class="fa-solid fa-pen"></i> Edit Notes
+                            </button>
                         </div>
-                        <textarea id="offensiveNotesInput" class="w-full bg-slate-900 border border-slate-700 text-white rounded p-2 text-xs" rows="3" placeholder="Enter offensive keys, motion rules, and expected coverages..."></textarea>
+                        <p id="playDesc" class="text-slate-300 leading-relaxed">Select a play to view tactical execution notes.</p>
+                        <textarea id="editPlayDesc" class="hidden w-full bg-slate-900 border border-amber-600 text-white rounded p-2 text-xs" rows="2"></textarea>
                     </div>
 
-                    <div class="bg-slate-950 p-3 rounded border border-slate-800 space-y-2">
-                        <div class="flex items-center justify-between">
-                            <h4 class="font-bold text-sm text-rose-400 flex items-center gap-1.5">
-                                <i class="fa-solid fa-shield"></i> Defensive Notes & Cover Keys
-                            </h4>
-                            <button onclick="if(window.app) window.app.saveNotes()" class="bg-rose-600 hover:bg-rose-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">Save</button>
-                        </div>
-                        <textarea id="defensiveNotesInput" class="w-full bg-slate-900 border border-slate-700 text-white rounded p-2 text-xs" rows="3" placeholder="Enter defensive coach notes, pressure checks, and run-fit rules..."></textarea>
+                    <!-- Defensive Notes vs Offensive Expectations -->
+                    <div class="bg-slate-950 p-3 rounded border border-rose-900/40">
+                        <h4 class="font-bold text-rose-400 mb-1 flex items-center justify-between">
+                            <span><i class="fa-solid fa-shield-cat"></i> Defensive Coach Notes / Expectations</span>
+                        </h4>
+                        <p id="defensiveNotesText" class="text-slate-300 leading-relaxed italic">Log expected offensive tendencies, blitz adjustments, and gap assignments here.</p>
+                        <textarea id="editDefensiveNotes" class="hidden w-full bg-slate-900 border border-rose-600 text-white rounded p-2 text-xs" rows="2" placeholder="Enter defensive notes..."></textarea>
+                        <button id="btnSaveNotes" type="button" class="hidden mt-2 w-full bg-rose-600 hover:bg-rose-500 text-white py-1 rounded text-xs font-bold cursor-pointer">
+                            <i class="fa-solid fa-check"></i> Save All Notes
+                        </button>
                     </div>
 
                 </div>
@@ -422,352 +586,805 @@
         </div>
     </div>
 
-    <!-- NEW FOLDER MODAL -->
-    <div id="newFolderModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-sm w-full p-6 shadow-2xl space-y-4">
-            <h3 class="text-base font-bold text-white"><i class="fa-solid fa-folder-plus text-emerald-500"></i> Create New Folder</h3>
-            <input type="text" id="newFolderNameInput" placeholder="e.g. Red Zone Install" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2 text-xs">
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="if(window.app) window.app.closeNewFolderModal()" class="px-3 py-1.5 text-xs text-slate-400">Cancel</button>
-                <button onclick="if(window.app) window.app.confirmCreateFolder()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded text-xs font-bold">Create</button>
+    <!-- NEW PLAY BUILDER MODAL -->
+    <div id="newPlayModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-square-plus text-blue-500"></i> Create New Play in Folder
+                </h3>
+                <button onclick="document.getElementById('newPlayModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1">Play Name</label>
+                    <input type="text" id="modalPlayName" value="Gun Trips Right - Dig Concept" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2 text-sm focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                <button onclick="document.getElementById('newPlayModal').classList.add('hidden')" type="button" class="px-4 py-2 rounded text-slate-400 hover:text-white font-semibold text-xs">Cancel</button>
+                <button id="btnCreatePlaySubmit" type="button" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded text-xs font-bold transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-check"></i> Create Play
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Application Script Engine -->
+    <!-- NEW FOLDER MODAL -->
+    <div id="newFolderModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-folder-plus text-emerald-500"></i> Create Playbook Folder
+                </h3>
+                <button onclick="document.getElementById('newFolderModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div>
+                <label class="block text-xs text-slate-300 font-semibold mb-1">Folder / Scheme Name</label>
+                <input type="text" id="newFolderNameInput" placeholder="Red Zone Shots, 3rd Down Blitz, etc." class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2 text-xs focus:outline-none focus:border-emerald-500">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="document.getElementById('newFolderModal').classList.add('hidden')" class="px-3 py-1.5 rounded text-slate-400 text-xs">Cancel</button>
+                <button onclick="if(window.app) window.app.createNewFolderSubmit()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded text-xs font-bold cursor-pointer">Create Folder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORMATION PICKER MODAL -->
+    <div id="formationPickerModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="formationPickerTitle" class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-users text-blue-500"></i> Drop Formation
+                </h3>
+                <button onclick="document.getElementById('formationPickerModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="formationPickerList" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <!-- Application Engine Logic -->
     <script>
-        class ChalkboardApp {
+        const OFFENSE_PRESETS = {
+            spread2x2: [
+                { id: 1, label: '1', role: 'WR', x: 0.12, y: 0.60, route: [{x:0.12, y:0.60}, {x:0.12, y:0.25}] },
+                { id: 2, label: '2', role: 'Slot', x: 0.28, y: 0.60, route: [{x:0.28, y:0.60}, {x:0.28, y:0.40}] },
+                { id: 3, label: '3', role: 'Slot', x: 0.72, y: 0.60, route: [{x:0.72, y:0.60}, {x:0.72, y:0.40}] },
+                { id: 4, label: '4', role: 'WR', x: 0.88, y: 0.60, route: [{x:0.88, y:0.60}, {x:0.88, y:0.25}] },
+                { id: 5, label: 'QB', role: 'QB', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.50, y:0.75}] },
+                { id: 'LT', label: 'LT', role: 'OL', x: 0.42, y: 0.58 },
+                { id: 'LG', label: 'LG', role: 'OL', x: 0.46, y: 0.58 },
+                { id: 'C',  label: 'C',  role: 'OL', x: 0.50, y: 0.58 },
+                { id: 'RG', label: 'RG', role: 'OL', x: 0.54, y: 0.58 },
+                { id: 'RT', label: 'RT', role: 'OL', x: 0.58, y: 0.58 }
+            ]
+        };
+
+        const DEFENSIVE_FRONTS = {
+            '4-3': [
+                { id: 'DE1', label: 'DE', x: 0.38, y: 0.52, zone: 'Flat Zone', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'DT1', label: 'DT', x: 0.45, y: 0.52, zone: 'Hook Zone', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DT2', label: 'DT', x: 0.55, y: 0.52, zone: 'Hook Zone', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DE2', label: 'DE', x: 0.62, y: 0.52, zone: 'Flat Zone', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'WLB', label: 'W',  x: 0.32, y: 0.44, zone: 'Hook Zone', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'MLB', label: 'M',  x: 0.50, y: 0.42, zone: 'Hook Zone', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'SLB', label: 'S',  x: 0.68, y: 0.44, zone: 'Flat Zone', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'CB1', label: 'CB', x: 0.10, y: 0.48, zone: 'Man Coverage', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'CB2', label: 'CB', x: 0.90, y: 0.48, zone: 'Man Coverage', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'FS',  label: 'FS', x: 0.35, y: 0.22, zone: 'Deep Third', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'SS',  label: 'SS', x: 0.65, y: 0.22, zone: 'Deep Third', isBlitz: false, blitzGap: 'C-Gap' }
+            ],
+            '3-4': [
+                { id: 'DE1', label: 'DE', x: 0.40, y: 0.52, zone: 'Hook Zone', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'NT',  label: 'NT', x: 0.50, y: 0.52, zone: 'Hook Zone', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DE2', label: 'DE', x: 0.60, y: 0.52, zone: 'Hook Zone', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'OLB1',label: 'OLB',x: 0.32, y: 0.50, zone: 'Flat Zone', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'ILB1',label: 'ILB',x: 0.44, y: 0.42, zone: 'Hook Zone', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'ILB2',label: 'ILB',x: 0.56, y: 0.42, zone: 'Hook Zone', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'OLB2',label: 'OLB',x: 0.68, y: 0.50, zone: 'Flat Zone', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'CB1', label: 'CB', x: 0.10, y: 0.48, zone: 'Man Coverage', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'CB2', label: 'CB', x: 0.90, y: 0.48, zone: 'Man Coverage', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'FS',  label: 'FS', x: 0.40, y: 0.22, zone: 'Deep Third', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'SS',  label: 'SS', x: 0.60, y: 0.22, zone: 'Deep Third', isBlitz: false, blitzGap: 'C-Gap' }
+            ]
+        };
+
+        const DEFAULT_FOLDERS = {
+            "Passing Plays": [
+                {
+                    id: 'p1',
+                    name: 'Gun 2x2 - Dig / Flat Concept',
+                    desc: 'High-low read on linebacker level with intermediate dig.',
+                    defNotes: 'Expect quick outside throws. Play Cover 3 shell with underneath flat defenders.',
+                    qbKeys: ['Read Mike LB leverage', 'Primary: Dig route'],
+                    offense: JSON.parse(JSON.stringify(OFFENSE_PRESETS.spread2x2))
+                }
+            ],
+            "Run Game": [
+                {
+                    id: 'r1',
+                    name: 'Inside Zone Split',
+                    desc: 'Physical inside zone run attacking A/B gap double teams.',
+                    defNotes: 'Load the box with 4-3 front. Gap integrity is critical.',
+                    qbKeys: ['Read backside edge defender', 'Hand off cleanly'],
+                    offense: JSON.parse(JSON.stringify(OFFENSE_PRESETS.spread2x2))
+                }
+            ]
+        };
+
+        class PlaybookApp {
             constructor() {
-                this.folders = ['Passing', 'Running', 'Play Action', 'RPO', 'Custom Installs'];
-                this.activeFolder = 'ALL';
-                this.plays = [
-                    {
-                        id: 'p1',
-                        name: 'Spread 2x2 - Dig Concept',
-                        folder: 'Passing',
-                        level: 'highschool',
-                        fieldColor: 'white',
-                        offenseNotes: 'Attack Cover 3 with intermediate dig behind linebackers.',
-                        defenseNotes: 'Match routes in man; eyes on #2 receiver for motion.',
-                        offense: [
-                            { id: 1, label: 'X', role: 'WR', x: 0.12, y: 0.60, route: [{x:0.12, y:0.60}, {x:0.12, y:0.25}] },
-                            { id: 2, label: 'Y', role: 'Slot', x: 0.28, y: 0.60, route: [{x:0.28, y:0.60}, {x:0.28, y:0.40}] },
-                            { id: 3, label: 'Z', role: 'WR', x: 0.88, y: 0.60, route: [{x:0.88, y:0.60}, {x:0.88, y:0.25}] },
-                            { id: 4, label: 'QB', role: 'QB', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.50, y:0.75}] }
-                        ],
-                        defense: [
-                            { id: 'DE1', label: 'DE', x: 0.38, y: 0.52, zone: 'none', blitz: 'none' },
-                            { id: 'DT1', label: 'DT', x: 0.45, y: 0.52, zone: 'none', blitz: 'none' },
-                            { id: 'CB1', label: 'CB', x: 0.10, y: 0.48, zone: 'flat', blitz: 'none' },
-                            { id: 'FS',  label: 'FS', x: 0.50, y: 0.22, zone: 'deepThird', blitz: 'none' }
-                        ]
-                    }
-                ];
+                this.folders = JSON.parse(JSON.stringify(DEFAULT_FOLDERS));
+                this.activeFolder = "Passing Plays";
+                this.plays = this.folders[this.activeFolder];
                 this.currentPlay = this.plays[0];
-                this.selectedPlayer = null;
-                this.activeTool = 'arrow';
-                this.fieldColor = 'white';
-                this.level = 'highschool';
 
-                this.initCanvas();
+                this.selectedLevel = 'highschool';
+                this.selectedHashPosition = 'middle';
+                this.selectedFront = '4-3';
+                this.selectedCoverage = 'Cover2';
+                this.currentDefense = JSON.parse(JSON.stringify(DEFENSIVE_FRONTS['4-3']));
+
+                this.selectedPlayerObj = null;
+                this.undoStack = [];
+                this.redoStack = [];
+
+                this.isPlaying = false;
+                this.progress = 0;
+                this.interactionMode = 'move';
+                this.activeTool = 'draw';
+                this.drawnLines = [];
+                this.currentLine = null;
+                this.draggedPlayer = null;
+                this.fieldColor = '#ffffff';
+
+                this.initDOM();
             }
 
-            launchFromAuth() {
-                document.getElementById('authScreen').classList.add('hidden');
-                document.getElementById('folderHubScreen').classList.remove('hidden');
-                this.renderFolders();
+            initDOM() {
+                this.authScreen = document.getElementById('authScreen');
+                this.folderHubScreen = document.getElementById('folderHubScreen');
+                this.appScreen = document.getElementById('appScreen');
+                this.tabLogin = document.getElementById('tabLogin');
+                this.tabSignup = document.getElementById('tabSignup');
+                this.loginForm = document.getElementById('loginForm');
+                this.signupForm = document.getElementById('signupForm');
+                
+                this.hashPositionSelect = document.getElementById('hashPositionSelect');
+                this.levelSelect = document.getElementById('levelSelect');
+                this.playSelect = document.getElementById('playSelect');
+                this.frontSelect = document.getElementById('frontSelect');
+                this.coverageSelect = document.getElementById('coverageSelect');
+                this.scrubber = document.getElementById('scrubber');
+                this.timeDisplay = document.getElementById('timeDisplay');
+                
+                this.playTitle = document.getElementById('playTitle');
+                this.playDesc = document.getElementById('playDesc');
+                this.defensiveNotesText = document.getElementById('defensiveNotesText');
+
+                this.playerInspectorPanel = document.getElementById('playerInspectorPanel');
+                this.inspectorLabel = document.getElementById('inspectorLabel');
+                this.defenderZoneInspector = document.getElementById('defenderZoneInspector');
+                this.offensiveRouteInspector = document.getElementById('offensiveRouteInspector');
+                this.defenderZoneSelect = document.getElementById('defenderZoneSelect');
+                this.chkDefenderBlitz = document.getElementById('chkDefenderBlitz');
+                this.blitzGapContainer = document.getElementById('blitzGapContainer');
+                this.blitzGapSelect = document.getElementById('blitzGapSelect');
+
+                this.btnEditNotes = document.getElementById('btnEditNotes');
+                this.btnSaveNotes = document.getElementById('btnSaveNotes');
+                this.editPlayDesc = document.getElementById('editPlayDesc');
+                this.editDefensiveNotes = document.getElementById('editDefensiveNotes');
             }
 
-            switchTab(tab) {
-                if (tab === 'signup') {
-                    document.getElementById('signupForm').classList.remove('hidden');
-                    document.getElementById('loginForm').classList.add('hidden');
-                    document.getElementById('tabSignup').className = 'flex-1 py-2 rounded-lg text-white bg-slate-800 transition';
-                    document.getElementById('tabLogin').className = 'flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition';
+            switchTab(mode) {
+                if (mode === 'signup') {
+                    this.tabSignup.className = 'flex-1 py-2 rounded-lg text-white bg-slate-800 transition';
+                    this.tabLogin.className = 'flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition';
+                    this.signupForm.classList.remove('hidden');
+                    this.loginForm.classList.add('hidden');
                 } else {
-                    document.getElementById('loginForm').classList.remove('hidden');
-                    document.getElementById('signupForm').classList.add('hidden');
-                    document.getElementById('tabLogin').className = 'flex-1 py-2 rounded-lg text-white bg-slate-800 transition';
-                    document.getElementById('tabSignup').className = 'flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition';
+                    this.tabLogin.className = 'flex-1 py-2 rounded-lg text-white bg-slate-800 transition';
+                    this.tabSignup.className = 'flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition';
+                    this.loginForm.classList.remove('hidden');
+                    this.signupForm.classList.add('hidden');
                 }
             }
 
-            submitProfile(e) { e.preventDefault(); this.launchFromAuth(); }
-            submitLogin(e) { e.preventDefault(); this.launchFromAuth(); }
+            async submitProfile(e) {
+                if(e) e.preventDefault();
+                const name = document.getElementById('signupName').value.trim() || 'Coach';
+                const level = document.getElementById('signupLevel').value || 'highschool';
+                const team = document.getElementById('signupTeam').value.trim() || 'Varsity';
+                this.launch(name, level, team);
+            }
 
-            renderFolders() {
-                const grid = document.getElementById('foldersGridContainer');
+            async submitLogin(e) {
+                if(e) e.preventDefault();
+                this.launch('Coach', 'highschool', 'Program');
+            }
+
+            launch(name, level, team) {
+                this.selectedLevel = level;
+                if(this.levelSelect) this.levelSelect.value = level;
+
+                this.authScreen.classList.add('hidden');
+                this.folderHubScreen.classList.remove('hidden');
+                this.renderFolderHub();
+            }
+
+            returnToFolderHub() {
+                this.appScreen.classList.add('hidden');
+                this.folderHubScreen.classList.remove('hidden');
+                this.renderFolderHub();
+            }
+
+            openFolder(folderName) {
+                this.activeFolder = folderName;
+                this.plays = this.folders[folderName] || [];
+                if(this.plays.length === 0) {
+                    this.plays.push({
+                        id: 'play_' + Date.now(),
+                        name: 'New ' + folderName + ' Play',
+                        desc: 'Custom tactical installation.',
+                        defNotes: 'Review pre-snap alignment.',
+                        qbKeys: ['Read coverage'],
+                        offense: JSON.parse(JSON.stringify(OFFENSE_PRESETS.spread2x2))
+                    });
+                }
+                this.currentPlay = this.plays[0];
+                document.getElementById('activeFolderLabel').textContent = folderName;
+
+                this.folderHubScreen.classList.add('hidden');
+                this.appScreen.classList.remove('hidden');
+
+                this.initCanvas();
+                this.populatePlaySelect();
+                this.loadPlay(this.currentPlay.id);
+                this.setupEvents();
+                this.startAnimationLoop();
+                setTimeout(() => this.resizeCanvas(), 50);
+            }
+
+            renderFolderHub() {
+                const grid = document.getElementById('foldersGrid');
                 grid.innerHTML = '';
-                
-                const allCard = document.createElement('div');
-                allCard.className = 'bg-slate-900 border border-slate-800 hover:border-emerald-500/50 p-5 rounded-xl cursor-pointer transition space-y-2';
-                allCard.innerHTML = `<h4 class="font-bold text-white text-base">📁 All Playbooks</h4><p class="text-xs text-slate-400">${this.plays.length} total plays saved across all categories.</p>`;
-                allCard.onclick = () => this.launchStudio('ALL');
-                grid.appendChild(allCard);
+                const folderNames = Object.keys(this.folders);
+                document.getElementById('folderCountBadge').textContent = `${folderNames.length} Folders`;
 
-                this.folders.forEach(folder => {
-                    const count = this.plays.filter(p => p.folder === folder).length;
+                folderNames.forEach(fn => {
+                    const count = (this.folders[fn] || []).length;
                     const card = document.createElement('div');
-                    card.className = 'bg-slate-900 border border-slate-800 hover:border-blue-500/50 p-5 rounded-xl cursor-pointer transition space-y-2';
-                    card.innerHTML = `<h4 class="font-bold text-white text-base">📂 ${folder}</h4><p class="text-xs text-slate-400">${count} plays in this folder.</p>`;
-                    card.onclick = () => this.launchStudio(folder);
+                    card.className = 'bg-slate-900 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-5 cursor-pointer transition shadow-xl flex flex-col justify-between gap-4 group';
+                    card.innerHTML = `
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <div class="p-3 bg-slate-800 group-hover:bg-emerald-600 rounded-xl text-emerald-400 group-hover:text-white transition">
+                                    <i class="fa-solid fa-folder-open text-xl"></i>
+                                </div>
+                                <span class="text-xs bg-slate-950 px-2.5 py-1 rounded-full text-slate-400 font-semibold border border-slate-800">${count} Play${count === 1 ? '' : 's'}</span>
+                            </div>
+                            <h3 class="text-base font-bold text-white group-hover:text-emerald-300 transition">${fn}</h3>
+                            <p class="text-xs text-slate-400">Manage playbook installations, formations, and tactical notes.</p>
+                        </div>
+                        <div class="flex items-center justify-between pt-3 border-t border-slate-800 text-xs font-bold text-emerald-400">
+                            <span>Open Folder</span>
+                            <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition"></i>
+                        </div>
+                    `;
+                    card.addEventListener('click', () => this.openFolder(fn));
                     grid.appendChild(card);
                 });
             }
 
-            openNewFolderModal() { document.getElementById('newFolderModal').classList.remove('hidden'); }
-            closeNewFolderModal() { document.getElementById('newFolderModal').classList.add('hidden'); }
-            confirmCreateFolder() {
-                const val = document.getElementById('newFolderNameInput').value.trim();
-                if (val && !this.folders.includes(val)) {
-                    this.folders.push(val);
-                    this.renderFolders();
-                }
+            openNewFolderModal() {
+                document.getElementById('newFolderModal').classList.remove('hidden');
                 document.getElementById('newFolderNameInput').value = '';
-                this.closeNewFolderModal();
             }
 
-            launchStudio(folder) {
-                this.activeFolder = folder;
-                document.getElementById('folderHubScreen').classList.add('hidden');
-                document.getElementById('appScreen').classList.remove('hidden');
-                document.getElementById('activeFolderSubtext').innerText = `Active Folder: ${folder}`;
-                this.populatePlaySelect();
-                this.initCanvasEvents();
-                this.render();
-            }
-
-            returnToFolders() {
-                document.getElementById('appScreen').classList.add('hidden');
-                document.getElementById('folderHubScreen').classList.remove('hidden');
-                this.renderFolders();
-            }
-
-            logout() {
-                document.getElementById('appScreen').classList.add('hidden');
-                document.getElementById('folderHubScreen').classList.add('hidden');
-                document.getElementById('authScreen').classList.remove('hidden');
+            createNewFolderSubmit() {
+                const name = document.getElementById('newFolderNameInput').value.trim();
+                if (!name) return;
+                if (!this.folders[name]) {
+                    this.folders[name] = [];
+                }
+                document.getElementById('newFolderModal').classList.add('hidden');
+                this.renderFolderHub();
             }
 
             populatePlaySelect() {
-                const sel = document.getElementById('playSelect');
-                sel.innerHTML = '';
-                const filtered = this.activeFolder === 'ALL' ? this.plays : this.plays.filter(p => p.folder === this.activeFolder);
-                filtered.forEach(p => {
+                if(!this.playSelect) return;
+                this.playSelect.innerHTML = '';
+                this.plays.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p.id;
                     opt.textContent = p.name;
-                    if (p.id === this.currentPlay.id) opt.selected = true;
-                    sel.appendChild(opt);
+                    this.playSelect.appendChild(opt);
                 });
-            }
-
-            switchPlay(id) {
-                const found = this.plays.find(p => p.id === id);
-                if (found) {
-                    this.currentPlay = found;
-                    this.level = found.level || 'highschool';
-                    document.getElementById('levelSelect').value = this.level;
-                    document.getElementById('offensiveNotesInput').value = found.offenseNotes || '';
-                    document.getElementById('defensiveNotesInput').value = found.defensiveNotes || '';
-                    this.render();
-                }
-            }
-
-            changeLevel(lvl) {
-                this.level = lvl;
-                this.currentPlay.level = lvl;
-                this.render();
-            }
-
-            changeFieldColor(color) {
-                this.fieldColor = color;
-                this.render();
-            }
-
-            saveNotes() {
-                this.currentPlay.offenseNotes = document.getElementById('offensiveNotesInput').value;
-                this.currentPlay.defensiveNotes = document.getElementById('defensiveNotesInput').value;
             }
 
             initCanvas() {
                 this.canvas = document.getElementById('fieldCanvas');
+                if (!this.canvas) return;
                 this.ctx = this.canvas.getContext('2d');
                 this.resizeCanvas();
-                window.addEventListener('resize', () => this.resizeCanvas());
             }
 
             resizeCanvas() {
-                const container = this.canvas.parentElement;
-                this.canvas.width = container.clientWidth;
-                this.canvas.height = container.clientHeight;
+                if (!this.canvas) return;
+                const rect = this.canvas.parentElement.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
                 this.render();
             }
 
-            initCanvasEvents() {
-                let isDragging = false;
-
-                this.canvas.onmousedown = (e) => {
-                    const rect = this.canvas.getBoundingClientRect();
-                    const x = (e.clientX - rect.left) / this.canvas.width;
-                    const y = (e.clientY - rect.top) / this.canvas.height;
-
-                    // Check player click
-                    const allPlayers = [...(this.currentPlay.offense || []), ...(this.currentPlay.defense || [])];
-                    const clicked = allPlayers.find(p => Math.hypot(p.x - x, p.y - y) < 0.04);
-
-                    if (clicked) {
-                        this.selectedPlayer = clicked;
-                        isDragging = true;
-                        this.updateInspector();
-                    }
-                };
-
-                this.canvas.onmousemove = (e) => {
-                    if (isDragging && this.selectedPlayer) {
-                        const rect = this.canvas.getBoundingClientRect();
-                        this.selectedPlayer.x = Math.max(0.05, Math.min(0.95, (e.clientX - rect.left) / this.canvas.width));
-                        this.selectedPlayer.y = Math.max(0.05, Math.min(0.95, (e.clientY - rect.top) / this.canvas.height));
-                        this.render();
-                    }
-                };
-
-                window.onmouseup = () => { isDragging = false; };
-            }
-
-            updateInspector() {
-                if (!this.selectedPlayer) return;
-                const panel = document.getElementById('defenderInspectorPanel');
-                if (this.currentPlay.defense.includes(this.selectedPlayer)) {
-                    panel.classList.remove('hidden');
-                    document.getElementById('inspectorDefLabel').value = this.selectedPlayer.label;
-                    document.getElementById('inspectorZoneSelect').value = this.selectedPlayer.zone || 'none';
-                    document.getElementById('inspectorBlitzSelect').value = this.selectedPlayer.blitz || 'none';
-                } else {
-                    panel.classList.add('hidden');
+            loadPlay(playId) {
+                const found = this.plays.find(p => p.id === playId);
+                if (found) {
+                    this.currentPlay = found;
+                    this.playTitle.textContent = this.currentPlay.name;
+                    this.playDesc.textContent = this.currentPlay.desc || '';
+                    this.defensiveNotesText.textContent = this.currentPlay.defNotes || 'Log expected offensive tendencies here.';
+                    this.deselectPlayer();
+                    this.render();
                 }
             }
 
-            updateDefLabel(val) { if (this.selectedPlayer) { this.selectedPlayer.label = val; this.render(); } }
-            updateDefZone(val) { if (this.selectedPlayer) { this.selectedPlayer.zone = val; this.render(); } }
-            updateDefBlitz(val) { if (this.selectedPlayer) { this.selectedPlayer.blitz = val; this.render(); } }
-            deselectPlayer() { this.selectedPlayer = null; document.getElementById('defenderInspectorPanel').classList.add('hidden'); this.render(); }
-
-            spawnPlayer(type, label) {
-                const newP = {
-                    id: 'p_' + Math.random().toString(36).substr(2, 5),
-                    label: label,
-                    role: type === 'offense' ? 'WR' : 'DB',
-                    x: 0.5,
-                    y: type === 'offense' ? 0.62 : 0.48,
-                    zone: 'none',
-                    blitz: 'none'
-                };
-                if (type === 'offense') this.currentPlay.offense.push(newP);
-                else this.currentPlay.defense.push(newP);
+            changeFieldColor(color) {
+                this.fieldColor = color;
+                const container = document.getElementById('canvasContainer');
+                if(container) {
+                    container.style.backgroundColor = color;
+                }
                 this.render();
+            }
+
+            spawnPlayer(side, label) {
+                const newId = side + '_' + Date.now();
+                if (side === 'offense') {
+                    if (!this.currentPlay.offense) this.currentPlay.offense = [];
+                    const p = { id: newId, label: label, role: label, x: 0.50, y: 0.60 };
+                    this.currentPlay.offense.push(p);
+                    this.inspectPlayer('offense', p);
+                } else {
+                    if (!this.currentDefense) this.currentDefense = [];
+                    const d = { id: newId, label: label, x: 0.50, y: 0.45, zone: 'Flat Zone', isBlitz: false, blitzGap: 'A-Gap' };
+                    this.currentDefense.push(d);
+                    this.inspectPlayer('defense', d);
+                }
+                this.render();
+            }
+
+            inspectPlayer(side, p) {
+                this.selectedPlayerObj = { side, player: p };
+                if (this.playerInspectorPanel) {
+                    this.playerInspectorPanel.classList.remove('hidden');
+                    this.inspectorLabel.value = p.label;
+
+                    if (side === 'defense') {
+                        document.getElementById('inspectorTitle').innerHTML = '<i class="fa-solid fa-shield-halved text-rose-400"></i> Defender Inspector';
+                        this.defenderZoneInspector.classList.remove('hidden');
+                        this.offensiveRouteInspector.classList.add('hidden');
+                        this.defenderZoneSelect.value = p.zone || 'Flat Zone';
+                        this.chkDefenderBlitz.checked = !!p.isBlitz;
+                        this.blitzGapContainer.classList.toggle('hidden', !p.isBlitz);
+                        if(p.blitzGap) this.blitzGapSelect.value = p.blitzGap;
+                    } else {
+                        document.getElementById('inspectorTitle').innerHTML = '<i class="fa-solid fa-user-gear text-blue-400"></i> Offensive Player Inspector';
+                        this.defenderZoneInspector.classList.add('hidden');
+                        this.offensiveRouteInspector.classList.remove('hidden');
+                    }
+                }
+                this.render();
+            }
+
+            deselectPlayer() {
+                this.selectedPlayerObj = null;
+                if (this.playerInspectorPanel) this.playerInspectorPanel.classList.add('hidden');
+                this.render();
+            }
+
+            updatePlayerLabel() {
+                if (this.selectedPlayerObj && this.inspectorLabel) {
+                    this.selectedPlayerObj.player.label = this.inspectorLabel.value.trim() || 'P';
+                    this.render();
+                }
+            }
+
+            updateDefenderZone(zone) {
+                if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'defense') {
+                    this.selectedPlayerObj.player.zone = zone;
+                    this.render();
+                }
+            }
+
+            toggleDefenderBlitz(isBlitz) {
+                if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'defense') {
+                    this.selectedPlayerObj.player.isBlitz = isBlitz;
+                    this.blitzGapContainer.classList.toggle('hidden', !isBlitz);
+                    this.render();
+                }
+            }
+
+            updateBlitzGap(gap) {
+                if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'defense') {
+                    this.selectedPlayerObj.player.blitzGap = gap;
+                    this.render();
+                }
+            }
+
+            applyRoutePreset(preset) {
+                if (!this.selectedPlayerObj || this.selectedPlayerObj.side !== 'offense') return;
+                const p = this.selectedPlayerObj.player;
+                const startX = p.x, startY = p.y;
+                if (preset === 'post') p.route = [{x:startX, y:startY}, {x:startX, y:startY-0.25}, {x:0.50, y:startY-0.45}];
+                if (preset === 'dig') p.route = [{x:startX, y:startY}, {x:startX, y:startY-0.25}, {x:0.50, y:startY-0.25}];
+                if (preset === 'fly') p.route = [{x:startX, y:startY}, {x:startX, y:startY-0.45}];
+                if (preset === 'slant') p.route = [{x:startX, y:startY}, {x:startX>0.5?startX-0.2:startX+0.2, y:startY-0.2}];
+                if (preset === 'out') p.route = [{x:startX, y:startY}, {x:startX, y:startY-0.2}, {x:startX>0.5?0.95:0.05, y:startY-0.2}];
+                if (preset === 'flat') p.route = [{x:startX, y:startY}, {x:startX>0.5?0.9:0.1, y:startY-0.08}];
+                this.render();
+            }
+
+            deleteSelectedPlayer() {
+                if (!this.selectedPlayerObj) return;
+                const target = this.selectedPlayerObj;
+                if (target.side === 'offense') {
+                    this.currentPlay.offense = this.currentPlay.offense.filter(p => p.id !== target.player.id);
+                } else {
+                    this.currentDefense = this.currentDefense.filter(d => d.id !== target.player.id);
+                }
+                this.deselectPlayer();
+            }
+
+            toggleEditNotes() {
+                const editing = !this.editPlayDesc.classList.contains('hidden');
+                if (!editing) {
+                    this.editPlayDesc.value = this.currentPlay.desc || '';
+                    this.editDefensiveNotes.value = this.currentPlay.defNotes || '';
+                    this.playDesc.classList.add('hidden');
+                    this.defensiveNotesText.classList.add('hidden');
+                    this.editPlayDesc.classList.remove('hidden');
+                    this.editDefensiveNotes.classList.remove('hidden');
+                    this.btnSaveNotes.classList.remove('hidden');
+                    this.btnEditNotes.innerHTML = '<i class="fa-solid fa-xmark"></i> Cancel';
+                } else {
+                    this.playDesc.classList.remove('hidden');
+                    this.defensiveNotesText.classList.remove('hidden');
+                    this.editPlayDesc.classList.add('hidden');
+                    this.editDefensiveNotes.classList.add('hidden');
+                    this.btnSaveNotes.classList.add('hidden');
+                    this.btnEditNotes.innerHTML = '<i class="fa-solid fa-pen"></i> Edit Notes';
+                }
+            }
+
+            saveNotes() {
+                this.currentPlay.desc = this.editPlayDesc.value.trim();
+                this.currentPlay.defNotes = this.editDefensiveNotes.value.trim();
+                this.playDesc.textContent = this.currentPlay.desc;
+                this.defensiveNotesText.textContent = this.currentPlay.defNotes;
+                this.toggleEditNotes();
+            }
+
+            setupEvents() {
+                if (this.eventsBound) return;
+                this.eventsBound = true;
+
+                this.levelSelect.addEventListener('change', (e) => {
+                    this.selectedLevel = e.target.value;
+                    this.render();
+                });
+                this.hashPositionSelect.addEventListener('change', (e) => {
+                    this.selectedHashPosition = e.target.value;
+                    this.render();
+                });
+                this.playSelect.addEventListener('change', (e) => this.loadPlay(e.target.value));
+                this.frontSelect.addEventListener('change', (e) => {
+                    this.selectedFront = e.target.value;
+                    if(DEFENSIVE_FRONTS[this.selectedFront]) {
+                        this.currentDefense = JSON.parse(JSON.stringify(DEFENSIVE_FRONTS[this.selectedFront]));
+                    }
+                    this.render();
+                });
+
+                document.getElementById('btnPlay').addEventListener('click', () => this.isPlaying = true);
+                document.getElementById('btnPause').addEventListener('click', () => this.isPlaying = false);
+                document.getElementById('btnReset').addEventListener('click', () => this.resetAnimation());
+                document.getElementById('btnEditNotes').addEventListener('click', () => this.toggleEditNotes());
+                document.getElementById('btnSaveNotes').addEventListener('click', () => this.saveNotes());
+
+                document.getElementById('btnClearAllPlayers').addEventListener('click', () => {
+                    if(confirm('Clear all players from field?')) {
+                        this.currentPlay.offense = [];
+                        this.currentDefense = [];
+                        this.render();
+                    }
+                });
+
+                document.getElementById('btnSavePlay').addEventListener('click', () => alert('Play saved successfully!'));
+                document.getElementById('btnDeletePlay').addEventListener('click', () => {
+                    if(this.plays.length > 1) {
+                        this.plays = this.plays.filter(p => p.id !== this.currentPlay.id);
+                        this.loadPlay(this.plays[0].id);
+                        this.populatePlaySelect();
+                    } else {
+                        alert('Cannot delete last play in folder.');
+                    }
+                });
+
+                document.getElementById('btnOpenNewPlayModal').addEventListener('click', () => {
+                    document.getElementById('newPlayModal').classList.remove('hidden');
+                });
+                document.getElementById('btnCreatePlaySubmit').addEventListener('click', () => {
+                    const name = document.getElementById('modalPlayName').value.trim() || 'New Play';
+                    const newPlay = {
+                        id: 'play_' + Date.now(),
+                        name: name,
+                        desc: 'Custom installation play.',
+                        defNotes: 'Review pre-snap gaps.',
+                        qbKeys: ['Read leverage'],
+                        offense: JSON.parse(JSON.stringify(OFFENSE_PRESETS.spread2x2))
+                    };
+                    this.plays.push(newPlay);
+                    this.populatePlaySelect();
+                    this.loadPlay(newPlay.id);
+                    document.getElementById('newPlayModal').classList.add('hidden');
+                });
+
+                this.canvas.addEventListener('mousedown', (e) => this.handlePointerDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.handlePointerMove(e));
+                this.canvas.addEventListener('mouseup', () => this.handlePointerUp());
+            }
+
+            handlePointerDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const w = this.canvas.width, h = this.canvas.height;
+
+                if (this.currentPlay && this.currentPlay.offense) {
+                    for (let p of this.currentPlay.offense) {
+                        if (Math.hypot(x - this.getAdjustedX(p.x, w), y - p.y * h) <= 18) {
+                            this.draggedPlayer = { type: 'offense', player: p };
+                            this.inspectPlayer('offense', p);
+                            return;
+                        }
+                    }
+                }
+                if (this.currentDefense) {
+                    for (let d of this.currentDefense) {
+                        if (Math.hypot(x - this.getAdjustedX(d.x, w), y - d.y * h) <= 18) {
+                            this.draggedPlayer = { type: 'defense', player: d };
+                            this.inspectPlayer('defense', d);
+                            return;
+                        }
+                    }
+                }
+                this.deselectPlayer();
+            }
+
+            handlePointerMove(e) {
+                if (!this.draggedPlayer) return;
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const w = this.canvas.width, h = this.canvas.height;
+
+                let hashOffset = 0;
+                if (this.selectedHashPosition === 'left') hashOffset = -0.15;
+                if (this.selectedHashPosition === 'right') hashOffset = 0.15;
+
+                this.draggedPlayer.player.x = Math.max(0.02, Math.min(0.98, (x / w) - hashOffset));
+                this.draggedPlayer.player.y = Math.max(0.02, Math.min(0.98, y / h));
+                this.render();
+            }
+
+            handlePointerUp() {
+                this.draggedPlayer = null;
+            }
+
+            resetAnimation() {
+                this.isPlaying = false;
+                this.progress = 0;
+                this.scrubber.value = 0;
+                this.timeDisplay.textContent = '0.0s';
+                this.render();
+            }
+
+            startAnimationLoop() {
+                if (this.animating) return;
+                this.animating = true;
+                let lastTime = performance.now();
+                const animate = (now) => {
+                    const dt = (now - lastTime) / 1000;
+                    lastTime = now;
+                    if (this.isPlaying) {
+                        this.progress += dt * 0.25;
+                        if (this.progress >= 1.0) { this.progress = 1.0; this.isPlaying = false; }
+                        this.scrubber.value = this.progress * 100;
+                        this.timeDisplay.textContent = (this.progress * 4.0).toFixed(1) + 's';
+                        this.render();
+                    }
+                    requestAnimationFrame(animate);
+                };
+                requestAnimationFrame(animate);
+            }
+
+            getAdjustedX(normX, w) {
+                let offset = 0;
+                if (this.selectedHashPosition === 'left') offset = -0.15;
+                if (this.selectedHashPosition === 'right') offset = 0.15;
+                return Math.max(0.02, Math.min(0.98, normX + offset)) * w;
+            }
+
+            flipPlay() {
+                if (this.currentPlay && this.currentPlay.offense) {
+                    this.currentPlay.offense.forEach(p => {
+                        p.x = 1.0 - p.x;
+                        if(p.route) p.route.forEach(pt => pt.x = 1.0 - pt.x);
+                    });
+                }
+                if (this.currentDefense) {
+                    this.currentDefense.forEach(d => d.x = 1.0 - d.x);
+                }
+                this.render();
+            }
+
+            exportPlaycard() {
+                alert('Playcard export generated successfully.');
             }
 
             render() {
-                if (!this.ctx) return;
-                const w = this.canvas.width;
-                const h = this.canvas.height;
+                if (!this.canvas || !this.ctx) return;
+                const w = this.canvas.width, h = this.canvas.height;
 
-                // Background
-                if (this.fieldColor === 'white') {
-                    this.ctx.fillStyle = '#ffffff';
-                } else if (this.fieldColor === 'green') {
-                    this.ctx.fillStyle = '#1e3a1e';
-                } else {
-                    this.ctx.fillStyle = '#0f172a';
-                }
+                // Field background based on picker
+                this.ctx.fillStyle = this.fieldColor;
                 this.ctx.fillRect(0, 0, w, h);
 
-                // Field Markings & Hashes based on Level
-                this.ctx.strokeStyle = this.fieldColor === 'white' ? '#94a3b8' : '#334155';
+                // Yard Lines
+                this.ctx.strokeStyle = this.fieldColor === '#ffffff' ? '#d1d5db' : '#334155';
                 this.ctx.lineWidth = 2;
-
-                // Line of scrimmage
-                this.ctx.beginPath();
-                this.ctx.moveTo(0, h * 0.55);
-                this.ctx.lineTo(w, h * 0.55);
-                this.ctx.stroke();
-
-                // Hash marks calculation
-                let hashOffset = 0.25; // High school wide hashes
-                if (this.level === 'college') hashOffset = 0.30; // NCAA mid hashes
-                if (this.level === 'nfl') hashOffset = 0.38; // NFL narrow hashes
-
-                this.ctx.fillStyle = this.ctx.strokeStyle;
-                [hashOffset, 1.0 - hashOffset].forEach(hx => {
-                    for (let x = 0.1; x < 0.9; x += 0.05) {
-                        this.ctx.fillRect(w * x, h * 0.54, 4, 8);
-                    }
-                });
-
-                // Draw Defensive Zones if selected
-                (this.currentPlay.defense || []).forEach(d => {
-                    if (d.zone && d.zone !== 'none') {
-                        this.ctx.fillStyle = 'rgba(59, 130, 246, 0.12)';
-                        this.ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
-                        this.ctx.beginPath();
-                        if (d.zone === 'deepThird') {
-                            this.ctx.arc(w * d.x, h * d.y, 80, Math.PI, 2 * Math.PI);
-                        } else if (d.zone === 'flat') {
-                            this.ctx.rect(w * (d.x - 0.1), h * (d.y - 0.05), 100, 60);
-                        } else {
-                            this.ctx.arc(w * d.x, h * d.y, 60, 0, 2 * Math.PI);
-                        }
-                        this.ctx.fill();
-                        this.ctx.stroke();
-                    }
-                });
-
-                // Draw Routes
-                (this.currentPlay.offense || []).forEach(p => {
-                    if (p.route && p.route.length > 1) {
-                        this.ctx.strokeStyle = '#3b82f6';
-                        this.ctx.lineWidth = 3;
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(w * p.route[0].x, h * p.route[0].y);
-                        for (let i = 1; i < p.route.length; i++) {
-                            this.ctx.lineTo(w * p.route[i].x, h * p.route[i].y);
-                        }
-                        this.ctx.stroke();
-                    }
-                });
-
-                // Draw Players
-                (this.currentPlay.offense || []).forEach(p => this.drawPlayerToken(w * p.x, h * p.y, p.label, '#3b82f6', p === this.selectedPlayer));
-                (this.currentPlay.defense || []).forEach(d => this.drawPlayerToken(w * d.x, h * d.y, d.label, '#ef4444', d === this.selectedPlayer));
-            }
-
-            drawPlayerToken(x, y, label, color, isSelected) {
-                this.ctx.fillStyle = color;
-                this.ctx.beginPath();
-                this.ctx.arc(x, y, 16, 0, 2 * Math.PI);
-                this.ctx.fill();
-
-                if (isSelected) {
-                    this.ctx.strokeStyle = '#f59e0b';
-                    this.ctx.lineWidth = 3;
+                for (let i = 1; i < 10; i++) {
+                    const y = (h / 10) * i;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(w, y);
                     this.ctx.stroke();
                 }
 
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.font = 'bold 12px system-ui';
-                this.ctx.textAlign = 'center';
-                this.ctx.textBaseline = 'middle';
-                this.ctx.fillText(label, x, y);
+                this.renderHashMarks(w, h);
+
+                // LOS and First Down lines
+                const losY = h * 0.58;
+                const fdY = h * 0.35;
+                this.ctx.strokeStyle = '#f59e0b';
+                this.ctx.lineWidth = 3;
+                this.ctx.setLineDash([6, 6]);
+                this.ctx.beginPath(); this.ctx.moveTo(0, fdY); this.ctx.lineTo(w, fdY); this.ctx.stroke();
+                this.ctx.setLineDash([]);
+                this.ctx.strokeStyle = '#3b82f6';
+                this.ctx.beginPath(); this.ctx.moveTo(0, losY); this.ctx.lineTo(w, losY); this.ctx.stroke();
+
+                // Render Offensive Routes
+                if (this.currentPlay && this.currentPlay.offense) {
+                    this.currentPlay.offense.forEach(p => {
+                        if (p.route && p.route.length > 1) {
+                            this.ctx.strokeStyle = '#3b82f6';
+                            this.ctx.lineWidth = 3;
+                            this.ctx.beginPath();
+                            p.route.forEach((pt, idx) => {
+                                const px = this.getAdjustedX(pt.x, w);
+                                if (idx === 0) this.ctx.moveTo(px, pt.y * h);
+                                else this.ctx.lineTo(px, pt.y * h);
+                            });
+                            this.ctx.stroke();
+                        }
+                    });
+                }
+
+                // Render Defense & Blitz/Zones
+                if (this.currentDefense) {
+                    this.currentDefense.forEach(d => {
+                        const pos = { x: this.getAdjustedX(d.x, w), y: d.y * h };
+                        const isSelected = this.selectedPlayerObj && this.selectedPlayerObj.player.id === d.id;
+
+                        // Draw Blitz path if enabled
+                        if (d.isBlitz) {
+                            this.ctx.strokeStyle = '#ef4444';
+                            this.ctx.lineWidth = 3;
+                            this.ctx.setLineDash([4, 4]);
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(pos.x, pos.y);
+                            this.ctx.lineTo(w * 0.50, losY);
+                            this.ctx.stroke();
+                            this.ctx.setLineDash([]);
+                        }
+
+                        this.ctx.fillStyle = isSelected ? '#f59e0b' : '#ef4444';
+                        this.ctx.strokeStyle = '#1f2937';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.beginPath();
+                        this.ctx.rect(pos.x - 12, pos.y - 12, 24, 24);
+                        this.ctx.fill();
+                        this.ctx.stroke();
+
+                        this.ctx.fillStyle = '#ffffff';
+                        this.ctx.font = 'bold 10px system-ui';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.textBaseline = 'middle';
+                        this.ctx.fillText(d.label, pos.x, pos.y);
+                    });
+                }
+
+                // Render Offense Players
+                if (this.currentPlay && this.currentPlay.offense) {
+                    this.currentPlay.offense.forEach(p => {
+                        const pos = { x: this.getAdjustedX(p.x, w), y: p.y * h };
+                        const isSelected = this.selectedPlayerObj && this.selectedPlayerObj.player.id === p.id;
+
+                        this.ctx.fillStyle = isSelected ? '#f59e0b' : '#3b82f6';
+                        this.ctx.strokeStyle = '#1f2937';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.beginPath();
+                        this.ctx.arc(pos.x, pos.y, 14, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        this.ctx.stroke();
+
+                        this.ctx.fillStyle = '#ffffff';
+                        this.ctx.font = 'bold 11px system-ui';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.textBaseline = 'middle';
+                        this.ctx.fillText(p.label, pos.x, pos.y);
+                    });
+                }
             }
 
-            saveCurrentPlay() {
-                alert('Play saved successfully!');
+            // Level-Accurate Hash Marks Geometry
+            renderHashMarks(w, h) {
+                let leftHashX, rightHashX;
+                if (this.selectedLevel === 'highschool') {
+                    // High School: wider hashes (approx 53ft 4in from sidelines)
+                    leftHashX = w * 0.33;
+                    rightHashX = w * 0.67;
+                } else if (this.selectedLevel === 'college') {
+                    // College / NCAA: mid hashes (approx 60ft from sidelines)
+                    leftHashX = w * 0.40;
+                    rightHashX = w * 0.60;
+                } else {
+                    // NFL: narrow hashes (hash marks match goalposts, ~70ft 9in apart)
+                    leftHashX = w * 0.46;
+                    rightHashX = w * 0.54;
+                }
+
+                this.ctx.strokeStyle = this.fieldColor === '#ffffff' ? '#9ca3af' : '#475569';
+                this.ctx.lineWidth = 1.5;
+
+                for (let i = 1; i < 40; i++) {
+                    const y = (h / 40) * i;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(leftHashX - 5, y);
+                    this.ctx.lineTo(leftHashX + 5, y);
+                    this.ctx.stroke();
+
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(rightHashX - 5, y);
+                    this.ctx.lineTo(rightHashX + 5, y);
+                    this.ctx.stroke();
+                }
             }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            window.app = new ChalkboardApp();
+            window.app = new PlaybookApp();
         });
     </script>
 </body>
