@@ -411,6 +411,13 @@
                     <p class="text-[10px] text-slate-500 italic">This app only saves to this browser, on this device — no cloud sync. Backup regularly, or Restore that file on another device to bring your plays with you.</p>
                 </div>
 
+                <!-- CLEAR FIELD ELEMENTS BUTTON -->
+                <div class="space-y-1.5">
+                    <button id="btnClearFieldOnly" type="button" class="w-full bg-amber-950/90 hover:bg-amber-900 active:bg-amber-950 text-amber-200 border border-amber-800 p-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm">
+                        <i class="fa-solid fa-eraser text-amber-400"></i> Clear Field Marks Only (Keep Players)
+                    </button>
+                </div>
+
                 <!-- CLEAR ALL PLAYERS BUTTON -->
                 <div class="space-y-1.5">
                     <button id="btnClearAllPlayers" type="button" class="w-full bg-rose-950/90 hover:bg-rose-900 active:bg-rose-950 text-rose-200 border border-rose-800 p-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm">
@@ -669,7 +676,7 @@
                         <div class="flex items-center justify-between">
                             <span class="text-xs text-slate-300 font-semibold">Field Background:</span>
                             <div class="flex items-center gap-2">
-                                <button type="button" onclick="if(window.app) window.app.setFieldColor('#ffffff')" class="bg-white text-slate-900 px-2 py-0.5 rounded text-[10px] font-bold border border-slate-400">Stock White</button>
+                                <button type="button" onclick="if(window.app) window.app.setFieldColor('#ffffff')" class="bg-white text-slate-900 px-2 py-0.5 rounded text-[10px] font-bold border border-slate-400">white</button>
                                 <button type="button" onclick="if(window.app) window.app.setFieldColor('#064e3b')" class="bg-emerald-800 text-white px-2 py-0.5 rounded text-[10px] font-bold">Turf Green</button>
                                 <input type="color" id="fieldCustomColorPicker" value="#ffffff" onchange="if(window.app) window.app.setFieldColor(this.value)" class="w-6 h-6 rounded border-0 p-0 bg-transparent cursor-pointer" title="Custom Field Color">
                             </div>
@@ -1137,6 +1144,7 @@
                 this.selectedCoverage = 'Cover2';
                 this.selectedStunt = 'None';
                 this.fieldColor = '#ffffff';
+                this.clearFieldOnlyMarks = false;
                 
                 this.currentDefense = JSON.parse(JSON.stringify(DEFENSIVE_FRONTS['4-3']));
 
@@ -1549,7 +1557,8 @@
                     hash: this.selectedHashPosition,
                     front: this.selectedFront,
                     coverage: this.selectedCoverage,
-                    stunt: this.selectedStunt
+                    stunt: this.selectedStunt,
+                    clearFieldOnlyMarks: this.clearFieldOnlyMarks
                 };
 
                 this.undoStack.push(snapshot);
@@ -1570,7 +1579,8 @@
                     hash: this.selectedHashPosition,
                     front: this.selectedFront,
                     coverage: this.selectedCoverage,
-                    stunt: this.selectedStunt
+                    stunt: this.selectedStunt,
+                    clearFieldOnlyMarks: this.clearFieldOnlyMarks
                 };
                 this.redoStack.push(currentSnapshot);
 
@@ -1589,7 +1599,8 @@
                     hash: this.selectedHashPosition,
                     front: this.selectedFront,
                     coverage: this.selectedCoverage,
-                    stunt: this.selectedStunt
+                    stunt: this.selectedStunt,
+                    clearFieldOnlyMarks: this.clearFieldOnlyMarks
                 };
                 this.undoStack.push(currentSnapshot);
 
@@ -1606,6 +1617,7 @@
                 this.selectedFront = snap.front;
                 this.selectedCoverage = snap.coverage;
                 this.selectedStunt = snap.stunt;
+                this.clearFieldOnlyMarks = !!snap.clearFieldOnlyMarks;
 
                 if (this.hashPositionSelect) this.hashPositionSelect.value = snap.hash;
                 if (this.frontSelect) this.frontSelect.value = snap.front;
@@ -1693,6 +1705,12 @@
                 this.drawnLines = [];
                 this.deselectPlayer();
                 this.checkFormationValidity();
+                this.render();
+            }
+
+            clearFieldMarksOnly() {
+                this.saveHistoryState();
+                this.clearFieldOnlyMarks = !this.clearFieldOnlyMarks;
                 this.render();
             }
 
@@ -2813,6 +2831,7 @@
                 }
 
                 document.getElementById('btnClearAllPlayers').addEventListener('click', () => this.clearAllPlayers());
+                document.getElementById('btnClearFieldOnly').addEventListener('click', () => this.clearFieldMarksOnly());
                 document.getElementById('btnClearOffense').addEventListener('click', () => this.clearOffenseOnly());
                 document.getElementById('btnClearDefense').addEventListener('click', () => this.clearDefenseOnly());
 
@@ -3079,58 +3098,60 @@
                 this.ctx.fillStyle = this.fieldColor || '#ffffff';
                 this.ctx.fillRect(0, 0, w, h);
 
-                this.ctx.strokeStyle = '#d1d5db';
-                this.ctx.lineWidth = 2;
-                const numYardLines = 10;
-                for (let i = 1; i < numYardLines; i++) {
-                    const y = (h / numYardLines) * i;
+                if (!this.clearFieldOnlyMarks) {
+                    this.ctx.strokeStyle = '#d1d5db';
+                    this.ctx.lineWidth = 2;
+                    const numYardLines = 10;
+                    for (let i = 1; i < numYardLines; i++) {
+                        const y = (h / numYardLines) * i;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(0, y);
+                        this.ctx.lineTo(w, y);
+                        this.ctx.stroke();
+                    }
+
+                    this.renderHashMarks(w, h, numYardLines);
+                    
+                    const showNumbersChk = document.getElementById('chkShowYardNumbers');
+                    if (!showNumbersChk || showNumbersChk.checked) {
+                        this.renderYardNumbers(w, h, numYardLines);
+                    }
+
+                    const losY = h * 0.58;
+                    const fdY = h * 0.35;
+
+                    this.ctx.strokeStyle = '#f59e0b';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.setLineDash([6, 6]);
                     this.ctx.beginPath();
-                    this.ctx.moveTo(0, y);
-                    this.ctx.lineTo(w, y);
+                    this.ctx.moveTo(0, fdY);
+                    this.ctx.lineTo(w, fdY);
                     this.ctx.stroke();
-                }
+                    this.ctx.setLineDash([]);
 
-                this.renderHashMarks(w, h, numYardLines);
-                
-                const showNumbersChk = document.getElementById('chkShowYardNumbers');
-                if (!showNumbersChk || showNumbersChk.checked) {
-                    this.renderYardNumbers(w, h, numYardLines);
-                }
-
-                const losY = h * 0.58;
-                const fdY = h * 0.35;
-
-                this.ctx.strokeStyle = '#f59e0b';
-                this.ctx.lineWidth = 3;
-                this.ctx.setLineDash([6, 6]);
-                this.ctx.beginPath();
-                this.ctx.moveTo(0, fdY);
-                this.ctx.lineTo(w, fdY);
-                this.ctx.stroke();
-                this.ctx.setLineDash([]);
-
-                this.ctx.strokeStyle = '#3b82f6';
-                this.ctx.lineWidth = 3;
-                this.ctx.beginPath();
-                this.ctx.moveTo(0, losY);
-                this.ctx.lineTo(w, losY);
-                this.ctx.stroke();
-
-                const situationVal = document.getElementById('situationDownSelect')?.value || '';
-                if (situationVal === 'Red Zone' || situationVal === 'Goal Line') {
-                    const rzY = situationVal === 'Goal Line' ? h * 0.06 : h * 0.14;
-                    this.ctx.strokeStyle = '#dc2626';
-                    this.ctx.lineWidth = 4;
+                    this.ctx.strokeStyle = '#3b82f6';
+                    this.ctx.lineWidth = 3;
                     this.ctx.beginPath();
-                    this.ctx.moveTo(0, rzY);
-                    this.ctx.lineTo(w, rzY);
+                    this.ctx.moveTo(0, losY);
+                    this.ctx.lineTo(w, losY);
                     this.ctx.stroke();
 
-                    this.ctx.fillStyle = '#dc2626';
-                    this.ctx.font = 'bold 11px system-ui';
-                    this.ctx.textAlign = 'left';
-                    this.ctx.textBaseline = 'alphabetic';
-                    this.ctx.fillText(situationVal === 'Goal Line' ? 'GOAL LINE' : 'RED ZONE', 8, Math.max(12, rzY - 6));
+                    const situationVal = document.getElementById('situationDownSelect')?.value || '';
+                    if (situationVal === 'Red Zone' || situationVal === 'Goal Line') {
+                        const rzY = situationVal === 'Goal Line' ? h * 0.06 : h * 0.14;
+                        this.ctx.strokeStyle = '#dc2626';
+                        this.ctx.lineWidth = 4;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(0, rzY);
+                        this.ctx.lineTo(w, rzY);
+                        this.ctx.stroke();
+
+                        this.ctx.fillStyle = '#dc2626';
+                        this.ctx.font = 'bold 11px system-ui';
+                        this.ctx.textAlign = 'left';
+                        this.ctx.textBaseline = 'alphabetic';
+                        this.ctx.fillText(situationVal === 'Goal Line' ? 'GOAL LINE' : 'RED ZONE', 8, Math.max(12, rzY - 6));
+                    }
                 }
 
                 if (this.chkRoutes.checked && this.currentPlay && this.currentPlay.offense) {
@@ -3173,7 +3194,7 @@
                         }
 
                         if (d.isBlitz) {
-                            let targetY = losY;
+                            let targetY = h * 0.58;
                             let targetX = pos.x;
                             if (d.blitzGap === 'A-Gap') targetX = w * 0.48;
                             else if (d.blitzGap === 'B-Gap') targetX = pos.x < w * 0.5 ? w * 0.44 : w * 0.56;
