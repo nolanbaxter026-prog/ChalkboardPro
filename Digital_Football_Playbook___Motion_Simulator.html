@@ -35,11 +35,7 @@
         .btn-disabled { opacity: 0.4; cursor: not-allowed !important; pointer-events: none; }
     </style>
 
-    <!-- FIREBASE: real accounts + cloud-saved playbook.
-         This config is safe to be public — Firebase config values are meant
-         to live in client-side code; access is actually controlled by the
-         Firestore/Auth security rules set in the Firebase console, not by
-         hiding this object. -->
+    <!-- FIREBASE: real accounts + cloud-saved playbook -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
         import {
@@ -64,8 +60,6 @@
         const auth = getAuth(fbApp);
         const db = getFirestore(fbApp);
 
-        // Exposed on window so the main (non-module) app script below can call
-        // into Firebase without the whole app needing to become an ES module.
         window.ChalkboardCloud = {
             ready: true,
             currentUser: null,
@@ -120,7 +114,7 @@
                 </div>
             </div>
 
-            <button id="btnQuickStart" onclick="if(window.app) window.app.launch('Coach', 'highschool', 'Varsity')" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2 border border-emerald-400/30 cursor-pointer">
+            <button id="btnQuickStart" onclick="if(window.app) window.app.launchQuickStartDirect()" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2 border border-emerald-400/30 cursor-pointer">
                 <i class="fa-solid fa-bolt text-amber-300"></i> Enter Studio & Start Drawing Immediately
             </button>
 
@@ -167,13 +161,10 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Offensive Base <span class="text-slate-500 font-normal">(Optional)</span></label>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Coaching Perspective <span class="text-slate-500 font-normal">(Offensive or Defensive)</span></label>
                     <select id="signupPhilosophy" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-blue-500">
-                        <option value="spread">2x2 / 3x1 Spread</option>
-                        <option value="airraid">Air Raid Passing</option>
-                        <option value="pro">Pro-Style / Heavy TE</option>
-                        <option value="option">Option / Triple Threat</option>
-                        <option value="westcoast">West Coast Timing</option>
+                        <option value="offensive" selected>Offensive Coach (Passing / Run / Expectations)</option>
+                        <option value="defensive">Defensive Coach (Fronts / Coverages / Notes)</option>
                     </select>
                 </div>
 
@@ -270,6 +261,14 @@
             <!-- Global Action Controls -->
             <div class="flex items-center gap-2 flex-wrap">
                 
+                <!-- MOVE PLAY TO FOLDER -->
+                <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700">
+                    <i class="fa-solid fa-folder-open text-amber-400 text-xs"></i>
+                    <label for="movePlayFolderSelect" class="text-xs font-semibold text-slate-300">Folder:</label>
+                    <select id="movePlayFolderSelect" onchange="if(window.app) window.app.moveCurrentPlayToFolder(this.value)" class="bg-slate-800 border border-slate-600 text-amber-300 rounded text-xs font-bold py-1 px-1.5 focus:outline-none">
+                    </select>
+                </div>
+
                 <!-- UNDO & REDO BUTTON GROUP -->
                 <div class="flex items-center bg-slate-950 rounded-lg border border-slate-700 p-0.5">
                     <button id="btnUndo" onclick="if(window.app) window.app.undo()" title="Undo (Ctrl+Z)" type="button" class="bg-slate-800 hover:bg-slate-700 text-amber-300 px-2.5 py-1.5 rounded-l text-xs font-bold transition flex items-center gap-1 cursor-pointer btn-disabled">
@@ -482,18 +481,25 @@
                         </div>
                     </div>
 
-                    <!-- DEFENDER-SPECIFIC OPTIONS (Zones & Blitz with Gap Picker) -->
+                    <!-- DEFENDER-SPECIFIC OPTIONS (Zones & Blitz with Gap Picker + Zone Color) -->
                     <div id="defenderOptionsContainer" class="hidden space-y-3 bg-slate-900 p-2.5 rounded border border-rose-900/50">
                         <span class="block text-[11px] font-bold text-rose-400 uppercase tracking-wider">Defensive Assignment</span>
                         
                         <div>
-                            <label class="block text-[10px] text-slate-300 mb-1 font-semibold">Defensive Zone Responsibility</label>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="text-[10px] text-slate-300 font-semibold">Defensive Zone Responsibility</label>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[9px] text-slate-400">Zone Color:</span>
+                                    <input type="color" id="zoneColorPicker" value="#1e3a8a" onchange="if(window.app) window.app.updateZoneColor(this.value)" class="w-5 h-5 rounded border-0 p-0 bg-transparent cursor-pointer" title="Customize Madden Zone Color">
+                                </div>
+                            </div>
                             <select id="defenderZoneSelect" onchange="if(window.app) window.app.updateDefenderZone(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-rose-400">
-                                <option value="none">None / Man Coverage</option>
-                                <option value="Deep 1/3">Deep 1/3 (Third)</option>
-                                <option value="Deep 1/2">Deep 1/2 (Half)</option>
-                                <option value="Hook/Curl">Hook / Curl Zone</option>
-                                <option value="Flat">Flat / Undercut Zone</option>
+                                <option value="none">None / Man Coverage (Grey)</option>
+                                <option value="Deep 1/3">Deep 1/3 (Dark Blue)</option>
+                                <option value="Deep 1/2">Deep 1/2 (Dark Blue)</option>
+                                <option value="Hook/Curl">Hook / Curl (Green)</option>
+                                <option value="Curl/Flat">Curl / Flat (Purple)</option>
+                                <option value="Flat">Flat / Hard Flat (Light Blue)</option>
                                 <option value="Seam/Hole">Seam / Hole Zone</option>
                                 <option value="Spy">QB Spy</option>
                             </select>
@@ -502,7 +508,7 @@
                         <div class="space-y-1.5 pt-1 border-t border-slate-800">
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" id="chkDefenderBlitz" onchange="if(window.app) window.app.toggleDefenderBlitz(this.checked)" class="rounded bg-slate-800 border-slate-700 text-rose-600 focus:ring-0">
-                                <span class="text-xs font-bold text-rose-300">Assign Blitz Route</span>
+                                <span class="text-xs font-bold text-rose-300">Assign Blitz Route (Red)</span>
                             </label>
 
                             <div id="blitzGapContainer" class="hidden pt-1 space-y-1">
@@ -616,11 +622,21 @@
                         <button id="btnToolCurveRoute" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
                             <i class="fa-solid fa-wave-square text-blue-300 w-4 text-center"></i> Curved Route
                         </button>
+                        <button id="btnAddCustomRoute" type="button" onclick="if(window.app) window.app.promptAddCustomRoute()" class="tool-btn bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 p-2 rounded text-xs text-left flex items-center gap-2 col-span-2 cursor-pointer text-emerald-200">
+                            <i class="fa-solid fa-bookmark text-emerald-400 w-4 text-center"></i> + Add Drawn Route to Preset Library
+                        </button>
                         <button id="btnToolEraseLine" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 col-span-2 cursor-pointer">
                             <i class="fa-solid fa-eraser text-rose-400 w-4 text-center"></i> Tap a Route/Line to Delete It
                         </button>
                     </div>
-                    <p class="text-[10px] text-slate-500 italic -mt-1">Straight Line: tap to place each straight segment (e.g. a speed-out's stem then break); double-tap or hit Finish to cap it with an arrowhead. Curved Route: drag freehand for a bending path (speed-out, wheel, etc) — arrowhead added automatically when you release.</p>
+
+                    <!-- CUSTOM SAVED ROUTES QUICK SELECT -->
+                    <div id="customRoutesSection" class="space-y-1.5 pt-1 border-t border-slate-800">
+                        <span class="block text-[10px] font-bold text-amber-400 uppercase">Your Saved Custom Routes:</span>
+                        <div id="customRoutesList" class="flex flex-wrap gap-1">
+                            <span class="text-[10px] text-slate-500 italic">Draw a route, select a player, and click "+ Add Drawn Route" above to save it here!</span>
+                        </div>
+                    </div>
 
                     <button id="btnFinishStraightLine" type="button" class="hidden w-full bg-blue-600 hover:bg-blue-500 text-white p-2 rounded text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
                         <i class="fa-solid fa-flag-checkered"></i> Finish Line
@@ -648,8 +664,25 @@
                         </div>
                     </div>
 
+                    <!-- FIELD BACKGROUND COLOR & YARD NUMBERS TOGGLE -->
+                    <div class="space-y-2 pt-2 border-t border-slate-800">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-slate-300 font-semibold">Field Background:</span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="if(window.app) window.app.setFieldColor('#ffffff')" class="bg-white text-slate-900 px-2 py-0.5 rounded text-[10px] font-bold border border-slate-400">Stock White</button>
+                                <button type="button" onclick="if(window.app) window.app.setFieldColor('#064e3b')" class="bg-emerald-800 text-white px-2 py-0.5 rounded text-[10px] font-bold">Turf Green</button>
+                                <input type="color" id="fieldCustomColorPicker" value="#ffffff" onchange="if(window.app) window.app.setFieldColor(this.value)" class="w-6 h-6 rounded border-0 p-0 bg-transparent cursor-pointer" title="Custom Field Color">
+                            </div>
+                        </div>
+
+                        <label class="flex items-center gap-2 cursor-pointer pt-1">
+                            <input type="checkbox" id="chkShowYardNumbers" checked onchange="if(window.app) window.app.render()" class="rounded bg-slate-800 border-slate-700 text-emerald-600 focus:ring-0">
+                            <span class="text-xs text-slate-300 font-semibold">Show Yard Numbers on Field</span>
+                        </label>
+                    </div>
+
                     <div class="space-y-1 pt-1">
-                        <span class="text-xs text-slate-400">End Style (applies to whichever tool you draw with next):</span>
+                        <span class="text-xs text-slate-400">End Style:</span>
                         <div class="grid grid-cols-6 gap-1">
                             <button id="endStyleNone" data-endstyle="none" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer" title="Plain line, no cap">
                                 <i class="fa-solid fa-minus text-slate-300"></i>
@@ -674,8 +707,9 @@
                 </div>
 
                 <div class="space-y-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-2">
-                        <i class="fa-solid fa-shield-halved"></i> Defensive Schematics
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center justify-between">
+                        <span><i class="fa-solid fa-shield-halved"></i> Defensive Schematics</span>
+                        <button onclick="if(window.app) window.app.promptRenameFront()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-300 px-2 py-0.5 rounded cursor-pointer" title="Rename active front">Rename Front</button>
                     </h3>
 
                     <div>
@@ -690,7 +724,10 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Coverage Shell</label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-xs text-slate-400">Coverage Shell</label>
+                            <button onclick="if(window.app) window.app.promptRenameCoverage()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-300 px-2 py-0.5 rounded cursor-pointer">Rename Coverage</button>
+                        </div>
                         <select id="coverageSelect" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-1.5 text-xs">
                             <option value="Cover2">Cover 2 Zone</option>
                             <option value="Cover3">Cover 3 Match</option>
@@ -776,7 +813,11 @@
                     
                     <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col">
                         <div class="flex items-center justify-between mb-1">
-                            <h4 id="playTitle" class="font-bold text-sm text-blue-400">Play Name</h4>
+                            <!-- EDITABLE PLAY TITLE -->
+                            <div class="flex items-center gap-2 flex-1 mr-2">
+                                <h4 id="playTitle" class="font-bold text-sm text-blue-400">Play Name</h4>
+                                <input type="text" id="editPlayTitleInput" class="hidden bg-slate-900 border border-blue-500 text-white font-bold text-xs rounded px-2 py-0.5 flex-1" />
+                            </div>
                             <button id="btnEditNotes" type="button" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 px-2 py-0.5 rounded font-semibold cursor-pointer flex items-center gap-1">
                                 <i class="fa-solid fa-pen"></i> Edit
                             </button>
@@ -873,7 +914,7 @@
         </div>
     </div>
 
-    <!-- FORMATION PICKER MODAL: used by both "Add Offense" and "Add Defense" -->
+    <!-- FORMATION PICKER MODAL -->
     <div id="formationPickerModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -967,56 +1008,56 @@
 
         const DEFENSIVE_FRONTS = {
             '4-3': [
-                { id: 'DE1', label: 'DE', x: 0.38, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'DT1', label: 'DT', x: 0.45, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'DT2', label: 'DT', x: 0.55, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'DE2', label: 'DE', x: 0.62, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'WLB', label: 'W',  x: 0.32, y: 0.44, zone: 'Hook/Curl', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'MLB', label: 'M',  x: 0.50, y: 0.42, zone: 'Hook/Curl', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'SLB', label: 'S',  x: 0.68, y: 0.44, zone: 'Flat', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'CB1', label: 'CB', x: 0.10, y: 0.48, zone: 'Flat', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'CB2', label: 'CB', x: 0.90, y: 0.48, zone: 'Flat', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'FS',  label: 'FS', x: 0.35, y: 0.22, zone: 'Deep 1/2', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'SS',  label: 'SS', x: 0.65, y: 0.22, zone: 'Deep 1/2', isBlitz: false, blitzGap: 'Edge' }
+                { id: 'DE1', label: 'DE', x: 0.38, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DT1', label: 'DT', x: 0.45, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DT2', label: 'DT', x: 0.55, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'DE2', label: 'DE', x: 0.62, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'WLB', label: 'W',  x: 0.32, y: 0.44, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'MLB', label: 'M',  x: 0.50, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'SLB', label: 'S',  x: 0.68, y: 0.44, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'CB1', label: 'CB', x: 0.10, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'CB2', label: 'CB', x: 0.90, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'FS',  label: 'FS', x: 0.35, y: 0.22, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'SS',  label: 'SS', x: 0.65, y: 0.22, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' }
             ],
             '3-4': [
-                { id: 'DE1', label: 'DE', x: 0.40, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'NT',  label: 'NT', x: 0.50, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'DE2', label: 'DE', x: 0.60, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'OLB1',label: 'OLB',x: 0.32, y: 0.50, zone: 'Flat', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'ILB1',label: 'ILB',x: 0.44, y: 0.42, zone: 'Hook/Curl', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'ILB2',label: 'ILB',x: 0.56, y: 0.42, zone: 'Hook/Curl', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'OLB2',label: 'OLB',x: 0.68, y: 0.50, zone: 'Flat', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'CB1', label: 'CB', x: 0.10, y: 0.48, zone: 'Flat', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'CB2', label: 'CB', x: 0.90, y: 0.48, zone: 'Flat', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'FS',  label: 'FS', x: 0.40, y: 0.22, zone: 'Deep 1/2', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'SS',  label: 'SS', x: 0.60, y: 0.22, zone: 'Deep 1/2', isBlitz: false, blitzGap: 'Edge' }
+                { id: 'DE1', label: 'DE', x: 0.40, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'NT',  label: 'NT', x: 0.50, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DE2', label: 'DE', x: 0.60, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'OLB1',label: 'OLB',x: 0.32, y: 0.50, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'ILB1',label: 'ILB',x: 0.44, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'ILB2',label: 'ILB',x: 0.56, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'OLB2',label: 'OLB',x: 0.68, y: 0.50, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'CB1', label: 'CB', x: 0.10, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'CB2', label: 'CB', x: 0.90, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'FS',  label: 'FS', x: 0.40, y: 0.22, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'SS',  label: 'SS', x: 0.60, y: 0.22, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' }
             ],
             '4-2-5': [
-                { id: 'DE1', label: 'DE', x: 0.38, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'DT1', label: 'DT', x: 0.46, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'DT2', label: 'DT', x: 0.54, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'DE2', label: 'DE', x: 0.62, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'MLB1', label: 'LB', x: 0.42, y: 0.42, zone: 'Hook/Curl', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'MLB2', label: 'LB', x: 0.58, y: 0.42, zone: 'Hook/Curl', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'CB1', label: 'CB', x: 0.10, y: 0.48, zone: 'Flat', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'CB2', label: 'CB', x: 0.90, y: 0.48, zone: 'Flat', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'NB',  label: 'NB', x: 0.28, y: 0.46, zone: 'Seam/Hole', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'FS',  label: 'FS', x: 0.42, y: 0.20, zone: 'Deep 1/2', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'SS',  label: 'SS', x: 0.62, y: 0.20, zone: 'Deep 1/2', isBlitz: false, blitzGap: 'Edge' }
+                { id: 'DE1', label: 'DE', x: 0.38, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'DT1', label: 'DT', x: 0.46, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DT2', label: 'DT', x: 0.54, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DE2', label: 'DE', x: 0.62, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'MLB1', label: 'LB', x: 0.42, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'MLB2', label: 'LB', x: 0.58, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'CB1', label: 'CB', x: 0.10, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'CB2', label: 'CB', x: 0.90, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'NB',  label: 'NB', x: 0.28, y: 0.46, zone: 'Seam/Hole', zoneColor: '#9333ea', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'FS',  label: 'FS', x: 0.42, y: 0.20, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'SS',  label: 'SS', x: 0.62, y: 0.20, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' }
             ],
             '5-3': [
-                { id: 'DE1', label: 'DE', x: 0.34, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'DT1', label: 'DT', x: 0.42, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'NT',  label: 'NT', x: 0.50, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'DT2', label: 'DT', x: 0.58, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'DE2', label: 'DE', x: 0.66, y: 0.52, zone: 'none', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'WLB', label: 'W',  x: 0.30, y: 0.42, zone: 'Flat', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'MLB', label: 'M',  x: 0.50, y: 0.40, zone: 'Hook/Curl', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'SLB', label: 'S',  x: 0.70, y: 0.42, zone: 'Flat', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'CB1', label: 'CB', x: 0.10, y: 0.46, zone: 'Flat', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'CB2', label: 'CB', x: 0.90, y: 0.46, zone: 'Flat', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'FS',  label: 'FS', x: 0.50, y: 0.20, zone: 'Deep 1/3', isBlitz: false, blitzGap: 'Edge' }
+                { id: 'DE1', label: 'DE', x: 0.34, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'DT1', label: 'DT', x: 0.42, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'NT',  label: 'NT', x: 0.50, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DT2', label: 'DT', x: 0.58, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'DE2', label: 'DE', x: 0.66, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'WLB', label: 'W',  x: 0.30, y: 0.42, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'MLB', label: 'M',  x: 0.50, y: 0.40, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'SLB', label: 'S',  x: 0.70, y: 0.42, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'CB1', label: 'CB', x: 0.10, y: 0.46, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'CB2', label: 'CB', x: 0.90, y: 0.46, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'FS',  label: 'FS', x: 0.50, y: 0.20, zone: 'Deep 1/3', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' }
             ],
             'blank': []
         };
@@ -1127,6 +1168,9 @@
                 this.cloudUserId = null;
                 this.customOffenseFormations = [];
                 this.customDefenseFormations = [];
+                this.customRoutes = [];
+                this.renamedFronts = {};
+                this.renamedCoverages = {};
                 this.formationPickerSide = null;
                 this.folders = ['Passing', 'Running', 'Play Action', 'RPO', 'Custom'];
 
@@ -1154,6 +1198,7 @@
                 this.timeDisplay = document.getElementById('timeDisplay');
                 
                 this.playTitle = document.getElementById('playTitle');
+                this.editPlayTitleInput = document.getElementById('editPlayTitleInput');
                 this.playDesc = document.getElementById('playDesc');
                 this.qbProgression = document.getElementById('qbProgression');
                 this.stuntProtectionInfo = document.getElementById('stuntProtectionInfo');
@@ -1180,6 +1225,7 @@
                 this.routeColorPicker = document.getElementById('routeColorPicker');
                 this.defenderOptionsContainer = document.getElementById('defenderOptionsContainer');
                 this.defenderZoneSelect = document.getElementById('defenderZoneSelect');
+                this.zoneColorPicker = document.getElementById('zoneColorPicker');
                 this.chkDefenderBlitz = document.getElementById('chkDefenderBlitz');
                 this.blitzGapContainer = document.getElementById('blitzGapContainer');
                 this.blitzGapSelect = document.getElementById('blitzGapSelect');
@@ -1200,6 +1246,229 @@
 
                 this.btnFinishStraightLine = document.getElementById('btnFinishStraightLine');
                 this.customColorPicker = document.getElementById('customColorPicker');
+            }
+
+            setFieldColor(hex) {
+                this.fieldColor = hex;
+                this.render();
+            }
+
+            updateZoneColor(colorHex) {
+                if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'defense') {
+                    this.saveHistoryState();
+                    this.selectedPlayerObj.player.zoneColor = colorHex;
+                    this.render();
+                }
+            }
+
+            // AUTO-UPDATE MADDEN BASE COLORS WHEN ZONE SELECTED
+            updateDefenderZone(zoneVal) {
+                if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'defense') {
+                    this.saveHistoryState();
+                    const d = this.selectedPlayerObj.player;
+                    d.zone = zoneVal;
+                    
+                    // Madden Base Zone Colors
+                    if (zoneVal === 'Deep 1/3' || zoneVal === 'Deep 1/2') {
+                        d.zoneColor = '#1e3a8a'; // Dark Blue
+                    } else if (zoneVal === 'Hook/Curl') {
+                        d.zoneColor = '#16a34a'; // Green
+                    } else if (zoneVal === 'Curl/Flat') {
+                        d.zoneColor = '#9333ea'; // Purple
+                    } else if (zoneVal === 'Flat') {
+                        d.zoneColor = '#38bdf8'; // Light Blue
+                    } else if (zoneVal === 'none') {
+                        d.zoneColor = '#6b7280'; // Grey (Man to Man)
+                    }
+
+                    if (this.zoneColorPicker) this.zoneColorPicker.value = d.zoneColor;
+                    this.render();
+                }
+            }
+
+            toggleDefenderBlitz(isBlitz) {
+                if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'defense') {
+                    this.saveHistoryState();
+                    const d = this.selectedPlayerObj.player;
+                    d.isBlitz = isBlitz;
+                    this.blitzGapContainer.classList.toggle('hidden', !isBlitz);
+                    if (isBlitz) {
+                        d.zone = 'none';
+                        d.zoneColor = '#ef4444'; // Red for Blitz
+                        this.defenderZoneSelect.value = 'none';
+                    }
+                    this.render();
+                }
+            }
+
+            updateBlitzGap(gapVal) {
+                if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'defense') {
+                    this.saveHistoryState();
+                    this.selectedPlayerObj.player.blitzGap = gapVal;
+                    this.render();
+                }
+            }
+
+            // CUSTOM ROUTE PRESET LIBRARY SAVING
+            promptAddCustomRoute() {
+                if (this.drawnLines.length === 0) {
+                    alert('Draw a route on the field first using the drawing tools before adding it to your library.');
+                    return;
+                }
+                const routeName = prompt('Name this custom route (e.g. Slant-N-Go, Whip Route):');
+                if (!routeName || !routeName.trim()) return;
+
+                const latestLine = this.drawnLines[this.drawnLines.length - 1];
+                const customRouteObj = {
+                    id: 'croute_' + Date.now(),
+                    name: routeName.trim(),
+                    line: JSON.parse(JSON.stringify(latestLine))
+                };
+
+                this.customRoutes.push(customRouteObj);
+                this.saveCustomRoutesStorage();
+                this.renderCustomRoutesUI();
+                alert(`Route "${routeName.trim()}" added to your custom route library!`);
+            }
+
+            saveCustomRoutesStorage() {
+                try {
+                    localStorage.setItem('chalkboard_custom_routes_' + this.profileKey, JSON.stringify(this.customRoutes));
+                } catch(e){}
+            }
+
+            loadCustomRoutesStorage() {
+                try {
+                    const saved = localStorage.getItem('chalkboard_custom_routes_' + this.profileKey);
+                    this.customRoutes = saved ? JSON.parse(saved) : [];
+                } catch(e) {
+                    this.customRoutes = [];
+                }
+                this.renderCustomRoutesUI();
+            }
+
+            renderCustomRoutesUI() {
+                const list = document.getElementById('customRoutesList');
+                if (!list) return;
+                list.innerHTML = '';
+
+                if (this.customRoutes.length === 0) {
+                    list.innerHTML = '<span class="text-[10px] text-slate-500 italic">No custom routes saved yet. Draw a route and click above to save!</span>';
+                    return;
+                }
+
+                this.customRoutes.forEach(cr => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 px-2 py-1 rounded text-[10px] font-semibold flex items-center gap-1 cursor-pointer';
+                    btn.innerHTML = `<i class="fa-solid fa-route"></i> ${cr.name}`;
+                    btn.addEventListener('click', () => {
+                        this.saveHistoryState();
+                        const clonedLine = JSON.parse(JSON.stringify(cr.line));
+                        this.drawnLines.push(clonedLine);
+                        this.render();
+                    });
+                    list.appendChild(btn);
+                });
+            }
+
+            // RENAME FRONTS & COVERAGES WITH PERSISTENCE
+            promptRenameFront() {
+                const currentVal = this.selectedFront;
+                const newName = prompt(`Rename defensive front "${currentVal}":`, currentVal);
+                if (!newName || !newName.trim()) return;
+                const clean = newName.trim();
+                
+                this.renamedFronts[currentVal] = clean;
+                this.saveSchematicRenames();
+                this.updateFrontSelectOptions();
+                this.selectedFront = clean;
+                this.frontSelect.value = clean;
+            }
+
+            promptRenameCoverage() {
+                const currentVal = this.selectedCoverage;
+                const newName = prompt(`Rename coverage shell "${currentVal}":`, currentVal);
+                if (!newName || !newName.trim()) return;
+                const clean = newName.trim();
+
+                this.renamedCoverages[currentVal] = clean;
+                this.saveSchematicRenames();
+                this.updateCoverageSelectOptions();
+                this.selectedCoverage = clean;
+                this.coverageSelect.value = clean;
+            }
+
+            saveSchematicRenames() {
+                try {
+                    localStorage.setItem('chalkboard_renamed_fronts_' + this.profileKey, JSON.stringify(this.renamedFronts));
+                    localStorage.setItem('chalkboard_renamed_coverages_' + this.profileKey, JSON.stringify(this.renamedCoverages));
+                } catch(e){}
+            }
+
+            loadSchematicRenames() {
+                try {
+                    const f = localStorage.getItem('chalkboard_renamed_fronts_' + this.profileKey);
+                    const c = localStorage.getItem('chalkboard_renamed_coverages_' + this.profileKey);
+                    if (f) this.renamedFronts = JSON.parse(f);
+                    if (c) this.renamedCoverages = JSON.parse(c);
+                    this.updateFrontSelectOptions();
+                    this.updateCoverageSelectOptions();
+                } catch(e){}
+            }
+
+            updateFrontSelectOptions() {
+                if (!this.frontSelect) return;
+                const val = this.frontSelect.value;
+                this.frontSelect.innerHTML = `
+                    <option value="4-3">${this.renamedFronts['4-3'] || '4-3 Over (4 DL, 3 LB)'}</option>
+                    <option value="3-4">${this.renamedFronts['3-4'] || '3-4 Odd (3 DL, 4 LB)'}</option>
+                    <option value="4-2-5">${this.renamedFronts['4-2-5'] || '4-2-5 Nickel (4 DL, 2 LB, 5 DB)'}</option>
+                    <option value="5-3">${this.renamedFronts['5-3'] || '5-3 Bear (5 DL, 3 LB)'}</option>
+                    <option value="Custom">${this.renamedFronts['Custom'] || 'Custom Drag-and-Drop Front'}</option>
+                `;
+                this.frontSelect.value = val;
+            }
+
+            updateCoverageSelectOptions() {
+                if (!this.coverageSelect) return;
+                const val = this.coverageSelect.value;
+                this.coverageSelect.innerHTML = `
+                    <option value="Cover2">${this.renamedCoverages['Cover2'] || 'Cover 2 Zone'}</option>
+                    <option value="Cover3">${this.renamedCoverages['Cover3'] || 'Cover 3 Match'}</option>
+                    <option value="Cover4">${this.renamedCoverages['Cover4'] || 'Cover 4 Quarters'}</option>
+                    <option value="Cover1">${this.renamedCoverages['Cover1'] || 'Cover 1 Man Free'}</option>
+                    <option value="Cover0">${this.renamedCoverages['Cover0'] || 'Cover 0 Blitz'}</option>
+                `;
+                this.coverageSelect.value = val;
+            }
+
+            // MOVE PLAYS BETWEEN FOLDERS
+            updateMovePlayFolderSelect() {
+                const sel = document.getElementById('movePlayFolderSelect');
+                if (!sel) return;
+                sel.innerHTML = '';
+                this.folders.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f;
+                    opt.textContent = f;
+                    if (this.currentPlay && (this.currentPlay.category || 'Custom') === f) {
+                        opt.selected = true;
+                    }
+                    sel.appendChild(opt);
+                });
+            }
+
+            moveCurrentPlayToFolder(targetFolder) {
+                if (!this.currentPlay) return;
+                this.currentPlay.category = targetFolder;
+                const idx = this.plays.findIndex(p => p.id === this.currentPlay.id);
+                if (idx !== -1) {
+                    this.plays[idx].category = targetFolder;
+                }
+                this.savePlays();
+                this.populatePlaySelect();
+                alert(`Play moved to folder "${targetFolder}" successfully!`);
             }
 
             flipPlay() {
@@ -1229,7 +1498,6 @@
 
             exportPlaycard() {
                 if (!this.canvas) return;
-
                 this.render();
 
                 const cardCanvas = document.createElement('canvas');
@@ -1406,7 +1674,7 @@
                 } else {
                     if (!this.currentDefense) this.currentDefense = [];
                     const spot = this.findFreeSpawnSpot('defense', 0.50, 0.45);
-                    const d = { id: newId, label: label, x: spot.x, y: spot.y, zone: 'none', isBlitz: false, blitzGap: 'A-Gap' };
+                    const d = { id: newId, label: label, x: spot.x, y: spot.y, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' };
                     this.currentDefense.push(d);
                     this.inspectPlayer('defense', d);
                 }
@@ -1470,49 +1738,19 @@
                         if (rbPanel) rbPanel.classList.toggle('hidden', !isRB);
                         if (stdPanel) stdPanel.classList.toggle('hidden', isRB);
                     } else {
-                        // DEFENDER INSPECTOR
                         wrReleaseContainer.classList.add('hidden');
                         if (stdPanel) stdPanel.classList.add('hidden');
                         if (rbPanel) rbPanel.classList.add('hidden');
                         this.defenderOptionsContainer.classList.remove('hidden');
 
                         this.defenderZoneSelect.value = p.zone || 'none';
+                        if (this.zoneColorPicker) this.zoneColorPicker.value = p.zoneColor || '#1e3a8a';
                         this.chkDefenderBlitz.checked = !!p.isBlitz;
                         this.blitzGapContainer.classList.toggle('hidden', !p.isBlitz);
                         this.blitzGapSelect.value = p.blitzGap || 'A-Gap';
                     }
                 }
                 this.render();
-            }
-
-            updateDefenderZone(zoneVal) {
-                if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'defense') {
-                    this.saveHistoryState();
-                    this.selectedPlayerObj.player.zone = zoneVal;
-                    this.render();
-                }
-            }
-
-            toggleDefenderBlitz(isBlitz) {
-                if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'defense') {
-                    this.saveHistoryState();
-                    const d = this.selectedPlayerObj.player;
-                    d.isBlitz = isBlitz;
-                    this.blitzGapContainer.classList.toggle('hidden', !isBlitz);
-                    if (isBlitz) {
-                        d.zone = 'none';
-                        this.defenderZoneSelect.value = 'none';
-                    }
-                    this.render();
-                }
-            }
-
-            updateBlitzGap(gapVal) {
-                if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'defense') {
-                    this.saveHistoryState();
-                    this.selectedPlayerObj.player.blitzGap = gapVal;
-                    this.render();
-                }
             }
 
             deselectPlayer() {
@@ -1895,6 +2133,11 @@
                 if (!this.currentPlay) return;
                 const editing = !this.editPlayDesc.classList.contains('hidden');
                 if (!editing) {
+                    // Enter Edit Mode for Title and Notes
+                    this.editPlayTitleInput.value = this.currentPlay.name || '';
+                    this.playTitle.classList.add('hidden');
+                    this.editPlayTitleInput.classList.remove('hidden');
+
                     this.editPlayDesc.value = this.currentPlay.desc || '';
                     this.editQbProgression.value = (this.currentPlay.qbKeys || []).join('\n');
                     this.editCoachNotes.value = this.currentPlay.coachNotes || '';
@@ -1909,6 +2152,9 @@
                     this.btnSaveNotes.classList.remove('hidden');
                     this.btnEditNotes.innerHTML = '<i class="fa-solid fa-xmark"></i> Cancel';
                 } else {
+                    this.playTitle.classList.remove('hidden');
+                    this.editPlayTitleInput.classList.add('hidden');
+
                     this.playDesc.classList.remove('hidden');
                     this.qbProgression.classList.remove('hidden');
                     this.coachNotesDisplay.classList.remove('hidden');
@@ -1925,12 +2171,23 @@
                 if (!this.currentPlay) return;
                 this.saveHistoryState();
 
+                const newTitle = this.editPlayTitleInput.value.trim();
+                if (newTitle) {
+                    this.currentPlay.name = newTitle;
+                    this.playTitle.textContent = newTitle;
+                    this.populatePlaySelect();
+                    this.playSelect.value = this.currentPlay.id;
+                }
+
                 this.currentPlay.desc = this.editPlayDesc.value.trim();
                 this.currentPlay.qbKeys = this.editQbProgression.value
                     .split('\n')
                     .map(s => s.trim())
                     .filter(s => s.length > 0);
                 this.currentPlay.coachNotes = this.editCoachNotes.value.trim();
+
+                this.playTitle.classList.remove('hidden');
+                this.editPlayTitleInput.classList.add('hidden');
 
                 this.playDesc.textContent = this.currentPlay.desc || 'Custom Tactical Play Alignment';
                 this.qbProgression.innerHTML = '';
@@ -1950,6 +2207,7 @@
                 this.editCoachNotes.classList.add('hidden');
                 this.btnSaveNotes.classList.add('hidden');
                 this.btnEditNotes.innerHTML = '<i class="fa-solid fa-pen"></i> Edit';
+                this.savePlays();
             }
 
             updateCoachRoleUI() {
@@ -2024,7 +2282,7 @@
                 const level = document.getElementById('signupLevel').value || 'highschool';
                 const team = document.getElementById('signupTeam').value.trim() || 'Program';
                 const philosophy = document.getElementById('signupPhilosophy').value;
-                this.coachRole = philosophy === 'pro' || philosophy === 'westcoast' ? 'offensive' : 'offensive';
+                this.coachRole = philosophy || 'offensive';
 
                 if (!window.ChalkboardCloud) {
                     errEl.textContent = 'Cloud sign-up is unavailable right now (offline?). Try Quick Start instead.';
@@ -2102,6 +2360,8 @@
                 this.profileKey = cloudUser ? ('cloud_' + cloudUser.uid) : this.slugify(name);
                 await this.loadPlaysForProfile();
                 this.loadFoldersForProfile();
+                this.loadCustomRoutesStorage();
+                this.loadSchematicRenames();
 
                 const subtext = document.getElementById('folderScreenSubtitle');
                 if (subtext) subtext.textContent = `${name || 'Coach'} • ${team || 'Program'} • Select a Folder`;
@@ -2186,7 +2446,6 @@
                 this.initCanvas();
                 this.populatePlaySelect();
 
-                // Find first play in this folder or create one if empty
                 const matchingPlays = this.plays.filter(p => (p.category || 'Custom') === folderName);
                 if (matchingPlays.length > 0) {
                     this.loadPlay(matchingPlays[0].id);
@@ -2232,6 +2491,7 @@
                     opt.textContent = `[${p.category || 'Custom'}] ${p.name}`;
                     this.playSelect.appendChild(opt);
                 });
+                this.updateMovePlayFolderSelect();
             }
 
             initCanvas() {
@@ -2255,6 +2515,7 @@
                 if (found) {
                     this.currentPlay = JSON.parse(JSON.stringify(found));
                     this.playTitle.textContent = this.currentPlay.name;
+                    if (this.editPlayTitleInput) this.editPlayTitleInput.value = this.currentPlay.name;
                     this.playDesc.textContent = this.currentPlay.desc || 'Custom Tactical Play Alignment';
                     this.updateCoachRoleUI();
                     
@@ -2272,6 +2533,7 @@
                     this.autoAlignCoverageIfNeeded();
                     this.checkFormationValidity();
                     this.resetAnimation();
+                    this.updateMovePlayFolderSelect();
                 }
             }
 
@@ -2358,7 +2620,7 @@
                         return;
                     }
 
-                    const confirmed = confirm(`Import ${incoming.length} play(s) into your current playbook? They'll be added alongside your existing plays (nothing gets overwritten).`);
+                    const confirmed = confirm(`Import ${incoming.length} play(s) into your current playbook? They'll be added alongside your existing plays.`);
                     if (!confirmed) return;
 
                     incoming.forEach(p => {
@@ -2613,18 +2875,21 @@
                     this.render();
                 });
 
+                // SAVE PLAY / SAVE NEW COPY LOGIC:
                 document.getElementById('btnSavePlay').addEventListener('click', () => {
                     const idx = this.plays.findIndex(p => p.id === this.currentPlay.id);
                     if (idx !== -1) {
                         this.plays[idx] = JSON.parse(JSON.stringify(this.currentPlay));
+                    } else {
+                        this.plays.push(JSON.parse(JSON.stringify(this.currentPlay)));
                     }
                     this.savePlays();
-                    alert('Play saved to local playbook storage!');
+                    alert('Play and custom routes/coverages saved successfully!');
                 });
 
                 document.getElementById('btnDeletePlay').addEventListener('click', () => {
                     if (this.plays.length > 1 && this.currentPlay) {
-                        const confirmed = confirm(`Permanently delete "${this.currentPlay.name}"? This cannot be undone once you leave this play.`);
+                        const confirmed = confirm(`Permanently delete "${this.currentPlay.name}"? This cannot be undone.`);
                         if (!confirmed) return;
                         this.plays = this.plays.filter(p => p.id !== this.currentPlay.id);
                         this.savePlays();
@@ -2811,7 +3076,6 @@
                 const w = this.canvas.width;
                 const h = this.canvas.height;
 
-                // Make field stock white or coach-selected custom color
                 this.ctx.fillStyle = this.fieldColor || '#ffffff';
                 this.ctx.fillRect(0, 0, w, h);
 
@@ -2827,7 +3091,11 @@
                 }
 
                 this.renderHashMarks(w, h, numYardLines);
-                this.renderYardNumbers(w, h, numYardLines);
+                
+                const showNumbersChk = document.getElementById('chkShowYardNumbers');
+                if (!showNumbersChk || showNumbersChk.checked) {
+                    this.renderYardNumbers(w, h, numYardLines);
+                }
 
                 const losY = h * 0.58;
                 const fdY = h * 0.35;
@@ -2899,12 +3167,11 @@
                         let pos = { x: this.getAdjustedX(d.x, w), y: d.y * h };
                         const isSelected = this.selectedPlayerObj && this.selectedPlayerObj.player.id === d.id;
 
-                        // RENDER DEFENSIVE ZONES IF SELECTED OR ACTIVE
+                        // RENDER MADDEN ZONES & BLITZ
                         if (d.zone && d.zone !== 'none') {
-                            this.renderDefensiveZone(pos.x, pos.y, d.zone, w, h);
+                            this.renderDefensiveZone(pos.x, pos.y, d.zone, d.zoneColor || '#1e3a8a', w, h);
                         }
 
-                        // RENDER BLITZ ARROW IF BLITZ IS ACTIVE
                         if (d.isBlitz) {
                             let targetY = losY;
                             let targetX = pos.x;
@@ -2912,7 +3179,7 @@
                             else if (d.blitzGap === 'B-Gap') targetX = pos.x < w * 0.5 ? w * 0.44 : w * 0.56;
                             else if (d.blitzGap === 'C-Gap') targetX = pos.x < w * 0.5 ? w * 0.38 : w * 0.62;
 
-                            this.ctx.strokeStyle = '#ef4444';
+                            this.ctx.strokeStyle = '#ef4444'; // Red for blitz
                             this.ctx.lineWidth = 3;
                             this.ctx.setLineDash([4, 4]);
                             this.ctx.beginPath();
@@ -3029,10 +3296,16 @@
                 this.renderTelestrator();
             }
 
-            renderDefensiveZone(x, y, zoneType, w, h) {
+            renderDefensiveZone(x, y, zoneType, colorHex, w, h) {
                 this.ctx.save();
-                this.ctx.fillStyle = 'rgba(239, 68, 68, 0.12)';
-                this.ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+                let r = 30, g = 58, b = 138;
+                if (colorHex && colorHex.startsWith('#') && colorHex.length === 7) {
+                    r = parseInt(colorHex.slice(1, 3), 16);
+                    g = parseInt(colorHex.slice(3, 5), 16);
+                    b = parseInt(colorHex.slice(5, 7), 16);
+                }
+                this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.18)`;
+                this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.6)`;
                 this.ctx.lineWidth = 1.5;
                 this.ctx.setLineDash([3, 3]);
 
@@ -3057,10 +3330,6 @@
             }
 
             renderHashMarks(w, h, numLines) {
-                // ACCURATE FIELD LEVEL WIDTHS & HASHES AS LABELED:
-                // High School = wide hashes (approx 53ft from sidelines)
-                // College = mid hashes (approx 60ft apart)
-                // NFL = narrow hashes (approx 18ft 6in apart)
                 let leftHashX, rightHashX;
                 if (this.selectedLevel === 'highschool') {
                     leftHashX = w * 0.33;
@@ -3069,7 +3338,6 @@
                     leftHashX = w * 0.40;
                     rightHashX = w * 0.60;
                 } else {
-                    // NFL Narrow hashes
                     leftHashX = w * 0.465;
                     rightHashX = w * 0.535;
                 }
@@ -3107,7 +3375,7 @@
 
             renderYardNumbers(w, h, numLines) {
                 const labels = ['10', '20', '30', '40', '50', '40', '30', '20', '10'];
-                this.ctx.font = 'bold 20px system-ui';
+                this.ctx.font = 'bold 18px system-ui';
                 this.ctx.textBaseline = 'middle';
                 this.ctx.lineWidth = 1.5;
                 this.ctx.strokeStyle = '#9ca3af';
@@ -3118,10 +3386,10 @@
                     if (!label) continue;
 
                     this.ctx.textAlign = 'left';
-                    this.ctx.strokeText(label, 6, y);
+                    this.ctx.strokeText(label, w * 0.05, y);
 
                     this.ctx.textAlign = 'right';
-                    this.ctx.strokeText(label, w - 6, y);
+                    this.ctx.strokeText(label, w * 0.95, y);
                 }
             }
 
