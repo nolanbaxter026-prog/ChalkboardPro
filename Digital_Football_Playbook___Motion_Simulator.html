@@ -316,6 +316,9 @@
                 <button id="btnSavePlay" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
                     <i class="fa-solid fa-floppy-disk"></i> Save Play
                 </button>
+                <button id="btnSaveAsNewCopy" type="button" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer" title="Save Edited Play as a New Copy">
+                    <i class="fa-solid fa-copy"></i> Save as New Copy
+                </button>
                 <button id="btnDeletePlay" type="button" class="bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
                     <i class="fa-solid fa-trash"></i> Delete
                 </button>
@@ -388,12 +391,7 @@
                         <span class="text-[10px] text-slate-500 font-semibold">Folder Filter</span>
                     </div>
                     <select id="categoryFilterSelect" class="w-full bg-slate-950 border border-slate-700 text-amber-300 font-bold rounded p-1.5 text-xs focus:outline-none">
-                        <option value="ALL" selected>📁 All Folders / Schemes</option>
-                        <option value="Passing">Passing Plays</option>
-                        <option value="Running">Run Game</option>
-                        <option value="Play Action">Play-Action Shots</option>
-                        <option value="RPO">RPO Concepts</option>
-                        <option value="Custom">Custom Installs</option>
+                        <!-- Dynamically populated including custom folders -->
                     </select>
 
                     <select id="playSelect" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2 text-sm font-medium focus:outline-none focus:border-blue-500">
@@ -411,10 +409,13 @@
                     <p class="text-[10px] text-slate-500 italic">This app only saves to this browser, on this device — no cloud sync. Backup regularly, or Restore that file on another device to bring your plays with you.</p>
                 </div>
 
-                <!-- CLEAR FIELD ELEMENTS BUTTON -->
+                <!-- CLEAR FIELD ELEMENTS & FIELD MARKS TOGGLE -->
                 <div class="space-y-1.5">
                     <button id="btnClearFieldOnly" type="button" class="w-full bg-amber-950/90 hover:bg-amber-900 active:bg-amber-950 text-amber-200 border border-amber-800 p-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm">
                         <i class="fa-solid fa-eraser text-amber-400"></i> Clear Field Marks Only (Keep Players)
+                    </button>
+                    <button id="btnRestoreFieldMarks" type="button" class="w-full bg-emerald-950/90 hover:bg-emerald-900 active:bg-emerald-950 text-emerald-200 border border-emerald-800 p-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm">
+                        <i class="fa-solid fa-eye text-emerald-400"></i> Add Field Marks Back
                     </button>
                 </div>
 
@@ -426,6 +427,17 @@
                     <div class="grid grid-cols-2 gap-1.5">
                         <button id="btnClearOffense" type="button" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1.5 rounded text-[11px] font-semibold">Clear Offense</button>
                         <button id="btnClearDefense" type="button" class="bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 py-1.5 rounded text-[11px] font-semibold">Clear Defense</button>
+                    </div>
+                </div>
+
+                <!-- ADD SAVED FORMATIONS PANEL (Spawns custom saved formations instantly!) -->
+                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center justify-between">
+                        <span><i class="fa-solid fa-layer-group"></i> Add Saved Formations</span>
+                        <span class="text-[10px] text-slate-500 font-normal">Quick Spawn</span>
+                    </h3>
+                    <div id="savedFormationsSpawnList" class="space-y-1.5">
+                        <span class="text-[10px] text-slate-500 italic">No saved formations yet. Set up players on the field, then tap "Save Current as New" below.</span>
                     </div>
                 </div>
 
@@ -885,11 +897,7 @@
                 <div>
                     <label class="block text-slate-300 font-semibold mb-1">Play Category / Folder</label>
                     <select id="modalCategory" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2">
-                        <option value="Passing">Passing Play</option>
-                        <option value="Running">Run Game</option>
-                        <option value="Play Action">Play-Action</option>
-                        <option value="RPO">RPO Concept</option>
-                        <option value="Custom">Custom Scheme</option>
+                        <!-- Dynamically populated including custom folders -->
                     </select>
                 </div>
 
@@ -1169,8 +1177,8 @@
 
                 this.isDrawingStraightLine = false;
                 this.straightLinePoints = [];
-                this.lastTapTime = 0;
                 this.lastTapPos = null;
+                this.lastTapTime = 0;
 
                 this.spawnCounter = 0;
                 this.cloudUserId = null;
@@ -1269,24 +1277,22 @@
                 }
             }
 
-            // AUTO-UPDATE MADDEN BASE COLORS WHEN ZONE SELECTED
             updateDefenderZone(zoneVal) {
                 if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'defense') {
                     this.saveHistoryState();
                     const d = this.selectedPlayerObj.player;
                     d.zone = zoneVal;
                     
-                    // Madden Base Zone Colors
                     if (zoneVal === 'Deep 1/3' || zoneVal === 'Deep 1/2') {
-                        d.zoneColor = '#1e3a8a'; // Dark Blue
+                        d.zoneColor = '#1e3a8a';
                     } else if (zoneVal === 'Hook/Curl') {
-                        d.zoneColor = '#16a34a'; // Green
+                        d.zoneColor = '#16a34a';
                     } else if (zoneVal === 'Curl/Flat') {
-                        d.zoneColor = '#9333ea'; // Purple
+                        d.zoneColor = '#9333ea';
                     } else if (zoneVal === 'Flat') {
-                        d.zoneColor = '#38bdf8'; // Light Blue
+                        d.zoneColor = '#38bdf8';
                     } else if (zoneVal === 'none') {
-                        d.zoneColor = '#6b7280'; // Grey (Man to Man)
+                        d.zoneColor = '#6b7280';
                     }
 
                     if (this.zoneColorPicker) this.zoneColorPicker.value = d.zoneColor;
@@ -1302,7 +1308,7 @@
                     this.blitzGapContainer.classList.toggle('hidden', !isBlitz);
                     if (isBlitz) {
                         d.zone = 'none';
-                        d.zoneColor = '#ef4444'; // Red for Blitz
+                        d.zoneColor = '#ef4444';
                         this.defenderZoneSelect.value = 'none';
                     }
                     this.render();
@@ -1317,7 +1323,6 @@
                 }
             }
 
-            // CUSTOM ROUTE PRESET LIBRARY SAVING
             promptAddCustomRoute() {
                 if (this.drawnLines.length === 0) {
                     alert('Draw a route on the field first using the drawing tools before adding it to your library.');
@@ -1380,7 +1385,6 @@
                 });
             }
 
-            // RENAME FRONTS & COVERAGES WITH PERSISTENCE
             promptRenameFront() {
                 const currentVal = this.selectedFront;
                 const newName = prompt(`Rename defensive front "${currentVal}":`, currentVal);
@@ -1451,20 +1455,51 @@
                 this.coverageSelect.value = val;
             }
 
-            // MOVE PLAYS BETWEEN FOLDERS
+            updateCategoryDropdowns() {
+                const catSelects = [this.categoryFilterSelect, document.getElementById('modalCategory')];
+                catSelects.forEach(sel => {
+                    if (!sel) return;
+                    const currentVal = sel.value;
+                    const isFilter = sel.id === 'categoryFilterSelect';
+                    sel.innerHTML = '';
+
+                    if (isFilter) {
+                        const allOpt = document.createElement('option');
+                        allOpt.value = 'ALL';
+                        allOpt.textContent = '📁 All Folders / Schemes';
+                        sel.appendChild(allOpt);
+                    }
+
+                    this.folders.forEach(f => {
+                        const opt = document.createElement('option');
+                        opt.value = f;
+                        opt.textContent = f;
+                        sel.appendChild(opt);
+                    });
+
+                    if (Array.from(sel.options).some(o => o.value === currentVal)) {
+                        sel.value = currentVal;
+                    }
+                });
+                this.updateMovePlayFolderSelect();
+            }
+
             updateMovePlayFolderSelect() {
                 const sel = document.getElementById('movePlayFolderSelect');
                 if (!sel) return;
+                const currentVal = sel.value;
                 sel.innerHTML = '';
                 this.folders.forEach(f => {
                     const opt = document.createElement('option');
                     opt.value = f;
                     opt.textContent = f;
-                    if (this.currentPlay && (this.currentPlay.category || 'Custom') === f) {
-                        opt.selected = true;
-                    }
                     sel.appendChild(opt);
                 });
+                if (this.currentPlay && (this.currentPlay.category || 'Custom')) {
+                    sel.value = this.currentPlay.category;
+                } else if (currentVal) {
+                    sel.value = currentVal;
+                }
             }
 
             moveCurrentPlayToFolder(targetFolder) {
@@ -1710,7 +1745,13 @@
 
             clearFieldMarksOnly() {
                 this.saveHistoryState();
-                this.clearFieldOnlyMarks = !this.clearFieldOnlyMarks;
+                this.clearFieldOnlyMarks = true;
+                this.render();
+            }
+
+            restoreFieldMarks() {
+                this.saveHistoryState();
+                this.clearFieldOnlyMarks = false;
                 this.render();
             }
 
@@ -2111,6 +2152,7 @@
                     this.saveCustomFormations('defense');
                 }
                 this.renderFormationPickerLists();
+                this.renderSavedFormationsSidebar();
             }
 
             deleteCustomFormation(side, id) {
@@ -2123,6 +2165,7 @@
                     this.saveCustomFormations('defense');
                 }
                 this.renderFormationPickerLists();
+                this.renderSavedFormationsSidebar();
             }
 
             saveCustomFormations(side) {
@@ -2145,13 +2188,52 @@
                     this.customOffenseFormations = [];
                     this.customDefenseFormations = [];
                 }
+                this.renderSavedFormationsSidebar();
+            }
+
+            renderSavedFormationsSidebar() {
+                const container = document.getElementById('savedFormationsSpawnList');
+                if (!container) return;
+                container.innerHTML = '';
+
+                const allSaved = [
+                    ...this.customOffenseFormations.map(f => ({ ...f, type: 'offense' })),
+                    ...this.customDefenseFormations.map(f => ({ ...f, type: 'defense' }))
+                ];
+
+                if (allSaved.length === 0) {
+                    container.innerHTML = '<span class="text-[10px] text-slate-500 italic">No saved formations yet. Set up players on the field, then tap "Save Current as New" in the formation menu.</span>';
+                    return;
+                }
+
+                allSaved.forEach(fm => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'w-full text-left bg-slate-900 hover:bg-slate-880 border border-slate-700 px-2.5 py-1.5 rounded text-xs text-slate-200 flex items-center justify-between cursor-pointer';
+                    btn.innerHTML = `
+                        <span class="truncate font-semibold"><i class="fa-solid fa-folder-plus text-emerald-400 mr-1.5"></i>${fm.name}</span>
+                        <span class="text-[9px] uppercase px-1.5 py-0.5 rounded ${fm.type === 'offense' ? 'bg-blue-950 text-blue-300' : 'bg-rose-950 text-rose-300'}">${fm.type}</span>
+                    `;
+                    btn.addEventListener('click', () => {
+                        this.saveHistoryState();
+                        if (fm.type === 'offense') {
+                            this.currentPlay.offense = JSON.parse(JSON.stringify(fm.players));
+                            this.autoAlignCoverageIfNeeded();
+                            this.checkFormationValidity();
+                        } else {
+                            this.currentDefense = JSON.parse(JSON.stringify(fm.players));
+                        }
+                        this.deselectPlayer();
+                        this.render();
+                    });
+                    container.appendChild(btn);
+                });
             }
 
             toggleEditNotes() {
                 if (!this.currentPlay) return;
                 const editing = !this.editPlayDesc.classList.contains('hidden');
                 if (!editing) {
-                    // Enter Edit Mode for Title and Notes
                     this.editPlayTitleInput.value = this.currentPlay.name || '';
                     this.playTitle.classList.add('hidden');
                     this.editPlayTitleInput.classList.remove('hidden');
@@ -2423,7 +2505,7 @@
             }
 
             openNewFolderPrompt() {
-                const folderName = prompt('Enter new folder name (e.g. Red Zone Offense, Blitz Packages):');
+                const folderName = prompt('Enter new folder name (e.g. Formations, Red Zone Offense, Blitz Packages):');
                 if (!folderName || !folderName.trim()) return;
                 const cleanName = folderName.trim();
                 if (this.folders.includes(cleanName)) {
@@ -2432,6 +2514,7 @@
                 }
                 this.folders.push(cleanName);
                 this.saveFoldersForProfile();
+                this.updateCategoryDropdowns();
                 this.renderFolderGrid();
             }
 
@@ -2446,6 +2529,7 @@
                 } catch (e) {
                     this.folders = ['Passing', 'Running', 'Play Action', 'RPO', 'Custom'];
                 }
+                this.updateCategoryDropdowns();
             }
 
             saveFoldersForProfile() {
@@ -2832,6 +2916,7 @@
 
                 document.getElementById('btnClearAllPlayers').addEventListener('click', () => this.clearAllPlayers());
                 document.getElementById('btnClearFieldOnly').addEventListener('click', () => this.clearFieldMarksOnly());
+                document.getElementById('btnRestoreFieldMarks').addEventListener('click', () => this.restoreFieldMarks());
                 document.getElementById('btnClearOffense').addEventListener('click', () => this.clearOffenseOnly());
                 document.getElementById('btnClearDefense').addEventListener('click', () => this.clearDefenseOnly());
 
@@ -2894,7 +2979,7 @@
                     this.render();
                 });
 
-                // SAVE PLAY / SAVE NEW COPY LOGIC:
+                // SAVE PLAY BUTTON: Updates current play in place
                 document.getElementById('btnSavePlay').addEventListener('click', () => {
                     const idx = this.plays.findIndex(p => p.id === this.currentPlay.id);
                     if (idx !== -1) {
@@ -2903,7 +2988,24 @@
                         this.plays.push(JSON.parse(JSON.stringify(this.currentPlay)));
                     }
                     this.savePlays();
-                    alert('Play and custom routes/coverages saved successfully!');
+                    alert('Play saved successfully!');
+                });
+
+                // SAVE AS NEW COPY BUTTON: Creates a brand new play copy (great for editing a formation play and saving it with routes into a playbook folder!)
+                document.getElementById('btnSaveAsNewCopy').addEventListener('click', () => {
+                    const newName = prompt('Enter name for this new play copy:', (this.currentPlay.name || 'Play') + ' (Copy)');
+                    if (!newName || !newName.trim()) return;
+
+                    const newPlayObj = JSON.parse(JSON.stringify(this.currentPlay));
+                    newPlayObj.id = 'play_' + Date.now();
+                    newPlayObj.name = newName.trim();
+
+                    this.plays.push(newPlayObj);
+                    this.savePlays();
+                    this.populatePlaySelect();
+                    this.playSelect.value = newPlayObj.id;
+                    this.loadPlay(newPlayObj.id);
+                    alert(`Created new play copy "${newPlayObj.name}" in folder "${newPlayObj.category}"!`);
                 });
 
                 document.getElementById('btnDeletePlay').addEventListener('click', () => {
@@ -3188,7 +3290,6 @@
                         let pos = { x: this.getAdjustedX(d.x, w), y: d.y * h };
                         const isSelected = this.selectedPlayerObj && this.selectedPlayerObj.player.id === d.id;
 
-                        // RENDER MADDEN ZONES & BLITZ
                         if (d.zone && d.zone !== 'none') {
                             this.renderDefensiveZone(pos.x, pos.y, d.zone, d.zoneColor || '#1e3a8a', w, h);
                         }
@@ -3200,7 +3301,7 @@
                             else if (d.blitzGap === 'B-Gap') targetX = pos.x < w * 0.5 ? w * 0.44 : w * 0.56;
                             else if (d.blitzGap === 'C-Gap') targetX = pos.x < w * 0.5 ? w * 0.38 : w * 0.62;
 
-                            this.ctx.strokeStyle = '#ef4444'; // Red for blitz
+                            this.ctx.strokeStyle = '#ef4444';
                             this.ctx.lineWidth = 3;
                             this.ctx.setLineDash([4, 4]);
                             this.ctx.beginPath();
