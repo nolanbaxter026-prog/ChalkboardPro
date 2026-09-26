@@ -94,9 +94,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
 
-    <!-- ========================================== -->
-    <!-- 1. LANDING & PROFILE SELECTION SCREEN      -->
-    <!-- ========================================== -->
+    <!-- LANDING & PROFILE SELECTION SCREEN -->
     <div id="authScreen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-5 my-auto">
             
@@ -197,9 +195,7 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- 1.5 FOLDER / PLAYBOOK DIRECTORY SCREEN     -->
-    <!-- ========================================== -->
+    <!-- FOLDER / PLAYBOOK DIRECTORY SCREEN -->
     <div id="folderScreen" class="fixed inset-0 bg-slate-950 z-45 flex flex-col hidden">
         <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -233,9 +229,7 @@
         </main>
     </div>
 
-    <!-- ========================================== -->
-    <!-- 2. MAIN APPLICATION WORKSPACE              -->
-    <!-- ========================================== -->
+    <!-- MAIN APPLICATION WORKSPACE -->
     <div id="appScreen" class="flex-1 flex flex-col hidden">
         
         <!-- Top Navigation Header -->
@@ -391,7 +385,6 @@
                         <span class="text-[10px] text-slate-500 font-semibold">Folder Filter</span>
                     </div>
                     <select id="categoryFilterSelect" class="w-full bg-slate-950 border border-slate-700 text-amber-300 font-bold rounded p-1.5 text-xs focus:outline-none">
-                        <!-- Dynamically populated including custom folders -->
                     </select>
 
                     <select id="playSelect" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2 text-sm font-medium focus:outline-none focus:border-blue-500">
@@ -430,7 +423,7 @@
                     </div>
                 </div>
 
-                <!-- ADD SAVED FORMATIONS PANEL (Spawns custom saved formations instantly!) -->
+                <!-- ADD SAVED FORMATIONS PANEL -->
                 <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center justify-between">
                         <span><i class="fa-solid fa-layer-group"></i> Add Saved Formations</span>
@@ -441,7 +434,7 @@
                     </div>
                 </div>
 
-                <!-- ADD ALL OFFENSE/DEFENSE: opens the formation picker modal -->
+                <!-- ADD ALL OFFENSE/DEFENSE -->
                 <div class="grid grid-cols-2 gap-1.5">
                     <button id="btnAddOffense" type="button" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 py-2 rounded text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
                         <i class="fa-solid fa-users"></i> Add All Offense
@@ -485,7 +478,7 @@
                     </div>
                 </div>
 
-                <!-- PLAYER INSPECTOR & ROUTE RESPONSIBILITY PANEL -->
+                <!-- PLAYER INSPECTOR & ICON SHAPE PANEL (FOR BOTH OFFENSE & DEFENSE) -->
                 <div id="playerInspectorPanel" class="bg-slate-950 p-3 rounded-lg border border-amber-500/40 space-y-3 hidden">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center justify-between">
                         <span><i class="fa-solid fa-user-gear"></i> Selected Player Inspector</span>
@@ -500,7 +493,61 @@
                         </div>
                     </div>
 
-                    <!-- DEFENDER-SPECIFIC OPTIONS (Zones & Blitz with Gap Picker + Zone Color) -->
+                    <!-- ICON SHAPE & COLOR CUSTOMIZATION (Offense & Defense) -->
+                    <div class="bg-slate-900 p-2.5 rounded border border-slate-800 space-y-2">
+                        <span class="block text-[11px] font-bold text-amber-300 uppercase tracking-wider">Icon Shape & Color Style</span>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1">Shape Style</label>
+                                <select id="inspectorShapeSelect" onchange="if(window.app) window.app.updatePlayerShape(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                                    <option value="circle">Circle (Default)</option>
+                                    <option value="square">Square</option>
+                                    <option value="rectangle">Rectangle</option>
+                                    <option value="star">Star (*)</option>
+                                    <option value="triangle">Triangle</option>
+                                    <option value="textonly">Text-Only (No Shape)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1">Icon Fill Color</label>
+                                <input type="color" id="inspectorColorPicker" value="#3b82f6" onchange="if(window.app) window.app.updatePlayerColor(this.value)" class="w-full h-7 rounded border border-slate-700 bg-transparent cursor-pointer p-0">
+                            </div>
+                        </div>
+
+                        <div class="pt-1 space-y-1">
+                            <button type="button" onclick="if(window.app) window.app.applyStyleToAllPlayersOnField()" class="w-full bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[10px] font-semibold cursor-pointer">
+                                Apply This Style to All Players on Field
+                            </button>
+                            <label class="flex items-center gap-2 cursor-pointer pt-0.5">
+                                <input type="checkbox" id="chkGlobalDefaultStyle" onchange="if(window.app) window.app.toggleGlobalDefaultStyle(this.checked)" class="rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0">
+                                <span class="text-[10px] text-amber-300 font-medium">Save as default for future spawns</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- ROUTE EDITING & GRAB TOOLKIT (OFFENSE ONLY) -->
+                    <div id="routeEditingToolkit" class="bg-slate-900 p-2.5 rounded border border-blue-900/50 space-y-2">
+                        <span class="block text-[11px] font-bold text-blue-400 uppercase tracking-wider"><i class="fa-solid fa-route"></i> Route Editing & Grab Controls</span>
+                        <p class="text-[10px] text-slate-400 leading-tight">Click & drag any route node point directly on the field, or use quick tools below:</p>
+                        
+                        <div class="grid grid-cols-2 gap-1.5 pt-1">
+                            <button type="button" onclick="if(window.app) window.app.straightenSelectedRoute()" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1.5 rounded text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-slash"></i> Straighten Route
+                            </button>
+                            <button type="button" onclick="if(window.app) window.app.scaleSelectedRoute(1.25)" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 py-1.5 rounded text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-expand"></i> Stretch / Bigger
+                            </button>
+                            <button type="button" onclick="if(window.app) window.app.scaleSelectedRoute(0.8)" class="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 py-1.5 rounded text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-compress"></i> Shrink / Smaller
+                            </button>
+                            <button type="button" onclick="if(window.app) window.app.flipSelectedRouteHorizontally()" class="bg-slate-800 hover:bg-slate-700 text-purple-300 border border-slate-700 py-1.5 rounded text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-arrows-left-right"></i> Flip Direction
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- DEFENDER-SPECIFIC OPTIONS -->
                     <div id="defenderOptionsContainer" class="hidden space-y-3 bg-slate-900 p-2.5 rounded border border-rose-900/50">
                         <span class="block text-[11px] font-bold text-rose-400 uppercase tracking-wider">Defensive Assignment</span>
                         
@@ -543,7 +590,7 @@
                     </div>
 
                     <!-- PLAYER SPEED RATING SLIDER -->
-                    <div>
+                    <div id="playerSpeedContainer">
                         <div class="flex justify-between items-center mb-1">
                             <label class="text-[11px] font-semibold text-amber-300">Player Speed (40-Yard Dash):</label>
                             <span id="speedValueDisplay" class="text-xs font-mono font-bold text-emerald-400">4.50s</span>
@@ -562,7 +609,7 @@
                         </select>
                     </div>
 
-                    <div>
+                    <div id="routeColorSection">
                         <div class="flex items-center justify-between mb-1">
                             <label class="text-[11px] font-semibold text-slate-300">Route Line Color</label>
                             <input type="color" id="routeColorPicker" value="#3b82f6" class="w-6 h-6 rounded-full border-0 p-0 bg-transparent cursor-pointer" title="This player's route color">
@@ -610,7 +657,7 @@
                             <i class="fa-solid fa-pen-nib"></i> Draw Tools
                         </button>
                     </div>
-                    <p id="modeDesc" class="text-[11px] text-slate-400 italic mt-1">Click & drag any player circle or square to adjust starting formation alignment.</p>
+                    <p id="modeDesc" class="text-[11px] text-slate-400 italic mt-1">Click & drag any player icon or route vertex handle to adjust alignment and routes.</p>
                 </div>
 
                 <!-- Drawing Palette -->
@@ -827,12 +874,11 @@
                     </div>
                 </div>
 
-                <!-- Tactical Breakdown Panel (Updated with Coach-Specific Notes) -->
+                <!-- Tactical Breakdown Panel -->
                 <div class="bg-slate-900/90 border-t border-slate-800 p-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs overflow-y-auto max-h-48">
                     
                     <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col">
                         <div class="flex items-center justify-between mb-1">
-                            <!-- EDITABLE PLAY TITLE -->
                             <div class="flex items-center gap-2 flex-1 mr-2">
                                 <h4 id="playTitle" class="font-bold text-sm text-blue-400">Play Name</h4>
                                 <input type="text" id="editPlayTitleInput" class="hidden bg-slate-900 border border-blue-500 text-white font-bold text-xs rounded px-2 py-0.5 flex-1" />
@@ -858,7 +904,6 @@
                         </button>
                     </div>
 
-                    <!-- COACH-SPECIFIC NOTES (Offensive vs Defensive perspective) -->
                     <div class="bg-slate-950 p-3 rounded border border-purple-900/40 flex flex-col">
                         <div class="flex items-center justify-between mb-1">
                             <h4 id="coachNotesTitle" class="font-bold text-purple-400 flex items-center gap-1">
@@ -897,7 +942,6 @@
                 <div>
                     <label class="block text-slate-300 font-semibold mb-1">Play Category / Folder</label>
                     <select id="modalCategory" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2">
-                        <!-- Dynamically populated including custom folders -->
                     </select>
                 </div>
 
@@ -965,29 +1009,29 @@
     <script>
         const OFFENSE_PRESETS = {
             spread2x2: [
-                { id: 1, label: '1', role: 'WR', speed: 4.40, release: 'none', x: 0.12, y: 0.60, route: [{x:0.12, y:0.60}, {x:0.12, y:0.25}] },
-                { id: 2, label: '2', role: 'Slot', speed: 4.50, release: 'jab', x: 0.28, y: 0.60, route: [{x:0.28, y:0.60}, {x:0.28, y:0.40}] },
-                { id: 3, label: '3', role: 'Slot', speed: 4.55, release: 'none', x: 0.72, y: 0.60, route: [{x:0.72, y:0.60}, {x:0.72, y:0.40}] },
-                { id: 4, label: '4', role: 'WR', speed: 4.45, release: 'none', x: 0.88, y: 0.60, route: [{x:0.88, y:0.60}, {x:0.88, y:0.25}] },
-                { id: 5, label: 'QB', role: 'QB', speed: 4.70, release: 'none', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.50, y:0.75}] },
-                { id: 'LT', label: 'LT', role: 'OL', speed: 5.00, release: 'none', x: 0.42, y: 0.58 },
-                { id: 'LG', label: 'LG', role: 'OL', speed: 5.00, release: 'none', x: 0.46, y: 0.58 },
-                { id: 'C',  label: 'C',  role: 'OL', speed: 5.00, release: 'none', x: 0.50, y: 0.58 },
-                { id: 'RG', label: 'RG', role: 'OL', speed: 5.00, release: 'none', x: 0.54, y: 0.58 },
-                { id: 'RT', label: 'RT', role: 'OL', speed: 5.00, release: 'none', x: 0.58, y: 0.58 }
+                { id: 1, label: '1', role: 'WR', shape: 'circle', color: '#3b82f6', speed: 4.40, release: 'none', x: 0.12, y: 0.60, route: [{x:0.12, y:0.60}, {x:0.12, y:0.25}] },
+                { id: 2, label: '2', role: 'Slot', shape: 'circle', color: '#3b82f6', speed: 4.50, release: 'jab', x: 0.28, y: 0.60, route: [{x:0.28, y:0.60}, {x:0.28, y:0.40}] },
+                { id: 3, label: '3', role: 'Slot', shape: 'circle', color: '#3b82f6', speed: 4.55, release: 'none', x: 0.72, y: 0.60, route: [{x:0.72, y:0.60}, {x:0.72, y:0.40}] },
+                { id: 4, label: '4', role: 'WR', shape: 'circle', color: '#3b82f6', speed: 4.45, release: 'none', x: 0.88, y: 0.60, route: [{x:0.88, y:0.60}, {x:0.88, y:0.25}] },
+                { id: 5, label: 'QB', role: 'QB', shape: 'circle', color: '#3b82f6', speed: 4.70, release: 'none', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.50, y:0.75}] },
+                { id: 'LT', label: 'LT', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.42, y: 0.58 },
+                { id: 'LG', label: 'LG', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.46, y: 0.58 },
+                { id: 'C',  label: 'C',  role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.50, y: 0.58 },
+                { id: 'RG', label: 'RG', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.54, y: 0.58 },
+                { id: 'RT', label: 'RT', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.58, y: 0.58 }
             ],
             tripsRight: [
-                { id: 1, label: '1', role: 'WR', speed: 4.40, release: 'none', x: 0.12, y: 0.60, route: [{x:0.12, y:0.60}, {x:0.12, y:0.25}] },
-                { id: 2, label: '2', role: 'Slot', speed: 4.45, release: 'jab', x: 0.68, y: 0.60, route: [{x:0.68, y:0.60}, {x:0.68, y:0.35}] },
-                { id: 3, label: '3', role: 'Slot', speed: 4.50, release: 'none', x: 0.78, y: 0.60, route: [{x:0.78, y:0.60}, {x:0.78, y:0.35}] },
-                { id: 4, label: '4', role: 'WR', speed: 4.42, release: 'none', x: 0.88, y: 0.60, route: [{x:0.88, y:0.60}, {x:0.88, y:0.25}] },
-                { id: 5, label: 'QB', role: 'QB', speed: 4.70, release: 'none', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.50, y:0.75}] },
-                { id: 6, label: 'RB', role: 'RB', speed: 4.48, release: 'none', x: 0.44, y: 0.70, route: [{x:0.44, y:0.70}, {x:0.35, y:0.55}] },
-                { id: 'LT', label: 'LT', role: 'OL', speed: 5.00, release: 'none', x: 0.42, y: 0.58 },
-                { id: 'LG', label: 'LG', role: 'OL', speed: 5.00, release: 'none', x: 0.46, y: 0.58 },
-                { id: 'C',  label: 'C',  role: 'OL', speed: 5.00, release: 'none', x: 0.50, y: 0.58 },
-                { id: 'RG', label: 'RG', role: 'OL', speed: 5.00, release: 'none', x: 0.54, y: 0.58 },
-                { id: 'RT', label: 'RT', role: 'OL', speed: 5.00, release: 'none', x: 0.58, y: 0.58 }
+                { id: 1, label: '1', role: 'WR', shape: 'circle', color: '#3b82f6', speed: 4.40, release: 'none', x: 0.12, y: 0.60, route: [{x:0.12, y:0.60}, {x:0.12, y:0.25}] },
+                { id: 2, label: '2', role: 'Slot', shape: 'circle', color: '#3b82f6', speed: 4.45, release: 'jab', x: 0.68, y: 0.60, route: [{x:0.68, y:0.60}, {x:0.68, y:0.35}] },
+                { id: 3, label: '3', role: 'Slot', shape: 'circle', color: '#3b82f6', speed: 4.50, release: 'none', x: 0.78, y: 0.60, route: [{x:0.78, y:0.60}, {x:0.78, y:0.35}] },
+                { id: 4, label: '4', role: 'WR', shape: 'circle', color: '#3b82f6', speed: 4.42, release: 'none', x: 0.88, y: 0.60, route: [{x:0.88, y:0.60}, {x:0.88, y:0.25}] },
+                { id: 5, label: 'QB', role: 'QB', shape: 'circle', color: '#3b82f6', speed: 4.70, release: 'none', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.50, y:0.75}] },
+                { id: 6, label: 'RB', role: 'RB', shape: 'circle', color: '#3b82f6', speed: 4.48, release: 'none', x: 0.44, y: 0.70, route: [{x:0.44, y:0.70}, {x:0.35, y:0.55}] },
+                { id: 'LT', label: 'LT', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.42, y: 0.58 },
+                { id: 'LG', label: 'LG', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.46, y: 0.58 },
+                { id: 'C',  label: 'C',  role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.50, y: 0.58 },
+                { id: 'RG', label: 'RG', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.54, y: 0.58 },
+                { id: 'RT', label: 'RT', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.58, y: 0.58 }
             ],
             blank: []
         };
@@ -1006,73 +1050,73 @@
                 ],
                 coachNotes: 'Expect quarters or zone shell; look for leverage against invert safety.',
                 offense: [
-                    { id: 1, label: '1', role: 'WR', speed: 4.40, release: 'none', x: 0.12, y: 0.60, route: [{x:0.12, y:0.25}, {x:0.18, y:0.18}] },
-                    { id: 2, label: '2', role: 'Slot', speed: 4.45, release: 'jab', x: 0.25, y: 0.60, motion: [{x:0.25, y:0.60}, {x:0.18, y:0.60}, {x:0.55, y:0.60}], route: [{x:0.55, y:0.60}, {x:0.45, y:0.52}] },
-                    { id: 3, label: '3', role: 'TE', speed: 4.65, release: 'none', x: 0.62, y: 0.60, route: [{x:0.62, y:0.60}, {x:0.80, y:0.63}] },
-                    { id: 4, label: '4', role: 'WR', speed: 4.42, release: 'none', x: 0.88, y: 0.60, route: [{x:0.88, y:0.60}, {x:0.55, y:0.52}] },
-                    { id: 5, label: 'QB', role: 'QB', speed: 4.75, release: 'none', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.52, y:0.75}] },
-                    { id: 6, label: 'RB', role: 'RB', speed: 4.55, release: 'none', x: 0.44, y: 0.70, route: [{x:0.44, y:0.70}, {x:0.34, y:0.58}] },
-                    { id: 'LT', label: 'LT', role: 'OL', speed: 5.00, release: 'none', x: 0.42, y: 0.58 },
-                    { id: 'LG', label: 'LG', role: 'OL', speed: 5.00, release: 'none', x: 0.46, y: 0.58 },
-                    { id: 'C',  label: 'C',  role: 'OL', speed: 5.00, release: 'none', x: 0.50, y: 0.58 },
-                    { id: 'RG', label: 'RG', role: 'OL', speed: 5.00, release: 'none', x: 0.54, y: 0.58 },
-                    { id: 'RT', label: 'RT', role: 'OL', speed: 5.00, release: 'none', x: 0.58, y: 0.58 }
+                    { id: 1, label: '1', role: 'WR', shape: 'circle', color: '#3b82f6', speed: 4.40, release: 'none', x: 0.12, y: 0.60, route: [{x:0.12, y:0.25}, {x:0.18, y:0.18}] },
+                    { id: 2, label: '2', role: 'Slot', shape: 'circle', color: '#3b82f6', speed: 4.45, release: 'jab', x: 0.25, y: 0.60, motion: [{x:0.25, y:0.60}, {x:0.18, y:0.60}, {x:0.55, y:0.60}], route: [{x:0.55, y:0.60}, {x:0.45, y:0.52}] },
+                    { id: 3, label: '3', role: 'TE', shape: 'circle', color: '#3b82f6', speed: 4.65, release: 'none', x: 0.62, y: 0.60, route: [{x:0.62, y:0.60}, {x:0.80, y:0.63}] },
+                    { id: 4, label: '4', role: 'WR', shape: 'circle', color: '#3b82f6', speed: 4.42, release: 'none', x: 0.88, y: 0.60, route: [{x:0.88, y:0.60}, {x:0.55, y:0.52}] },
+                    { id: 5, label: 'QB', role: 'QB', shape: 'circle', color: '#3b82f6', speed: 4.75, release: 'none', x: 0.50, y: 0.70, route: [{x:0.50, y:0.70}, {x:0.52, y:0.75}] },
+                    { id: 6, label: 'RB', role: 'RB', shape: 'circle', color: '#3b82f6', speed: 4.55, release: 'none', x: 0.44, y: 0.70, route: [{x:0.44, y:0.70}, {x:0.34, y:0.58}] },
+                    { id: 'LT', label: 'LT', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.42, y: 0.58 },
+                    { id: 'LG', label: 'LG', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.46, y: 0.58 },
+                    { id: 'C',  label: 'C',  role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.50, y: 0.58 },
+                    { id: 'RG', label: 'RG', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.54, y: 0.58 },
+                    { id: 'RT', label: 'RT', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.58, y: 0.58 }
                 ]
             }
         ];
 
         const DEFENSIVE_FRONTS = {
             '4-3': [
-                { id: 'DE1', label: 'DE', x: 0.38, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'DT1', label: 'DT', x: 0.45, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'DT2', label: 'DT', x: 0.55, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'DE2', label: 'DE', x: 0.62, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'WLB', label: 'W',  x: 0.32, y: 0.44, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'MLB', label: 'M',  x: 0.50, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'SLB', label: 'S',  x: 0.68, y: 0.44, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'CB1', label: 'CB', x: 0.10, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'CB2', label: 'CB', x: 0.90, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'FS',  label: 'FS', x: 0.35, y: 0.22, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'SS',  label: 'SS', x: 0.65, y: 0.22, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' }
+                { id: 'DE1', label: 'DE', shape: 'square', color: '#ef4444', x: 0.38, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DT1', label: 'DT', shape: 'square', color: '#ef4444', x: 0.45, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DT2', label: 'DT', shape: 'square', color: '#ef4444', x: 0.55, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'DE2', label: 'DE', shape: 'square', color: '#ef4444', x: 0.62, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'WLB', label: 'W',  shape: 'square', color: '#ef4444', x: 0.32, y: 0.44, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'MLB', label: 'M',  shape: 'square', color: '#ef4444', x: 0.50, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'SLB', label: 'S',  shape: 'square', color: '#ef4444', x: 0.68, y: 0.44, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'CB1', label: 'CB', shape: 'square', color: '#ef4444', x: 0.10, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'CB2', label: 'CB', shape: 'square', color: '#ef4444', x: 0.90, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'FS',  label: 'FS', shape: 'square', color: '#ef4444', x: 0.35, y: 0.22, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'SS',  label: 'SS', shape: 'square', color: '#ef4444', x: 0.65, y: 0.22, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' }
             ],
             '3-4': [
-                { id: 'DE1', label: 'DE', x: 0.40, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'NT',  label: 'NT', x: 0.50, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'DE2', label: 'DE', x: 0.60, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'OLB1',label: 'OLB',x: 0.32, y: 0.50, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'ILB1',label: 'ILB',x: 0.44, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'ILB2',label: 'ILB',x: 0.56, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'OLB2',label: 'OLB',x: 0.68, y: 0.50, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'CB1', label: 'CB', x: 0.10, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'CB2', label: 'CB', x: 0.90, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'FS',  label: 'FS', x: 0.40, y: 0.22, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'SS',  label: 'SS', x: 0.60, y: 0.22, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' }
+                { id: 'DE1', label: 'DE', shape: 'square', color: '#ef4444', x: 0.40, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'NT',  label: 'NT', shape: 'square', color: '#ef4444', x: 0.50, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DE2', label: 'DE', shape: 'square', color: '#ef4444', x: 0.60, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'OLB1',label: 'OLB',shape: 'square', color: '#ef4444', x: 0.32, y: 0.50, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'ILB1',label: 'ILB',shape: 'square', color: '#ef4444', x: 0.44, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'ILB2',label: 'ILB',shape: 'square', color: '#ef4444', x: 0.56, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'OLB2',label: 'OLB',shape: 'square', color: '#ef4444', x: 0.68, y: 0.50, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'CB1', label: 'CB', shape: 'square', color: '#ef4444', x: 0.10, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'CB2', label: 'CB', shape: 'square', color: '#ef4444', x: 0.90, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'FS',  label: 'FS', shape: 'square', color: '#ef4444', x: 0.40, y: 0.22, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'SS',  label: 'SS', shape: 'square', color: '#ef4444', x: 0.60, y: 0.22, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' }
             ],
             '4-2-5': [
-                { id: 'DE1', label: 'DE', x: 0.38, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'DT1', label: 'DT', x: 0.46, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'DT2', label: 'DT', x: 0.54, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'DE2', label: 'DE', x: 0.62, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'MLB1', label: 'LB', x: 0.42, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'MLB2', label: 'LB', x: 0.58, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'CB1', label: 'CB', x: 0.10, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'CB2', label: 'CB', x: 0.90, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'NB',  label: 'NB', x: 0.28, y: 0.46, zone: 'Seam/Hole', zoneColor: '#9333ea', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'FS',  label: 'FS', x: 0.42, y: 0.20, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'SS',  label: 'SS', x: 0.62, y: 0.20, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' }
+                { id: 'DE1', label: 'DE', shape: 'square', color: '#ef4444', x: 0.38, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'DT1', label: 'DT', shape: 'square', color: '#ef4444', x: 0.46, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DT2', label: 'DT', shape: 'square', color: '#ef4444', x: 0.54, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DE2', label: 'DE', shape: 'square', color: '#ef4444', x: 0.62, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'MLB1', label: 'LB', shape: 'square', color: '#ef4444', x: 0.42, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'MLB2', label: 'LB', shape: 'square', color: '#ef4444', x: 0.58, y: 0.42, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'CB1', label: 'CB', shape: 'square', color: '#ef4444', x: 0.10, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'CB2', label: 'CB', shape: 'square', color: '#ef4444', x: 0.90, y: 0.48, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'NB',  label: 'NB', shape: 'square', color: '#ef4444', x: 0.28, y: 0.46, zone: 'Seam/Hole', zoneColor: '#9333ea', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'FS',  label: 'FS', shape: 'square', color: '#ef4444', x: 0.42, y: 0.20, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'SS',  label: 'SS', shape: 'square', color: '#ef4444', x: 0.62, y: 0.20, zone: 'Deep 1/2', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' }
             ],
             '5-3': [
-                { id: 'DE1', label: 'DE', x: 0.34, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'DT1', label: 'DT', x: 0.42, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'NT',  label: 'NT', x: 0.50, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'DT2', label: 'DT', x: 0.58, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
-                { id: 'DE2', label: 'DE', x: 0.66, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'WLB', label: 'W',  x: 0.30, y: 0.42, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'MLB', label: 'M',  x: 0.50, y: 0.40, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'A-Gap' },
-                { id: 'SLB', label: 'S',  x: 0.70, y: 0.42, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'C-Gap' },
-                { id: 'CB1', label: 'CB', x: 0.10, y: 0.46, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'CB2', label: 'CB', x: 0.90, y: 0.46, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
-                { id: 'FS',  label: 'FS', x: 0.50, y: 0.20, zone: 'Deep 1/3', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' }
+                { id: 'DE1', label: 'DE', shape: 'square', color: '#ef4444', x: 0.34, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'DT1', label: 'DT', shape: 'square', color: '#ef4444', x: 0.42, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'NT',  label: 'NT', shape: 'square', color: '#ef4444', x: 0.50, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'DT2', label: 'DT', shape: 'square', color: '#ef4444', x: 0.58, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'B-Gap' },
+                { id: 'DE2', label: 'DE', shape: 'square', color: '#ef4444', x: 0.66, y: 0.52, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'WLB', label: 'W',  shape: 'square', color: '#ef4444', x: 0.30, y: 0.42, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'MLB', label: 'M',  shape: 'square', color: '#ef4444', x: 0.50, y: 0.40, zone: 'Hook/Curl', zoneColor: '#16a34a', isBlitz: false, blitzGap: 'A-Gap' },
+                { id: 'SLB', label: 'S',  shape: 'square', color: '#ef4444', x: 0.70, y: 0.42, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'C-Gap' },
+                { id: 'CB1', label: 'CB', shape: 'square', color: '#ef4444', x: 0.10, y: 0.46, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'CB2', label: 'CB', shape: 'square', color: '#ef4444', x: 0.90, y: 0.46, zone: 'Flat', zoneColor: '#38bdf8', isBlitz: false, blitzGap: 'Edge' },
+                { id: 'FS',  label: 'FS', shape: 'square', color: '#ef4444', x: 0.50, y: 0.20, zone: 'Deep 1/3', zoneColor: '#1e3a8a', isBlitz: false, blitzGap: 'Edge' }
             ],
             'blank': []
         };
@@ -1142,7 +1186,7 @@
             constructor() {
                 this.plays = [...DEFAULT_PLAYS];
                 this.profileKey = 'default';
-                this.coachRole = 'offensive'; // 'offensive' or 'defensive'
+                this.coachRole = 'offensive';
 
                 this.currentPlay = this.plays[0];
                 this.selectedLevel = 'highschool';
@@ -1155,8 +1199,14 @@
                 this.clearFieldOnlyMarks = false;
                 
                 this.currentDefense = JSON.parse(JSON.stringify(DEFENSIVE_FRONTS['4-3']));
-
                 this.selectedPlayerObj = null;
+                this.draggedRouteNodeIndex = null;
+
+                // Global icon template defaults across future plays
+                this.globalIconDefaults = {
+                    offense: { shape: 'circle', color: '#3b82f6' },
+                    defense: { shape: 'square', color: '#ef4444' }
+                };
 
                 this.undoStack = [];
                 this.redoStack = [];
@@ -1235,6 +1285,10 @@
 
                 this.playerInspectorPanel = document.getElementById('playerInspectorPanel');
                 this.inspectorLabel = document.getElementById('inspectorLabel');
+                this.inspectorShapeSelect = document.getElementById('inspectorShapeSelect');
+                this.inspectorColorPicker = document.getElementById('inspectorColorPicker');
+                this.chkGlobalDefaultStyle = document.getElementById('chkGlobalDefaultStyle');
+
                 this.playerSpeedRange = document.getElementById('playerSpeedRange');
                 this.speedValueDisplay = document.getElementById('speedValueDisplay');
                 this.wrReleaseSelect = document.getElementById('wrReleaseSelect');
@@ -1275,6 +1329,106 @@
                     this.selectedPlayerObj.player.zoneColor = colorHex;
                     this.render();
                 }
+            }
+
+            updatePlayerShape(shapeVal) {
+                if (this.selectedPlayerObj) {
+                    this.saveHistoryState();
+                    this.selectedPlayerObj.player.shape = shapeVal;
+                    this.render();
+                }
+            }
+
+            updatePlayerColor(colorHex) {
+                if (this.selectedPlayerObj) {
+                    this.saveHistoryState();
+                    this.selectedPlayerObj.player.color = colorHex;
+                    this.render();
+                }
+            }
+
+            applyStyleToAllPlayersOnField() {
+                if (!this.selectedPlayerObj) return;
+                this.saveHistoryState();
+                const curShape = this.selectedPlayerObj.player.shape || 'circle';
+                const curColor = this.selectedPlayerObj.player.color || (this.selectedPlayerObj.side === 'offense' ? '#3b82f6' : '#ef4444');
+
+                if (this.currentPlay && this.currentPlay.offense) {
+                    this.currentPlay.offense.forEach(p => {
+                        p.shape = curShape;
+                        p.color = curColor;
+                    });
+                }
+                if (this.currentDefense) {
+                    this.currentDefense.forEach(d => {
+                        d.shape = curShape;
+                        d.color = curColor;
+                    });
+                }
+                this.render();
+                alert('Applied this icon shape & color style to all players on the field!');
+            }
+
+            toggleGlobalDefaultStyle(isGlobal) {
+                if (!this.selectedPlayerObj) return;
+                const side = this.selectedPlayerObj.side;
+                const curShape = this.selectedPlayerObj.player.shape || (side === 'offense' ? 'circle' : 'square');
+                const curColor = this.selectedPlayerObj.player.color || (side === 'offense' ? '#3b82f6' : '#ef4444');
+
+                if (isGlobal) {
+                    this.globalIconDefaults[side] = { shape: curShape, color: curColor };
+                    try {
+                        localStorage.setItem('chalkboard_global_icon_defaults_' + this.profileKey, JSON.stringify(this.globalIconDefaults));
+                    } catch(e){}
+                    alert(`Saved as master default for future ${side} player spawns!`);
+                }
+            }
+
+            loadGlobalIconDefaults() {
+                try {
+                    const saved = localStorage.getItem('chalkboard_global_icon_defaults_' + this.profileKey);
+                    if (saved) this.globalIconDefaults = JSON.parse(saved);
+                } catch(e){}
+            }
+
+            // Route Grab & Reshaping Utilities
+            straightenSelectedRoute() {
+                if (!this.selectedPlayerObj || this.selectedPlayerObj.side !== 'offense') return;
+                const p = this.selectedPlayerObj.player;
+                if (!p.route || p.route.length < 2) return;
+                this.saveHistoryState();
+                const start = p.route[0];
+                const end = p.route[p.route.length - 1];
+                p.route = [ {x: start.x, y: start.y}, {x: end.x, y: end.y} ];
+                this.render();
+            }
+
+            scaleSelectedRoute(factor) {
+                if (!this.selectedPlayerObj || this.selectedPlayerObj.side !== 'offense') return;
+                const p = this.selectedPlayerObj.player;
+                if (!p.route || p.route.length < 2) return;
+                this.saveHistoryState();
+                const start = p.route[0];
+                p.route = p.route.map((pt, idx) => {
+                    if (idx === 0) return pt;
+                    const dx = pt.x - start.x;
+                    const dy = pt.y - start.y;
+                    return { x: start.x + dx * factor, y: start.y + dy * factor };
+                });
+                this.render();
+            }
+
+            flipSelectedRouteHorizontally() {
+                if (!this.selectedPlayerObj || this.selectedPlayerObj.side !== 'offense') return;
+                const p = this.selectedPlayerObj.player;
+                if (!p.route || p.route.length < 2) return;
+                this.saveHistoryState();
+                const start = p.route[0];
+                p.route = p.route.map(pt => {
+                    const dx = pt.x - start.x;
+                    return { x: start.x - dx, y: pt.y };
+                });
+                this.render();
             }
 
             updateDefenderZone(zoneVal) {
@@ -1711,17 +1865,18 @@
             spawnPlayer(side, label) {
                 this.saveHistoryState();
                 const newId = side + '_' + Date.now() + '_' + (this.spawnCounter++);
+                const defaults = this.globalIconDefaults[side] || (side === 'offense' ? { shape: 'circle', color: '#3b82f6' } : { shape: 'square', color: '#ef4444' });
 
                 if (side === 'offense') {
                     if (!this.currentPlay.offense) this.currentPlay.offense = [];
                     const spot = this.findFreeSpawnSpot('offense', 0.50, 0.60);
-                    const p = { id: newId, label: label, role: label, speed: 4.50, release: 'none', x: spot.x, y: spot.y };
+                    const p = { id: newId, label: label, role: label, shape: defaults.shape, color: defaults.color, speed: 4.50, release: 'none', x: spot.x, y: spot.y };
                     this.currentPlay.offense.push(p);
                     this.inspectPlayer('offense', p);
                 } else {
                     if (!this.currentDefense) this.currentDefense = [];
                     const spot = this.findFreeSpawnSpot('defense', 0.50, 0.45);
-                    const d = { id: newId, label: label, x: spot.x, y: spot.y, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' };
+                    const d = { id: newId, label: label, shape: defaults.shape, color: defaults.color, x: spot.x, y: spot.y, zone: 'none', zoneColor: '#6b7280', isBlitz: false, blitzGap: 'A-Gap' };
                     this.currentDefense.push(d);
                     this.inspectPlayer('defense', d);
                 }
@@ -1779,16 +1934,26 @@
                 if (this.playerInspectorPanel) {
                     this.playerInspectorPanel.classList.remove('hidden');
                     this.inspectorLabel.value = p.label;
+                    this.inspectorShapeSelect.value = p.shape || (side === 'offense' ? 'circle' : 'square');
+                    this.inspectorColorPicker.value = p.color || (side === 'offense' ? '#3b82f6' : '#ef4444');
+                    if (this.chkGlobalDefaultStyle) this.chkGlobalDefaultStyle.checked = false;
 
                     const stdPanel = document.getElementById('routePresetsStandard');
                     const rbPanel = document.getElementById('routePresetsRB');
                     const wrReleaseContainer = document.getElementById('wrReleaseContainer');
+                    const speedContainer = document.getElementById('playerSpeedContainer');
+                    const routeColorSec = document.getElementById('routeColorSection');
+                    const routeToolkit = document.getElementById('routeEditingToolkit');
 
                     if (side === 'offense') {
                         this.defenderOptionsContainer.classList.add('hidden');
+                        speedContainer.classList.remove('hidden');
+                        wrReleaseContainer.classList.remove('hidden');
+                        routeColorSec.classList.remove('hidden');
+                        if (routeToolkit) routeToolkit.classList.remove('hidden');
+
                         this.playerSpeedRange.value = p.speed || 4.50;
                         this.speedValueDisplay.textContent = (p.speed || 4.50).toFixed(2) + 's';
-                        wrReleaseContainer.classList.remove('hidden');
 
                         const colorPicker = document.getElementById('routeColorPicker');
                         if (colorPicker) colorPicker.value = p.routeColor || '#3b82f6';
@@ -1798,6 +1963,9 @@
                         if (stdPanel) stdPanel.classList.toggle('hidden', isRB);
                     } else {
                         wrReleaseContainer.classList.add('hidden');
+                        speedContainer.classList.add('hidden');
+                        routeColorSec.classList.add('hidden');
+                        if (routeToolkit) routeToolkit.classList.add('hidden');
                         if (stdPanel) stdPanel.classList.add('hidden');
                         if (rbPanel) rbPanel.classList.add('hidden');
                         this.defenderOptionsContainer.classList.remove('hidden');
@@ -1814,6 +1982,7 @@
 
             deselectPlayer() {
                 this.selectedPlayerObj = null;
+                this.draggedRouteNodeIndex = null;
                 if (this.playerInspectorPanel) {
                     this.playerInspectorPanel.classList.add('hidden');
                 }
@@ -2296,7 +2465,7 @@
                     li.textContent = key;
                     this.qbProgression.appendChild(li);
                 });
-                this.coachNotesDisplay.textContent = this.currentPlay.coachNotes || (this.coachRole === 'offensive' ? 'No offensive expectations entered.' : 'No defensive notes entered.');
+                this.coachNotesDisplay.textContent = this.currentPlay.coachNotes || (this.coachRole === 'offensive' ? 'Expect quarters or zone shell; look for leverage against invert safety.' : 'No defensive notes entered.');
 
                 this.playDesc.classList.remove('hidden');
                 this.qbProgression.classList.remove('hidden');
@@ -2462,6 +2631,7 @@
                 this.loadFoldersForProfile();
                 this.loadCustomRoutesStorage();
                 this.loadSchematicRenames();
+                this.loadGlobalIconDefaults();
 
                 const subtext = document.getElementById('folderScreenSubtitle');
                 if (subtext) subtext.textContent = `${name || 'Coach'} • ${team || 'Program'} • Select a Folder`;
@@ -2808,7 +2978,7 @@
                     this.interactionMode = 'move';
                     document.getElementById('btnModeMove').className = 'mode-btn bg-blue-600 text-white p-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5 active';
                     document.getElementById('btnModeDraw').className = 'mode-btn bg-slate-800 text-slate-300 hover:bg-slate-700 p-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5';
-                    this.modeDesc.textContent = 'Click & drag any player circle or square to adjust starting formation alignment.';
+                    this.modeDesc.textContent = 'Click & drag any player icon or route vertex handle to adjust alignment and routes.';
                 });
 
                 document.getElementById('btnModeDraw').addEventListener('click', () => {
@@ -2979,7 +3149,6 @@
                     this.render();
                 });
 
-                // SAVE PLAY BUTTON: Updates current play in place
                 document.getElementById('btnSavePlay').addEventListener('click', () => {
                     const idx = this.plays.findIndex(p => p.id === this.currentPlay.id);
                     if (idx !== -1) {
@@ -2991,7 +3160,6 @@
                     alert('Play saved successfully!');
                 });
 
-                // SAVE AS NEW COPY BUTTON: Creates a brand new play copy (great for editing a formation play and saving it with routes into a playbook folder!)
                 document.getElementById('btnSaveAsNewCopy').addEventListener('click', () => {
                     const newName = prompt('Enter name for this new play copy:', (this.currentPlay.name || 'Play') + ' (Copy)');
                     if (!newName || !newName.trim()) return;
@@ -3044,12 +3212,29 @@
                 const h = this.canvas.height;
 
                 if (this.interactionMode === 'move') {
+                    // Check if clicking on a selected player's route vertex handle first
+                    if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'offense') {
+                        const p = this.selectedPlayerObj.player;
+                        if (p.route && p.route.length > 0) {
+                            for (let i = 0; i < p.route.length; i++) {
+                                const pt = p.route[i];
+                                const px = this.getAdjustedX(pt.x, w);
+                                const py = pt.y * h;
+                                if (Math.hypot(x - px, y - py) <= 14) {
+                                    this.saveHistoryState();
+                                    this.draggedRouteNodeIndex = i;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
                     if (this.currentPlay && this.currentPlay.offense) {
                         for (let p of this.currentPlay.offense) {
                             const px = this.getAdjustedX(p.x, w);
                             const py = p.y * h;
                             const dist = Math.hypot(x - px, y - py);
-                            if (dist <= 18) {
+                            if (dist <= 22) {
                                 this.saveHistoryState();
                                 this.draggedPlayer = { type: 'offense', player: p };
                                 this.inspectPlayer('offense', p);
@@ -3063,7 +3248,7 @@
                             const dx = this.getAdjustedX(d.x, w);
                             const dy = d.y * h;
                             const dist = Math.hypot(x - dx, y - dy);
-                            if (dist <= 18) {
+                            if (dist <= 22) {
                                 this.saveHistoryState();
                                 this.draggedPlayer = { type: 'defense', player: d };
                                 this.inspectPlayer('defense', d);
@@ -3118,7 +3303,17 @@
                 const w = this.canvas.width;
                 const h = this.canvas.height;
 
-                if (this.draggedPlayer) {
+                if (this.draggedRouteNodeIndex !== null && this.selectedPlayerObj && this.selectedPlayerObj.side === 'offense') {
+                    let hashOffset = 0;
+                    if (this.selectedHashPosition === 'left') hashOffset = -0.15;
+                    if (this.selectedHashPosition === 'right') hashOffset = 0.15;
+
+                    const p = this.selectedPlayerObj.player;
+                    const idx = this.draggedRouteNodeIndex;
+                    p.route[idx].x = Math.max(0.02, Math.min(0.98, (x / w) - hashOffset));
+                    p.route[idx].y = Math.max(0.02, Math.min(0.98, y / h));
+                    this.render();
+                } else if (this.draggedPlayer) {
                     let hashOffset = 0;
                     if (this.selectedHashPosition === 'left') hashOffset = -0.15;
                     if (this.selectedHashPosition === 'right') hashOffset = 0.15;
@@ -3142,6 +3337,9 @@
             }
 
             handlePointerUp() {
+                if (this.draggedRouteNodeIndex !== null) {
+                    this.draggedRouteNodeIndex = null;
+                }
                 if (this.draggedPlayer) {
                     this.draggedPlayer = null;
                 }
@@ -3281,6 +3479,21 @@
                                 const yards = this.computePathYards(p.route);
                                 this.drawYardLabel(this.getAdjustedX(lastPt.x, w), lastPt.y * h, yards, routeColor);
                             }
+
+                            // Render interactive grab handles if player is selected
+                            if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'offense' && this.selectedPlayerObj.player.id === p.id) {
+                                p.route.forEach((pt, idx) => {
+                                    const hx = this.getAdjustedX(pt.x, w);
+                                    const hy = pt.y * h;
+                                    this.ctx.fillStyle = '#f59e0b';
+                                    this.ctx.strokeStyle = '#ffffff';
+                                    this.ctx.lineWidth = 2;
+                                    this.ctx.beginPath();
+                                    this.ctx.arc(hx, hy, 7, 0, Math.PI * 2);
+                                    this.ctx.fill();
+                                    this.ctx.stroke();
+                                });
+                            }
                         }
                     });
                 }
@@ -3340,27 +3553,7 @@
                             }
                         }
 
-                        this.ctx.fillStyle = isSelected ? '#f59e0b' : '#dc2626';
-                        this.ctx.strokeStyle = '#1f2937';
-                        this.ctx.lineWidth = isSelected ? 3 : 2;
-                        this.ctx.beginPath();
-                        this.ctx.rect(pos.x - 12, pos.y - 12, 24, 24);
-                        this.ctx.fill();
-                        this.ctx.stroke();
-
-                        this.ctx.fillStyle = '#ffffff';
-                        this.ctx.font = 'bold 10px system-ui';
-                        this.ctx.textAlign = 'center';
-                        this.ctx.textBaseline = 'middle';
-                        this.ctx.fillText(d.label, pos.x, pos.y);
-
-                        if (isSelected) {
-                            this.ctx.strokeStyle = '#111827';
-                            this.ctx.lineWidth = 2;
-                            this.ctx.setLineDash([4, 3]);
-                            this.ctx.strokeRect(pos.x - 20, pos.y - 20, 40, 40);
-                            this.ctx.setLineDash([]);
-                        }
+                        this.renderPlayerIcon(pos.x, pos.y, d.label, d.shape || 'square', d.color || '#ef4444', isSelected);
                     });
                 }
 
@@ -3389,33 +3582,133 @@
                             }
                         }
 
-                        this.ctx.fillStyle = isSelected ? '#f59e0b' : '#2563eb';
-                        this.ctx.strokeStyle = '#1f2937';
-                        this.ctx.lineWidth = isSelected ? 3 : 2;
-                        this.ctx.beginPath();
-                        this.ctx.arc(pos.x, pos.y, 14, 0, Math.PI * 2);
-                        this.ctx.fill();
-                        this.ctx.stroke();
-
-                        this.ctx.fillStyle = '#ffffff';
-                        this.ctx.font = 'bold 11px system-ui';
-                        this.ctx.textAlign = 'center';
-                        this.ctx.textBaseline = 'middle';
-                        this.ctx.fillText(p.label, pos.x, pos.y);
-
-                        if (isSelected) {
-                            this.ctx.strokeStyle = '#111827';
-                            this.ctx.lineWidth = 2;
-                            this.ctx.setLineDash([4, 3]);
-                            this.ctx.beginPath();
-                            this.ctx.arc(pos.x, pos.y, 22, 0, Math.PI * 2);
-                            this.ctx.stroke();
-                            this.ctx.setLineDash([]);
-                        }
+                        this.renderPlayerIcon(pos.x, pos.y, p.label, p.shape || 'circle', p.color || '#3b82f6', isSelected);
                     });
                 }
 
                 this.renderTelestrator();
+            }
+
+            renderPlayerIcon(x, y, label, shape, color, isSelected) {
+                this.ctx.save();
+                const fillColor = color || '#3b82f6';
+                const strokeColor = isSelected ? '#f59e0b' : '#1f2937';
+                const lineWidth = isSelected ? 3 : 2;
+
+                if (shape === 'circle') {
+                    this.ctx.fillStyle = fillColor;
+                    this.ctx.strokeStyle = strokeColor;
+                    this.ctx.lineWidth = lineWidth;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 14, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.stroke();
+
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = 'bold 11px system-ui';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(label, x, y);
+                } else if (shape === 'square') {
+                    this.ctx.fillStyle = fillColor;
+                    this.ctx.strokeStyle = strokeColor;
+                    this.ctx.lineWidth = lineWidth;
+                    this.ctx.beginPath();
+                    this.ctx.rect(x - 13, y - 13, 26, 26);
+                    this.ctx.fill();
+                    this.ctx.stroke();
+
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = 'bold 10px system-ui';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(label, x, y);
+                } else if (shape === 'rectangle') {
+                    this.ctx.fillStyle = fillColor;
+                    this.ctx.strokeStyle = strokeColor;
+                    this.ctx.lineWidth = lineWidth;
+                    this.ctx.beginPath();
+                    this.ctx.rect(x - 18, y - 11, 36, 22);
+                    this.ctx.fill();
+                    this.ctx.stroke();
+
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = 'bold 10px system-ui';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(label, x, y);
+                } else if (shape === 'star') {
+                    this.ctx.fillStyle = fillColor;
+                    this.ctx.strokeStyle = strokeColor;
+                    this.ctx.lineWidth = lineWidth;
+                    this.drawStarPath(x, y, 5, 16, 8);
+                    this.ctx.fill();
+                    this.ctx.stroke();
+
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = 'bold 9px system-ui';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(label, x, y);
+                } else if (shape === 'triangle') {
+                    this.ctx.fillStyle = fillColor;
+                    this.ctx.strokeStyle = strokeColor;
+                    this.ctx.lineWidth = lineWidth;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, y - 15);
+                    this.ctx.lineTo(x + 15, y + 12);
+                    this.ctx.lineTo(x - 15, y + 12);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                    this.ctx.stroke();
+
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = 'bold 10px system-ui';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(label, x, y + 2);
+                } else if (shape === 'textonly') {
+                    this.ctx.fillStyle = '#0f172a';
+                    this.ctx.fillRect(x - 16, y - 9, 32, 18);
+                    this.ctx.fillStyle = fillColor;
+                    this.ctx.font = 'bold 13px system-ui';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(label, x, y);
+                }
+
+                if (isSelected) {
+                    this.ctx.strokeStyle = '#f59e0b';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([4, 3]);
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 22, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                }
+                this.ctx.restore();
+            }
+
+            drawStarPath(cx, cy, spikes, outerRadius, innerRadius) {
+                let rot = Math.PI / 2 * 3;
+                let x = cx, y = cy;
+                let step = Math.PI / spikes;
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(cx, cy - outerRadius);
+                for (let i = 0; i < spikes; i++) {
+                    x = cx + Math.cos(rot) * outerRadius;
+                    y = cy + Math.sin(rot) * outerRadius;
+                    this.ctx.lineTo(x, y);
+                    rot += step;
+
+                    x = cx + Math.cos(rot) * innerRadius;
+                    y = cy + Math.sin(rot) * innerRadius;
+                    this.ctx.lineTo(x, y);
+                    rot += step;
+                }
+                this.ctx.lineTo(cx, cy - outerRadius);
+                this.ctx.closePath();
             }
 
             renderDefensiveZone(x, y, zoneType, colorHex, w, h) {
