@@ -33,6 +33,9 @@
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         .btn-disabled { opacity: 0.4; cursor: not-allowed !important; pointer-events: none; }
+        /* AI Mentor chat bubbles */
+        .ai-bubble-user { background: #1e40af; color: white; border-radius: 12px 12px 4px 12px; }
+        .ai-bubble-bot  { background: #1e293b; color: #e2e8f0; border-radius: 12px 12px 12px 4px; border: 1px solid #334155; }
     </style>
 
     <!-- FIREBASE: real accounts + cloud-saved playbook -->
@@ -282,6 +285,21 @@
                 <!-- EXPORT PRINT PLAYCARD BUTTON -->
                 <button id="btnExportPlaycard" onclick="if(window.app) window.app.exportPlaycard()" title="Export Printable Playcard Image" type="button" class="bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
                     <i class="fa-solid fa-file-export"></i> Export Playcard
+                </button>
+
+                <!-- NEW: Open Call Sheet / Matrix -->
+                <button onclick="if(window.app) window.app.openCallSheet()" type="button" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-table-cells"></i> Call Sheet
+                </button>
+
+                <!-- NEW: Open Dropbox Play Picker -->
+                <button onclick="if(window.app) window.app.openPlayPicker()" type="button" class="bg-cyan-700 hover:bg-cyan-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-magnifying-glass"></i> Play Picker
+                </button>
+
+                <!-- NEW: AI Mentor Toggle -->
+                <button onclick="if(window.app) window.app.toggleAIMentor()" type="button" class="bg-violet-700 hover:bg-violet-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-robot"></i> AI Mentor
                 </button>
 
                 <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700">
@@ -647,6 +665,35 @@
                     </button>
                 </div>
 
+                <!-- NEW: VIDEO CLIP ATTACHMENT PANEL -->
+                <div class="bg-slate-950 p-3 rounded-lg border border-cyan-800/50 space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                        <i class="fa-solid fa-video"></i> Teaching Tape / Video Clip
+                    </h3>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-0.5">Clip Title</label>
+                        <input type="text" id="videoClipTitle" placeholder="e.g. Dig Concept - All-22" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-0.5">Video URL (YouTube / Hudl / etc.)</label>
+                        <input type="url" id="videoClipUrl" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-0.5">Camera Angle</label>
+                        <select id="videoClipAngle" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                            <option value="All-22">All-22</option>
+                            <option value="Endzone">Endzone</option>
+                            <option value="Sideline">Sideline</option>
+                            <option value="Broadcast">Broadcast</option>
+                            <option value="Practice">Practice / Coach Cam</option>
+                        </select>
+                    </div>
+                    <button onclick="if(window.app) window.app.saveVideoClipToPlay()" class="w-full bg-cyan-700 hover:bg-cyan-600 text-white py-1.5 rounded text-[11px] font-bold cursor-pointer">
+                        <i class="fa-solid fa-paperclip"></i> Attach Clip to Current Play
+                    </button>
+                    <div id="currentVideoClipDisplay" class="text-[10px] text-slate-400 italic hidden"></div>
+                </div>
+
                 <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2">
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Interactivity Mode</label>
                     <div class="grid grid-cols-2 gap-2">
@@ -1004,6 +1051,98 @@
         </div>
     </div>
 
+    <!-- ========== NEW FEATURE MODALS ========== -->
+
+    <!-- DROPBOX-STYLE PLAY PICKER MODAL -->
+    <div id="playPickerModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass text-cyan-400"></i> Dropbox Play Picker
+                </h3>
+                <button onclick="if(window.app) window.app.closePlayPicker()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-4 border-b border-slate-800">
+                <input type="text" id="playPickerSearch" placeholder="Type to filter plays or type a custom call..." class="w-full bg-slate-800 border border-slate-600 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500" oninput="if(window.app) window.app.filterPlayPicker(this.value)">
+            </div>
+            <div id="playPickerList" class="flex-1 overflow-y-auto p-3 space-y-1.5">
+                <!-- populated by JS -->
+            </div>
+            <div class="p-4 border-t border-slate-800 flex justify-between items-center">
+                <span class="text-xs text-slate-500">Click a play to load it, or type a custom call name</span>
+                <button onclick="if(window.app) window.app.useCustomCallFromPicker()" class="bg-cyan-700 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Use Custom Call</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SITUATIONAL MATRIX / CALL SHEET MODAL -->
+    <div id="callSheetModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-table-cells text-indigo-400"></i> Situational Matrix Builder
+                </h3>
+                <button onclick="if(window.app) window.app.closeCallSheet()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="flex border-b border-slate-800 text-xs font-semibold">
+                <button data-matrix="opening" onclick="if(window.app) window.app.switchMatrixTab('opening')" class="matrix-tab flex-1 py-2.5 text-white bg-indigo-900/50 border-b-2 border-indigo-500">Opening Script</button>
+                <button data-matrix="redzone" onclick="if(window.app) window.app.switchMatrixTab('redzone')" class="matrix-tab flex-1 py-2.5 text-slate-400 hover:text-white">Red Zone</button>
+                <button data-matrix="3rddown" onclick="if(window.app) window.app.switchMatrixTab('3rddown')" class="matrix-tab flex-1 py-2.5 text-slate-400 hover:text-white">3rd Down</button>
+                <button data-matrix="2min" onclick="if(window.app) window.app.switchMatrixTab('2min')" class="matrix-tab flex-1 py-2.5 text-slate-400 hover:text-white">2-Minute</button>
+                <button data-matrix="st" onclick="if(window.app) window.app.switchMatrixTab('st')" class="matrix-tab flex-1 py-2.5 text-slate-400 hover:text-white">Special Teams</button>
+            </div>
+            <div class="p-4 flex-1 overflow-y-auto">
+                <div class="grid grid-cols-4 gap-2 mb-4 text-center text-[10px] font-bold text-slate-400 uppercase">
+                    <div>Slot 1</div><div>Slot 2</div><div>Slot 3</div><div>Slot 4</div>
+                </div>
+                <div id="matrixGrid" class="grid grid-cols-4 gap-2">
+                    <!-- 12 slots populated by JS -->
+                </div>
+                <!-- Live Tendency Tracking -->
+                <div class="mt-6 bg-slate-950 border border-slate-800 rounded-xl p-4">
+                    <h4 class="text-xs font-bold text-amber-400 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-pie"></i> Live Tendency Tracking</h4>
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div class="text-2xl font-black text-blue-400" id="tendRunPct">0%</div>
+                            <div class="text-[10px] text-slate-400 uppercase">Run</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-black text-emerald-400" id="tendPassPct">0%</div>
+                            <div class="text-[10px] text-slate-400 uppercase">Pass</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-black text-purple-400" id="tendSTCount">0</div>
+                            <div class="text-[10px] text-slate-400 uppercase">Special Teams</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-800 flex justify-end gap-3">
+                <button onclick="if(window.app) window.app.exportWristband()" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-id-badge"></i> Wristband Export</button>
+                <button onclick="if(window.app) window.app.exportCallSheetPrint()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-print"></i> Print-Ready</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI MENTOR ASSISTANT PANEL -->
+    <div id="aiMentorPanel" class="fixed bottom-4 right-4 w-96 max-w-[95vw] bg-slate-900 border border-violet-700 rounded-2xl shadow-2xl z-50 flex flex-col hidden" style="height: 480px;">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-violet-950/50 rounded-t-2xl">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-robot text-violet-400"></i> AI Mentor Assistant
+            </h3>
+            <button onclick="if(window.app) window.app.toggleAIMentor()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="aiChatMessages" class="flex-1 overflow-y-auto p-3 space-y-3 text-xs">
+            <div class="ai-bubble-bot p-3">
+                <strong>AI Mentor:</strong> Hey Coach! Ask me about blitz counters, coverage shells, schematic adjustments, red-zone concepts, or special teams.  
+                <br><br>Need deeper help? Email <strong>chalkboardpro.support</strong>
+            </div>
+        </div>
+        <div class="p-3 border-t border-slate-800 flex gap-2">
+            <input type="text" id="aiMentorInput" placeholder="e.g. How do I attack Cover 3?" class="flex-1 bg-slate-800 border border-slate-600 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-violet-500" onkeydown="if(event.key==='Enter' && window.app) window.app.sendAIMentorQuery()">
+            <button onclick="if(window.app) window.app.sendAIMentorQuery()" class="bg-violet-600 hover:bg-violet-500 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
 
     <!-- Application Engine Logic -->
     <script>
@@ -1034,6 +1173,16 @@
                 { id: 'RT', label: 'RT', role: 'OL', shape: 'circle', color: '#3b82f6', speed: 5.00, release: 'none', x: 0.58, y: 0.58 }
             ],
             blank: []
+        };
+
+        // Special Teams templates
+        const ST_TEMPLATES = {
+            'Kickoff': { name: 'Kickoff Coverage', category: 'Special Teams', desc: 'Standard kickoff coverage lanes.', qbKeys: ['Stay in lanes', 'Squeeze to ball'], coachNotes: 'Force returner inside.' },
+            'Kick Return': { name: 'Kick Return', category: 'Special Teams', desc: 'Kick return blocking scheme.', qbKeys: ['Set wall', 'Seal edge'], coachNotes: 'Create alley for returner.' },
+            'Punt': { name: 'Punt Protection', category: 'Special Teams', desc: 'Punt protection & coverage.', qbKeys: ['Protect first', 'Cover lanes'], coachNotes: 'Get off clean.' },
+            'Punt Return': { name: 'Punt Return', category: 'Special Teams', desc: 'Punt return block & catch.', qbKeys: ['Fair catch call', 'Block gunners'], coachNotes: 'Secure the football.' },
+            'FG Block': { name: 'Field Goal Block', category: 'Special Teams', desc: 'Field goal block / attack.', qbKeys: ['Low pad level', 'Get hands up'], coachNotes: 'Time the snap.' },
+            'FG Attack': { name: 'Field Goal Attack', category: 'Special Teams', desc: 'Aggressive FG block scheme.', qbKeys: ['Overload side', 'Leap if needed'], coachNotes: 'Risk vs reward.' }
         };
 
         const DEFAULT_PLAYS = [
@@ -1202,8 +1351,8 @@
                 this.selectedPlayerObj = null;
                 this.draggedRouteNodeIndex = null;
 
-                // Dragging smooth damping factor
-                this.dragSmoothing = 0.35;
+                // Dragging smooth damping factor - further reduced for less sensitivity
+                this.dragSmoothing = 0.22;
 
                 // Global icon template defaults across future plays
                 this.globalIconDefaults = {
@@ -1242,11 +1391,213 @@
                 this.renamedFronts = {};
                 this.renamedCoverages = {};
                 this.formationPickerSide = null;
-                this.folders = ['Passing', 'Running', 'Play Action', 'RPO', 'Custom'];
+
+                // Enhanced folders with defaults
+                this.folders = ['Offense', 'Defense', 'Special Teams', 'Run Game', 'Pass Game', 'Passing', 'Running', 'Play Action', 'RPO', 'Custom'];
+
+                // Call Sheet / Matrix data
+                this.matrixData = {
+                    opening: Array(12).fill(null),
+                    redzone: Array(12).fill(null),
+                    '3rddown': Array(12).fill(null),
+                    '2min': Array(12).fill(null),
+                    st: Array(12).fill(null)
+                };
+                this.currentMatrixTab = 'opening';
 
                 this.initDOM();
                 this.setupKeyboardShortcuts();
             }
+
+            // ========== NEW FEATURE METHODS ==========
+
+            openPlayPicker() {
+                document.getElementById('playPickerModal').classList.remove('hidden');
+                this.filterPlayPicker('');
+                document.getElementById('playPickerSearch').focus();
+            }
+            closePlayPicker() {
+                document.getElementById('playPickerModal').classList.add('hidden');
+            }
+            filterPlayPicker(query) {
+                const list = document.getElementById('playPickerList');
+                list.innerHTML = '';
+                const q = (query || '').toLowerCase().trim();
+                const filtered = this.plays.filter(p => {
+                    if (!q) return true;
+                    return (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q);
+                });
+                if (filtered.length === 0) {
+                    list.innerHTML = `<p class="text-xs text-slate-500 p-3 italic">No plays match. Type a custom call name and click "Use Custom Call".</p>`;
+                    return;
+                }
+                filtered.forEach(p => {
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2.5 rounded-lg text-xs text-slate-200 flex items-center justify-between cursor-pointer';
+                    btn.innerHTML = `<span><span class="text-amber-400 font-bold">[${p.category || 'Custom'}]</span> ${p.name}</span><i class="fa-solid fa-chevron-right text-slate-500"></i>`;
+                    btn.onclick = () => {
+                        this.loadPlay(p.id);
+                        this.closePlayPicker();
+                    };
+                    list.appendChild(btn);
+                });
+            }
+            useCustomCallFromPicker() {
+                const name = document.getElementById('playPickerSearch').value.trim();
+                if (!name) { alert('Type a custom call name first.'); return; }
+                const newPlay = {
+                    id: 'custom_' + Date.now(),
+                    name: name,
+                    category: this.selectedCategoryFilter !== 'ALL' ? this.selectedCategoryFilter : 'Custom',
+                    desc: 'Custom call entered via Play Picker.',
+                    qbKeys: ['Execute the called play'],
+                    coachNotes: '',
+                    offense: []
+                };
+                this.plays.push(newPlay);
+                this.savePlays();
+                this.populatePlaySelect();
+                this.loadPlay(newPlay.id);
+                this.closePlayPicker();
+            }
+
+            openCallSheet() {
+                document.getElementById('callSheetModal').classList.remove('hidden');
+                this.renderMatrixGrid();
+                this.updateTendencies();
+            }
+            closeCallSheet() {
+                document.getElementById('callSheetModal').classList.add('hidden');
+            }
+            switchMatrixTab(tab) {
+                this.currentMatrixTab = tab;
+                document.querySelectorAll('.matrix-tab').forEach(b => {
+                    b.classList.remove('bg-indigo-900/50', 'border-b-2', 'border-indigo-500', 'text-white');
+                    b.classList.add('text-slate-400');
+                });
+                const active = document.querySelector(`.matrix-tab[data-matrix="${tab}"]`);
+                if (active) {
+                    active.classList.add('bg-indigo-900/50', 'border-b-2', 'border-indigo-500', 'text-white');
+                    active.classList.remove('text-slate-400');
+                }
+                this.renderMatrixGrid();
+                this.updateTendencies();
+            }
+            renderMatrixGrid() {
+                const grid = document.getElementById('matrixGrid');
+                grid.innerHTML = '';
+                const slots = this.matrixData[this.currentMatrixTab] || Array(12).fill(null);
+                for (let i = 0; i < 12; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'bg-slate-800 border border-slate-700 rounded-lg p-2 min-h-[60px] flex flex-col items-center justify-center text-center cursor-pointer hover:border-indigo-500 transition';
+                    if (slots[i]) {
+                        slot.innerHTML = `<span class="text-[10px] font-bold text-indigo-300 truncate w-full">${slots[i]}</span><button class="text-[9px] text-rose-400 mt-1" onclick="event.stopPropagation(); window.app.clearMatrixSlot(${i})">clear</button>`;
+                    } else {
+                        slot.innerHTML = `<span class="text-[10px] text-slate-500">+ Add Call</span>`;
+                        slot.onclick = () => this.addToMatrixSlot(i);
+                    }
+                    grid.appendChild(slot);
+                }
+            }
+            addToMatrixSlot(idx) {
+                const name = prompt('Enter play / call name for this slot:');
+                if (!name || !name.trim()) return;
+                this.matrixData[this.currentMatrixTab][idx] = name.trim();
+                this.renderMatrixGrid();
+                this.updateTendencies();
+            }
+            clearMatrixSlot(idx) {
+                this.matrixData[this.currentMatrixTab][idx] = null;
+                this.renderMatrixGrid();
+                this.updateTendencies();
+            }
+            updateTendencies() {
+                const allCalls = Object.values(this.matrixData).flat().filter(Boolean);
+                let run = 0, pass = 0, st = 0;
+                allCalls.forEach(c => {
+                    const lower = c.toLowerCase();
+                    if (lower.includes('kick') || lower.includes('punt') || lower.includes('fg') || lower.includes('return') || lower.includes('special')) st++;
+                    else if (lower.includes('run') || lower.includes('power') || lower.includes('counter') || lower.includes('iso') || lower.includes('draw')) run++;
+                    else pass++;
+                });
+                const total = run + pass + st || 1;
+                document.getElementById('tendRunPct').textContent = Math.round((run / total) * 100) + '%';
+                document.getElementById('tendPassPct').textContent = Math.round((pass / total) * 100) + '%';
+                document.getElementById('tendSTCount').textContent = st;
+            }
+            exportCallSheetPrint() {
+                alert('Print-ready Call Sheet export generated (browser print dialog will open).');
+                window.print();
+            }
+            exportWristband() {
+                alert('Wristband export prepared. Use the Print-Ready button or Export Playcard for physical media.');
+            }
+
+            toggleAIMentor() {
+                const panel = document.getElementById('aiMentorPanel');
+                panel.classList.toggle('hidden');
+            }
+            sendAIMentorQuery() {
+                const input = document.getElementById('aiMentorInput');
+                const q = (input.value || '').trim();
+                if (!q) return;
+                const chat = document.getElementById('aiChatMessages');
+                // User bubble
+                const userDiv = document.createElement('div');
+                userDiv.className = 'ai-bubble-user p-3 ml-8';
+                userDiv.textContent = q;
+                chat.appendChild(userDiv);
+                input.value = '';
+
+                // Bot response
+                const reply = this.getAIMentorReply(q);
+                const botDiv = document.createElement('div');
+                botDiv.className = 'ai-bubble-bot p-3 mr-6';
+                botDiv.innerHTML = `<strong>AI Mentor:</strong> ${reply}`;
+                chat.appendChild(botDiv);
+                chat.scrollTop = chat.scrollHeight;
+            }
+            getAIMentorReply(query) {
+                const q = query.toLowerCase();
+                if (q.includes('cover 3') || q.includes('cover3')) {
+                    return 'Against Cover 3: Attack the seams with 4 verticals or deep crossers. Flood one side to stress the curl/flat defender. High-low the corner with a deep + intermediate route. Need custom diagram help? Email <strong>chalkboardpro.support</strong>.';
+                }
+                if (q.includes('cover 2') || q.includes('cover2')) {
+                    return 'Cover 2 is vulnerable to intermediate digs and deep posts between the safeties. Use mesh or smash concepts to stress the corners. Contact <strong>chalkboardpro.support</strong> for more schemes.';
+                }
+                if (q.includes('blitz') || q.includes('pressure')) {
+                    return 'Vs blitz: Hot routes are critical. Identify the free runner pre-snap. Max protect or quick game (slants, hitches, screens). Slide protection toward the pressure. For personalized blitz packages email <strong>chalkboardpro.support</strong>.';
+                }
+                if (q.includes('red zone') || q.includes('redzone') || q.includes('goal line')) {
+                    return 'Red Zone: Shrink the field — favor condensed formations, play-action, and fade / corner routes. Goal-line: Power, iso, or jumbo packages. Ask for specific play designs at <strong>chalkboardpro.support</strong>.';
+                }
+                if (q.includes('special teams') || q.includes('punt') || q.includes('kickoff') || q.includes('return')) {
+                    return 'Special Teams modules are available under the Special Teams folder and Call Sheet. Templates for Kickoff, Punt, Returns and FG Block/Attack are ready. Need custom ST schemes? Reach <strong>chalkboardpro.support</strong>.';
+                }
+                if (q.includes('run') || q.includes('gap') || q.includes('zone')) {
+                    return 'Run game: Zone schemes stress lateral movement; gap schemes (power/counter) create double-teams. Match your OL skill set. For detailed install sheets contact <strong>chalkboardpro.support</strong>.';
+                }
+                if (q.includes('help') || q.includes('support') || q.includes('contact')) {
+                    return 'For personalized coaching support, diagram reviews, or feature requests, please email <strong>chalkboardpro.support</strong>. We\'re here to help your staff!';
+                }
+                return `I can help with coverages, blitzes, red-zone, special teams, and schematic adjustments. Try asking about "Cover 3", "blitz counters", or "red zone concepts". For deeper 1-on-1 help always email <strong>chalkboardpro.support</strong>.`;
+            }
+
+            saveVideoClipToPlay() {
+                if (!this.currentPlay) return;
+                const title = document.getElementById('videoClipTitle').value.trim();
+                const url = document.getElementById('videoClipUrl').value.trim();
+                const angle = document.getElementById('videoClipAngle').value;
+                if (!title && !url) { alert('Enter at least a title or URL.'); return; }
+                this.currentPlay.videoClip = { title, url, angle };
+                this.savePlays();
+                const disp = document.getElementById('currentVideoClipDisplay');
+                disp.classList.remove('hidden');
+                disp.innerHTML = `<i class="fa-solid fa-video text-cyan-400"></i> <strong>${title || 'Clip'}</strong> (${angle}) ${url ? '— <a href="'+url+'" target="_blank" class="text-cyan-300 underline">Open</a>' : ''}`;
+                alert('Video clip attached to current play!');
+            }
+
+            // ========== ORIGINAL METHODS (preserved + lightly extended) ==========
 
             initDOM() {
                 this.authScreen = document.getElementById('authScreen');
@@ -2720,10 +3071,10 @@
                     if (saved) {
                         this.folders = JSON.parse(saved);
                     } else {
-                        this.folders = ['Passing', 'Running', 'Play Action', 'RPO', 'Custom'];
+                        this.folders = ['Offense', 'Defense', 'Special Teams', 'Run Game', 'Pass Game', 'Passing', 'Running', 'Play Action', 'RPO', 'Custom'];
                     }
                 } catch (e) {
-                    this.folders = ['Passing', 'Running', 'Play Action', 'RPO', 'Custom'];
+                    this.folders = ['Offense', 'Defense', 'Special Teams', 'Run Game', 'Pass Game', 'Passing', 'Running', 'Play Action', 'RPO', 'Custom'];
                 }
                 this.updateCategoryDropdowns();
             }
@@ -2823,6 +3174,21 @@
                         li.textContent = key;
                         this.qbProgression.appendChild(li);
                     });
+
+                    // Load video clip if present
+                    const disp = document.getElementById('currentVideoClipDisplay');
+                    if (this.currentPlay.videoClip) {
+                        const vc = this.currentPlay.videoClip;
+                        document.getElementById('videoClipTitle').value = vc.title || '';
+                        document.getElementById('videoClipUrl').value = vc.url || '';
+                        document.getElementById('videoClipAngle').value = vc.angle || 'All-22';
+                        disp.classList.remove('hidden');
+                        disp.innerHTML = `<i class="fa-solid fa-video text-cyan-400"></i> <strong>${vc.title || 'Clip'}</strong> (${vc.angle}) ${vc.url ? '— <a href="'+vc.url+'" target="_blank" class="text-cyan-300 underline">Open</a>' : ''}`;
+                    } else {
+                        document.getElementById('videoClipTitle').value = '';
+                        document.getElementById('videoClipUrl').value = '';
+                        disp.classList.add('hidden');
+                    }
 
                     this.undoStack = [];
                     this.redoStack = [];
@@ -3351,7 +3717,7 @@
                     const clampedX = Math.max(0.02, Math.min(0.98, targetNormX));
                     const clampedY = Math.max(0.02, Math.min(0.98, targetNormY));
 
-                    // Smooth damping (lerp) to eliminate hyper-sensitivity / twitchiness
+                    // Smooth damping (lerp) - further reduced sensitivity
                     this.draggedPlayer.player.x += (clampedX - this.draggedPlayer.player.x) * this.dragSmoothing;
                     this.draggedPlayer.player.y += (clampedY - this.draggedPlayer.player.y) * this.dragSmoothing;
 
