@@ -1,10 +1,9 @@
-<div class="bg-slate-800 rounded p-2"><div class="text-lg font-bold text-emerald-400" id="tendPass">0%</div><div class="text-[10px] text-slate-400">Pass</div></div>
-                        <div class="bg-slate-800 rounded p-2"><div class="text-lg font-bold text-amber-400" id="<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CHALKBOARD PRO | Football Playbook & Motion Studio</title>
+    <title>CHALKBOARD PRO | Football Playbook & Motion Simulator</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -27,8 +26,8 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
-        .canvas-container { position: relative; width: 100%; aspect-ratio: 16/9; max-height: 72vh; }
+        body { font-family: system-ui, -apple-system, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        .canvas-container { position: relative; width: 100%; aspect-ratio: 16/9; max-height: 78vh; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
@@ -36,10 +35,7 @@
         .btn-disabled { opacity: 0.4; cursor: not-allowed !important; pointer-events: none; }
         /* AI Mentor chat bubbles */
         .ai-bubble-user { background: #1e40af; color: white; border-radius: 12px 12px 4px 12px; }
-        .ai-bubble-bot { background: #1e293b; color: #e2e8f0; border-radius: 12px 12px 12px 4px; border: 1px solid #334155; }
-        .callsheet-header { font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
-        .callsheet-cell { min-height: 36px; border: 1px solid #334155; }
-        .callsheet-cell:focus { outline: 2px solid #3b82f6; background: #1e293b; }
+        .ai-bubble-bot  { background: #1e293b; color: #e2e8f0; border-radius: 12px 12px 12px 4px; border: 1px solid #334155; }
     </style>
 
     <!-- FIREBASE: real accounts + cloud-saved playbook -->
@@ -70,6 +66,7 @@
         window.ChalkboardCloud = {
             ready: true,
             currentUser: null,
+
             async signUp(email, password) {
                 const cred = await createUserWithEmailAndPassword(auth, email, password);
                 return cred.user;
@@ -98,17 +95,19 @@
         });
     </script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col overflow-hidden">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
 
     <!-- LANDING & PROFILE SELECTION SCREEN -->
     <div id="authScreen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-5 my-auto">
+            
             <div class="text-center space-y-2">
                 <div class="inline-flex p-3 bg-emerald-600 rounded-2xl text-white shadow-lg mb-1">
                     <i class="fa-solid fa-clipboard-list text-3xl"></i>
                 </div>
                 <h1 class="text-2xl font-black tracking-tight text-white">CHALKBOARD PRO</h1>
                 <p class="text-xs text-slate-400">Playbook Studio & Tactical Motion Simulator</p>
+                
                 <div class="pt-1">
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-950 text-emerald-300 border border-emerald-800">
                         <i class="fa-solid fa-circle-check text-xs"></i> Instant Touch & Mobile Ready
@@ -116,683 +115,1033 @@
                 </div>
             </div>
 
-            <button id="btnQuickStart" onclick="if(window.app) window.app.enterApp()" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2 border border-emerald-400/30 cursor-pointer">
+            <button id="btnQuickStart" onclick="if(window.app) window.app.launchQuickStartDirect()" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2 border border-emerald-400/30 cursor-pointer">
                 <i class="fa-solid fa-bolt text-amber-300"></i> Enter Studio & Start Drawing Immediately
             </button>
 
             <div class="relative flex py-1 items-center">
                 <div class="flex-grow border-t border-slate-800"></div>
-                <span class="flex-shrink mx-3 text-slate-500 text-[11px] uppercase tracking-wider font-semibold">Cloud / Firebase Auth (Optional)</span>
+                <span class="flex-shrink mx-3 text-slate-500 text-[11px] uppercase tracking-wider font-semibold">Or Setup Profile (Optional)</span>
                 <div class="flex-grow border-t border-slate-800"></div>
             </div>
 
-            <div class="space-y-3">
-                <input id="authEmail" type="email" placeholder="Coach Email" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
-                <input id="authPassword" type="password" placeholder="Password" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
-                <div class="flex gap-2 pt-1">
-                    <button onclick="window.app && window.app.cloudSignIn()" type="button" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs py-2.5 rounded-xl font-semibold transition">Sign In</button>
-                    <button onclick="window.app && window.app.cloudSignUp()" type="button" class="flex-1 bg-blue-600 hover:bg-blue-500 text-xs py-2.5 rounded-xl font-semibold transition">Create Account</button>
-                </div>
+            <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+                <button id="tabSignup" onclick="if(window.app) window.app.switchTab('signup')" type="button" class="flex-1 py-2 rounded-lg text-white bg-slate-800 transition">Coach Profile</button>
+                <button id="tabLogin" onclick="if(window.app) window.app.switchTab('login')" type="button" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition">Sign In</button>
             </div>
+
+            <form id="signupForm" onsubmit="if(window.app){ window.app.submitProfile(event); } return false;" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Coach Name <span class="text-slate-500 font-normal">(Optional)</span></label>
+                    <input type="text" id="signupName" placeholder="Coach Vance" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Email</label>
+                    <input type="email" id="signupEmail" placeholder="coach@program.com" required class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Password <span class="text-slate-500 font-normal">(6+ characters)</span></label>
+                    <input type="password" id="signupPassword" placeholder="••••••••" required minlength="6" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Coaching Level <span class="text-slate-500 font-normal">(Optional)</span></label>
+                        <select id="signupLevel" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-blue-500">
+                            <option value="highschool" selected>High School (Wide Hashes)</option>
+                            <option value="college">College / NCAA (Mid Hashes)</option>
+                            <option value="nfl">NFL (Narrow Hashes)</option>
+                            <option value="youth">Youth / Middle School</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Team Name <span class="text-slate-500 font-normal">(Optional)</span></label>
+                        <input type="text" id="signupTeam" placeholder="Longhorns" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Coaching Perspective <span class="text-slate-500 font-normal">(Offensive or Defensive)</span></label>
+                    <select id="signupPhilosophy" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-blue-500">
+                        <option value="offensive" selected>Offensive Coach (Passing / Run / Expectations)</option>
+                        <option value="defensive">Defensive Coach (Fronts / Coverages / Notes)</option>
+                    </select>
+                </div>
+
+                <p id="signupError" class="text-[11px] text-rose-400 font-semibold hidden"></p>
+
+                <div class="space-y-2 pt-1">
+                    <button type="submit" id="btnSaveProfile" class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white py-3 rounded-lg text-xs font-bold transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-floppy-disk"></i> Create Account & Launch Studio
+                    </button>
+                </div>
+            </form>
+
+            <form id="loginForm" onsubmit="if(window.app){ window.app.submitLogin(event); } return false;" class="space-y-3 hidden">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Email</label>
+                    <input type="email" id="loginEmail" placeholder="coach@program.com" required class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                </div>
+
+                <p id="loginError" class="text-[11px] text-rose-400 font-semibold hidden"></p>
+
+                <button type="submit" id="btnLoginSubmit" class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white py-3 rounded-lg text-xs font-bold transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-right-to-bracket"></i> Sign In & Open Playbook
+                </button>
+            </form>
+
         </div>
     </div>
 
-    <!-- MAIN APP SCREEN -->
-    <div id="appScreen" class="hidden h-screen flex flex-col">
-        <!-- TOP BAR -->
-        <header class="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between shrink-0">
+    <!-- FOLDER / PLAYBOOK DIRECTORY SCREEN -->
+    <div id="folderScreen" class="fixed inset-0 bg-slate-950 z-45 flex flex-col hidden">
+        <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="font-black text-lg tracking-tight">CHALKBOARD <span class="text-blue-500">PRO</span></div>
-                <div class="h-5 w-px bg-slate-700"></div>
-                <select id="folderSelect" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs" onchange="window.app.onFolderChange()">
-                    <option value="offense">Offense</option>
-                    <option value="defense">Defense</option>
-                    <option value="specialteams">Special Teams</option>
-                    <option value="rungame">Run Game</option>
-                    <option value="passgame">Pass Game</option>
-                </select>
-                <button onclick="window.app.createFolder()" class="text-xs bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded border border-slate-700">
-                    <i class="fas fa-folder-plus mr-1"></i>New Folder
-                </button>
+                <div class="bg-emerald-600 p-2.5 rounded-xl text-white">
+                    <i class="fa-solid fa-folder-tree text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black text-white">Playbook Library & Folders</h1>
+                    <p class="text-xs text-slate-400" id="folderScreenSubtitle">Select a folder or create a new scheme</p>
+                </div>
             </div>
-            <div class="flex items-center gap-2">
-                <button onclick="window.app.openPlayPicker()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700">
-                    <i class="fas fa-search mr-1"></i>Play Picker
+            <div class="flex items-center gap-3">
+                <button onclick="if(window.app) window.app.openNewFolderPrompt()" class="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 cursor-pointer shadow">
+                    <i class="fa-solid fa-folder-plus"></i> New Folder
                 </button>
-                <button onclick="window.app.openCallSheet()" class="text-xs bg-indigo-700 hover:bg-indigo-600 px-3 py-1.5 rounded">
-                    <i class="fas fa-table mr-1"></i>Call Sheet / Matrix
-                </button>
-                <button onclick="window.app.toggleAIMentor()" class="text-xs bg-violet-700 hover:bg-violet-600 px-3 py-1.5 rounded">
-                    <i class="fas fa-robot mr-1"></i>AI Mentor
-                </button>
-                <button onclick="window.app.exportPrint()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded border border-slate-700">
-                    <i class="fas fa-print mr-1"></i>Print
+                <button onclick="if(window.app) window.app.logout()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3.5 py-2 rounded-lg text-xs font-semibold cursor-pointer border border-slate-700">
+                    <i class="fa-solid fa-right-from-bracket"></i> Exit
                 </button>
             </div>
         </header>
 
-        <div class="flex flex-1 overflow-hidden">
-            <!-- LEFT SIDEBAR - PLAYS & FOLDERS -->
-            <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
-                <div class="p-3 border-b border-slate-800">
-                    <button onclick="window.app.newPlay()" class="w-full bg-blue-600 hover:bg-blue-500 text-sm font-semibold py-2 rounded">
-                        <i class="fas fa-plus mr-1"></i> New Play
+        <main class="flex-1 p-6 max-w-6xl w-full mx-auto overflow-y-auto space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400">Your Folders & Playbook Categories</h2>
+                <span class="text-xs text-slate-500">Click any folder to open its plays</span>
+            </div>
+
+            <div id="foldersGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <!-- Dynamically populated folder cards -->
+            </div>
+        </main>
+    </div>
+
+    <!-- MAIN APPLICATION WORKSPACE -->
+    <div id="appScreen" class="flex-1 flex flex-col hidden">
+        
+        <!-- Top Navigation Header -->
+        <header class="bg-slate-900 border-b border-slate-800 px-4 py-2 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <button onclick="if(window.app) window.app.returnToFolderView()" title="Back to Folders" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-slate-700">
+                    <i class="fa-solid fa-arrow-left"></i> Folders
+                </button>
+                <div class="bg-emerald-600 p-2 rounded-lg text-white">
+                    <i class="fa-solid fa-clipboard-list text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-base text-white leading-tight">CHALKBOARD PRO</h1>
+                        <span id="syncIndicator" class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check"></i> Playbook Studio
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400" id="coachTeamSubtext">Interactive Playbook Studio</p>
+                </div>
+            </div>
+
+            <!-- Global Action Controls -->
+            <div class="flex items-center gap-2 flex-wrap">
+                
+                <!-- MOVE PLAY TO FOLDER -->
+                <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700">
+                    <i class="fa-solid fa-folder-open text-amber-400 text-xs"></i>
+                    <label for="movePlayFolderSelect" class="text-xs font-semibold text-slate-300">Folder:</label>
+                    <select id="movePlayFolderSelect" onchange="if(window.app) window.app.moveCurrentPlayToFolder(this.value)" class="bg-slate-800 border border-slate-600 text-amber-300 rounded text-xs font-bold py-1 px-1.5 focus:outline-none">
+                    </select>
+                </div>
+
+                <!-- UNDO & REDO BUTTON GROUP -->
+                <div class="flex items-center bg-slate-950 rounded-lg border border-slate-700 p-0.5">
+                    <button id="btnUndo" onclick="if(window.app) window.app.undo()" title="Undo (Ctrl+Z)" type="button" class="bg-slate-800 hover:bg-slate-700 text-amber-300 px-2.5 py-1.5 rounded-l text-xs font-bold transition flex items-center gap-1 cursor-pointer btn-disabled">
+                        <i class="fa-solid fa-rotate-left"></i> Undo
+                    </button>
+                    <div class="w-[1px] h-4 bg-slate-800"></div>
+                    <button id="btnRedo" onclick="if(window.app) window.app.redo()" title="Redo (Ctrl+Y)" type="button" class="bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-r text-xs font-bold transition flex items-center gap-1 cursor-pointer btn-disabled">
+                        Redo <i class="fa-solid fa-rotate-right"></i>
                     </button>
                 </div>
-                <div class="flex-1 overflow-y-auto p-2" id="playList">
-                    <!-- Plays rendered here -->
-                </div>
-            </aside>
 
-            <!-- CENTER - CANVAS -->
-            <main class="flex-1 flex flex-col bg-slate-950 relative">
-                <div class="p-2 border-b border-slate-800 flex items-center gap-3 flex-wrap">
-                    <div class="flex items-center gap-1 bg-slate-900 rounded-lg p-1">
-                        <button id="modeMove" onclick="window.app.setMode('move')" class="px-3 py-1.5 text-xs font-semibold rounded bg-blue-600">Drag Players</button>
-                        <button id="modeRoute" onclick="window.app.setMode('route')" class="px-3 py-1.5 text-xs font-semibold rounded hover:bg-slate-800">Draw Routes</button>
-                        <button id="modeDraw" onclick="window.app.setMode('draw')" class="px-3 py-1.5 text-xs font-semibold rounded hover:bg-slate-800">Telestrator</button>
+                <!-- FLIP PLAY (MIRROR) BUTTON -->
+                <button id="btnFlipPlay" onclick="if(window.app) window.app.flipPlay()" title="Mirror Play Left/Right" type="button" class="bg-purple-950 hover:bg-purple-900 text-purple-200 border border-purple-800 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-arrows-left-right-to-line"></i> Flip Play
+                </button>
+
+                <!-- EXPORT PRINT PLAYCARD BUTTON -->
+                <button id="btnExportPlaycard" onclick="if(window.app) window.app.exportPlaycard()" title="Export Printable Playcard Image" type="button" class="bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-file-export"></i> Export Playcard
+                </button>
+
+                <!-- Open Call Sheet / Matrix -->
+                <button onclick="if(window.app) window.app.openCallSheet()" type="button" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-table-cells"></i> Call Sheet
+                </button>
+
+                <!-- Open Dropbox Play Picker -->
+                <button onclick="if(window.app) window.app.openPlayPicker()" type="button" class="bg-cyan-700 hover:bg-cyan-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-magnifying-glass"></i> Play Picker
+                </button>
+
+                <!-- AI Mentor Toggle -->
+                <button onclick="if(window.app) window.app.toggleAIMentor()" type="button" class="bg-violet-700 hover:bg-violet-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-robot"></i> AI Mentor
+                </button>
+
+                <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700">
+                    <i class="fa-solid fa-arrows-left-right text-blue-400 text-xs"></i>
+                    <label for="hashPositionSelect" class="text-xs font-semibold text-slate-300">Hash:</label>
+                    <select id="hashPositionSelect" class="bg-slate-800 border border-slate-600 text-white rounded text-xs font-bold py-1 px-1.5 focus:outline-none focus:border-blue-400">
+                        <option value="middle" selected>Middle of Field</option>
+                        <option value="left">Left Hash</option>
+                        <option value="right">Right Hash</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700">
+                    <i class="fa-solid fa-graduation-cap text-amber-400 text-xs"></i>
+                    <label for="levelSelect" class="text-xs font-semibold text-slate-300">Level:</label>
+                    <select id="levelSelect" class="bg-slate-800 border border-slate-600 text-white rounded text-xs font-bold py-1 px-1.5 focus:outline-none focus:border-amber-400">
+                        <option value="highschool">High School (Wide 60ft)</option>
+                        <option value="college">College / NCAA (Mid 40ft)</option>
+                        <option value="nfl">NFL (Narrow 18ft 6in)</option>
+                    </select>
+                </div>
+
+                <button id="btnOpenNewPlayModal" type="button" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition shadow-md cursor-pointer">
+                    <i class="fa-solid fa-plus-circle"></i> New Play
+                </button>
+                <button id="btnSavePlay" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Play
+                </button>
+                <button id="btnSaveAsNewCopy" type="button" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer" title="Save Edited Play as a New Copy">
+                    <i class="fa-solid fa-copy"></i> Save as New Copy
+                </button>
+                <button id="btnDeletePlay" type="button" class="bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+                <button id="btnLogout" onclick="if(window.app) window.app.logout()" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition ml-1 cursor-pointer">
+                    <i class="fa-solid fa-right-from-bracket"></i> Exit
+                </button>
+            </div>
+        </header>
+
+        <!-- GAME SITUATION & CALL SHEET BAR -->
+        <div class="bg-slate-950 border-b border-slate-800 px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2 font-bold text-amber-400">
+                <i class="fa-solid fa-stopwatch text-sm"></i>
+                <span>GAME SITUATION / CALL SHEET:</span>
+            </div>
+
+            <div class="flex items-center gap-3 flex-wrap">
+                <div>
+                    <span class="text-slate-400 mr-1">Down & Dist:</span>
+                    <select id="situationDownSelect" class="bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                        <option value="1st & 10">1st & 10 (Normal)</option>
+                        <option value="2nd & Short">2nd & Short (< 3 yds)</option>
+                        <option value="2nd & Long">2nd & Long (> 7 yds)</option>
+                        <option value="3rd & Medium">3rd & Medium (4-6 yds)</option>
+                        <option value="3rd & Long">3rd & Long (> 7 yds)</option>
+                        <option value="4th & Short">4th & Short / Go For It</option>
+                        <option value="Red Zone">Red Zone (Inside 20)</option>
+                        <option value="Goal Line">Goal Line (Inside 5)</option>
+                        <option value="2-Minute Drill">2-Minute Hurry Up</option>
+                    </select>
+                </div>
+
+                <div>
+                    <span class="text-slate-400 mr-1">Quarter:</span>
+                    <select id="situationQuarterSelect" class="bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                        <option value="1st Qtr">1st Quarter</option>
+                        <option value="2nd Qtr">2nd Quarter</option>
+                        <option value="3rd Qtr">3rd Quarter</option>
+                        <option value="4th Qtr">4th Quarter</option>
+                        <option value="OT">Overtime</option>
+                    </select>
+                </div>
+
+                <div>
+                    <span class="text-slate-400 mr-1">Auto-Align Defense:</span>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="chkAutoAlign" checked class="rounded bg-slate-800 border-slate-700 text-purple-500 focus:ring-0">
+                        <span class="ml-1 text-purple-300 font-semibold">Enabled</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORMATION & INELIGIBLE RECEIVER WARNING BANNER -->
+        <div id="formationWarningBanner" class="bg-amber-950/90 border-b border-amber-600/50 px-4 py-1.5 text-xs text-amber-200 font-semibold flex items-center gap-2 hidden">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i>
+            <span id="warningMessage">Warning: Illegal Formation / Ineligible Receiver detected.</span>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            
+            <!-- Sidebar -->
+            <aside class="w-full lg:w-80 bg-slate-900 border-r border-slate-800 flex flex-col p-4 overflow-y-auto gap-4 order-last lg:order-none">
+                
+                <!-- PLAYBOOK CATEGORY / FOLDER FILTER -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Playbook Library</label>
+                        <span class="text-[10px] text-slate-500 font-semibold">Folder Filter</span>
                     </div>
-                    <span class="text-[11px] text-amber-300/90 font-medium">Must click and hold, then drag to move players. Pure click only selects.</span>
-                    <div class="flex items-center gap-2 ml-auto">
-                        <label class="text-xs text-slate-400">Hash:</label>
-                        <select id="hashSelect" onchange="window.app.changeHash(this.value)" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs">
-                            <option value="middle">Middle</option>
-                            <option value="left">Left Hash</option>
-                            <option value="right">Right Hash</option>
+                    <select id="categoryFilterSelect" class="w-full bg-slate-950 border border-slate-700 text-amber-300 font-bold rounded p-1.5 text-xs focus:outline-none">
+                    </select>
+
+                    <select id="playSelect" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2 text-sm font-medium focus:outline-none focus:border-blue-500">
+                    </select>
+
+                    <div class="grid grid-cols-2 gap-1.5 pt-1">
+                        <button id="btnExportPlaybook" type="button" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 py-1.5 rounded text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-download"></i> Backup (.json)
+                        </button>
+                        <button id="btnImportPlaybook" type="button" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1.5 rounded text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-upload"></i> Restore (.json)
+                        </button>
+                    </div>
+                    <input type="file" id="importPlaybookFile" accept="application/json" class="hidden">
+                    <p class="text-[10px] text-slate-500 italic">This app saves locally to your browser. Backup regularly, or restore that file on another device.</p>
+                </div>
+
+                <!-- CLEAR FIELD ELEMENTS & FIELD MARKS TOGGLE -->
+                <div class="space-y-1.5">
+                    <button id="btnClearFieldOnly" type="button" class="w-full bg-amber-950/90 hover:bg-amber-900 active:bg-amber-950 text-amber-200 border border-amber-800 p-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm">
+                        <i class="fa-solid fa-eraser text-amber-400"></i> Clear Field Marks Only (Keep Players)
+                    </button>
+                    <button id="btnRestoreFieldMarks" type="button" class="w-full bg-emerald-950/90 hover:bg-emerald-900 active:bg-emerald-950 text-emerald-200 border border-emerald-800 p-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm">
+                        <i class="fa-solid fa-eye text-emerald-400"></i> Add Field Marks Back
+                    </button>
+                </div>
+
+                <!-- CLEAR ALL PLAYERS BUTTON -->
+                <div class="space-y-1.5">
+                    <button id="btnClearAllPlayers" type="button" class="w-full bg-rose-950/90 hover:bg-rose-900 active:bg-rose-950 text-rose-200 border border-rose-800 p-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm">
+                        <i class="fa-solid fa-user-slash text-rose-400"></i> Clear All Players (Blank Field)
+                    </button>
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <button id="btnClearOffense" type="button" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1.5 rounded text-[11px] font-semibold">Clear Offense</button>
+                        <button id="btnClearDefense" type="button" class="bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 py-1.5 rounded text-[11px] font-semibold">Clear Defense</button>
+                    </div>
+                </div>
+
+                <!-- ADD SAVED FORMATIONS PANEL -->
+                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center justify-between">
+                        <span><i class="fa-solid fa-layer-group"></i> Add Saved Formations</span>
+                        <span class="text-[10px] text-slate-500 font-normal">Quick Spawn</span>
+                    </h3>
+                    <div id="savedFormationsSpawnList" class="space-y-1.5">
+                        <span class="text-[10px] text-slate-500 italic">No saved formations yet. Set up players on the field, then tap "Save Current as New" below.</span>
+                    </div>
+                </div>
+
+                <!-- ADD ALL OFFENSE/DEFENSE -->
+                <div class="grid grid-cols-2 gap-1.5">
+                    <button id="btnAddOffense" type="button" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 py-2 rounded text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-users"></i> Add All Offense
+                    </button>
+                    <button id="btnAddDefense" type="button" class="bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 py-2 rounded text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-users"></i> Add All Defense
+                    </button>
+                </div>
+
+                <!-- SPAWN PERSONNEL SIDE MENU -->
+                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center justify-between">
+                        <span><i class="fa-solid fa-users"></i> Add Players to Field</span>
+                        <span class="text-[10px] text-slate-500 font-normal">Click to Spawn</span>
+                    </h3>
+
+                    <!-- Offense Spawners -->
+                    <div>
+                        <span class="block text-[11px] font-semibold text-blue-300 mb-1">Offense:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="if(window.app) window.app.spawnPlayer('offense', 'X')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ X</button>
+                            <button onclick="if(window.app) window.app.spawnPlayer('offense', 'Z')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ Z</button>
+                            <button onclick="if(window.app) window.app.spawnPlayer('offense', 'Y')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ Y (TE)</button>
+                            <button onclick="if(window.app) window.app.spawnPlayer('offense', 'Slot')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ Slot</button>
+                            <button onclick="if(window.app) window.app.spawnPlayer('offense', 'QB')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ QB</button>
+                            <button onclick="if(window.app) window.app.spawnPlayer('offense', 'RB')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ RB</button>
+                            <button onclick="if(window.app) window.app.spawnPlayer('offense', 'OL')" class="bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ OL</button>
+                        </div>
+                    </div>
+
+                    <!-- Defense Spawners -->
+                    <div>
+                        <span class="block text-[11px] font-semibold text-rose-300 mb-1">Defense:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="if(window.app) window.app.spawnPlayer('defense', 'DE')" class="bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ DE</button>
+                            <button onclick="if(window.app) window.app.spawnPlayer('defense', 'DT')" class="bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ DT</button>
+                            <button onclick="if(window.app) window.app.spawnPlayer('defense', 'LB')" class="bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ LB</button>
+                            <button onclick="if(window.app) window.app.spawnPlayer('defense', 'CB')" class="bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ CB</button>
+                            <button onclick="if(window.app) window.app.spawnPlayer('defense', 'S')" class="bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 px-2 py-1 rounded text-xs font-bold cursor-pointer">+ Safety</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PLAYER INSPECTOR & ICON SHAPE PANEL -->
+                <div id="playerInspectorPanel" class="bg-slate-950 p-3 rounded-lg border border-amber-500/40 space-y-3 hidden">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center justify-between">
+                        <span><i class="fa-solid fa-user-gear"></i> Selected Player Inspector</span>
+                        <button onclick="if(window.app) window.app.deselectPlayer()" class="text-slate-400 hover:text-white text-xs cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+                    </h3>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">Player Label / Name</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="inspectorLabel" class="flex-1 bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-amber-400">
+                            <button onclick="if(window.app) window.app.updatePlayerLabel()" class="bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1 rounded text-xs font-bold cursor-pointer">Rename</button>
+                        </div>
+                    </div>
+
+                    <!-- ICON SHAPE & COLOR CUSTOMIZATION -->
+                    <div class="bg-slate-900 p-2.5 rounded border border-slate-800 space-y-2">
+                        <span class="block text-[11px] font-bold text-amber-300 uppercase tracking-wider">Icon Shape & Color Style</span>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1">Shape Style</label>
+                                <select id="inspectorShapeSelect" onchange="if(window.app) window.app.updatePlayerShape(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                                    <option value="circle">Circle (Default)</option>
+                                    <option value="square">Square</option>
+                                    <option value="rectangle">Rectangle</option>
+                                    <option value="star">Star (*)</option>
+                                    <option value="triangle">Triangle</option>
+                                    <option value="textonly">Text-Only (Clean No Box)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1">Icon Fill Color</label>
+                                <input type="color" id="inspectorColorPicker" value="#3b82f6" onchange="if(window.app) window.app.updatePlayerColor(this.value)" class="w-full h-7 rounded border border-slate-700 bg-transparent cursor-pointer p-0">
+                            </div>
+                        </div>
+
+                        <div class="pt-1 space-y-1">
+                            <button type="button" onclick="if(window.app) window.app.applyStyleToAllPlayersOnField()" class="w-full bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[10px] font-semibold cursor-pointer">
+                                Apply This Style to All Players on Field
+                            </button>
+                            <label class="flex items-center gap-2 cursor-pointer pt-0.5">
+                                <input type="checkbox" id="chkGlobalDefaultStyle" onchange="if(window.app) window.app.toggleGlobalDefaultStyle(this.checked)" class="rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0">
+                                <span class="text-[10px] text-amber-300 font-medium">Save as default for future spawns</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- ROUTE EDITING & GRAB TOOLKIT -->
+                    <div id="routeEditingToolkit" class="bg-slate-900 p-2.5 rounded border border-blue-900/50 space-y-2">
+                        <span class="block text-[11px] font-bold text-blue-400 uppercase tracking-wider"><i class="fa-solid fa-route"></i> Route Editing & Grab Controls</span>
+                        <p class="text-[10px] text-slate-400 leading-tight">Click & drag any route node point directly on the field, or use quick tools below:</p>
+                        
+                        <div class="grid grid-cols-2 gap-1.5 pt-1">
+                            <button type="button" onclick="if(window.app) window.app.straightenSelectedRoute()" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1.5 rounded text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-slash"></i> Straighten Route
+                            </button>
+                            <button type="button" onclick="if(window.app) window.app.scaleSelectedRoute(1.25)" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 py-1.5 rounded text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-expand"></i> Stretch / Bigger
+                            </button>
+                            <button type="button" onclick="if(window.app) window.app.scaleSelectedRoute(0.8)" class="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 py-1.5 rounded text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-compress"></i> Shrink / Smaller
+                            </button>
+                            <button type="button" onclick="if(window.app) window.app.flipSelectedRouteHorizontally()" class="bg-slate-800 hover:bg-slate-700 text-purple-300 border border-slate-700 py-1.5 rounded text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-arrows-left-right"></i> Flip Direction
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- DEFENDER-SPECIFIC OPTIONS -->
+                    <div id="defenderOptionsContainer" class="hidden space-y-3 bg-slate-900 p-2.5 rounded border border-rose-900/50">
+                        <span class="block text-[11px] font-bold text-rose-400 uppercase tracking-wider">Defensive Assignment</span>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="text-[10px] text-slate-300 font-semibold">Defensive Zone Responsibility</label>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[9px] text-slate-400">Zone Color:</span>
+                                    <input type="color" id="zoneColorPicker" value="#1e3a8a" onchange="if(window.app) window.app.updateZoneColor(this.value)" class="w-5 h-5 rounded border-0 p-0 bg-transparent cursor-pointer" title="Customize Zone Color">
+                                </div>
+                            </div>
+                            <select id="defenderZoneSelect" onchange="if(window.app) window.app.updateDefenderZone(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-rose-400">
+                                <option value="none">None / Man Coverage (Grey)</option>
+                                <option value="Deep 1/3">Deep 1/3 (Dark Blue)</option>
+                                <option value="Deep 1/2">Deep 1/2 (Dark Blue)</option>
+                                <option value="Hook/Curl">Hook / Curl (Green)</option>
+                                <option value="Curl/Flat">Curl / Flat (Purple)</option>
+                                <option value="Flat">Flat / Hard Flat (Light Blue)</option>
+                                <option value="Seam/Hole">Seam / Hole Zone</option>
+                                <option value="Spy">QB Spy (Orange)</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1.5 pt-1 border-t border-slate-800">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="chkDefenderBlitz" onchange="if(window.app) window.app.toggleDefenderBlitz(this.checked)" class="rounded bg-slate-800 border-slate-700 text-rose-600 focus:ring-0">
+                                <span class="text-xs font-bold text-rose-300">Assign Blitz Route (Red)</span>
+                            </label>
+
+                            <div id="blitzGapContainer" class="hidden pt-1 space-y-1">
+                                <label class="block text-[10px] text-slate-400">Blitz Target Gap:</label>
+                                <select id="blitzGapSelect" onchange="if(window.app) window.app.updateBlitzGap(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs focus:outline-none">
+                                    <option value="A-Gap">A-Gap (Between Center & Guard)</option>
+                                    <option value="B-Gap">B-Gap (Between Guard & Tackle)</option>
+                                    <option value="C-Gap">C-Gap (Outside Tackle / Tight End)</option>
+                                    <option value="Edge">Edge / Contain Rush</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PLAYER SPEED RATING SLIDER -->
+                    <div id="playerSpeedContainer">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-[11px] font-semibold text-amber-300">Player Speed (40-Yard Dash):</label>
+                            <span id="speedValueDisplay" class="text-xs font-mono font-bold text-emerald-400">4.50s</span>
+                        </div>
+                        <input type="range" id="playerSpeedRange" min="4.30" max="5.00" step="0.05" value="4.50" oninput="if(window.app) window.app.updatePlayerSpeed(this.value)" class="w-full accent-amber-500 cursor-pointer">
+                    </div>
+
+                    <!-- WR PRESS RELEASE SELECTOR -->
+                    <div id="wrReleaseContainer">
+                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">Press Release Technique</label>
+                        <select id="wrReleaseSelect" onchange="if(window.app) window.app.updatePlayerRelease(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-amber-400">
+                            <option value="none">Straight Release Stem</option>
+                            <option value="jab">Press Jab-Step (Lateral Wiggle)</option>
+                            <option value="split">Split Release (Square Up)</option>
+                            <option value="speed">Speed Release Outside</option>
+                        </select>
+                    </div>
+
+                    <div id="routeColorSection">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-[11px] font-semibold text-slate-300">Route Line Color</label>
+                            <input type="color" id="routeColorPicker" value="#3b82f6" class="w-6 h-6 rounded-full border-0 p-0 bg-transparent cursor-pointer" title="Route color">
+                        </div>
+                    </div>
+
+                    <div id="routePresetsStandard">
+                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">Route / Assignment Responsibility</label>
+                        <div class="grid grid-cols-3 gap-1 mb-2">
+                            <button onclick="if(window.app) window.app.applyRoutePreset('post')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Post</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('dig')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Dig</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('fly')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Fly/Go</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('slant')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Slant</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('out')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Out</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('corner')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Corner</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('flat')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Flat</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('curl')" class="bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Curl</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('block')" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Block</button>
+                        </div>
+                    </div>
+
+                    <div id="routePresetsRB" class="hidden">
+                        <label class="block text-[11px] font-semibold text-amber-300 mb-1">RB Route / Assignment</label>
+                        <div class="grid grid-cols-2 gap-1 mb-2">
+                            <button onclick="if(window.app) window.app.applyRoutePreset('check')" class="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Check-Release</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('swing')" class="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Swing</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('wheel')" class="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Wheel</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('screen')" class="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer">Screen</button>
+                            <button onclick="if(window.app) window.app.applyRoutePreset('block')" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 py-1 rounded text-[11px] font-semibold cursor-pointer col-span-2">Pass Block (stay in)</button>
+                        </div>
+                    </div>
+
+                    <button onclick="if(window.app) window.app.deleteSelectedPlayer()" class="w-full bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 py-1 rounded text-xs font-semibold cursor-pointer">
+                        Remove Player from Field
+                    </button>
+                </div>
+
+                <!-- VIDEO CLIP ATTACHMENT PANEL -->
+                <div class="bg-slate-950 p-3 rounded-lg border border-cyan-800/50 space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                        <i class="fa-solid fa-video"></i> Teaching Tape / Video Clip
+                    </h3>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-0.5">Clip Title</label>
+                        <input type="text" id="videoClipTitle" placeholder="e.g. Dig Concept - All-22" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-0.5">Video URL (YouTube / Hudl / etc.)</label>
+                        <input type="url" id="videoClipUrl" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-0.5">Camera Angle</label>
+                        <select id="videoClipAngle" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                            <option value="All-22">All-22</option>
+                            <option value="Endzone">Endzone</option>
+                            <option value="Sideline">Sideline</option>
+                            <option value="Broadcast">Broadcast</option>
+                            <option value="Practice">Practice / Coach Cam</option>
+                        </select>
+                    </div>
+                    <button onclick="if(window.app) window.app.saveVideoClipToPlay()" class="w-full bg-cyan-700 hover:bg-cyan-600 text-white py-1.5 rounded text-[11px] font-bold cursor-pointer">
+                        <i class="fa-solid fa-paperclip"></i> Attach Clip to Current Play
+                    </button>
+                    <div id="currentVideoClipDisplay" class="text-[10px] text-slate-400 italic hidden"></div>
+                </div>
+
+                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Interactivity Mode</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btnModeMove" type="button" class="mode-btn bg-blue-600 text-white p-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5 active cursor-pointer">
+                            <i class="fa-solid fa-up-down-left-right"></i> Drag Players
+                        </button>
+                        <button id="btnModeDraw" type="button" class="mode-btn bg-slate-800 text-slate-300 hover:bg-slate-700 p-2 rounded text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-pen-nib"></i> Draw Tools
+                        </button>
+                    </div>
+                    <p id="modeDesc" class="text-[11px] text-slate-400 italic mt-1">Click & drag any player icon or route vertex handle to adjust alignment and routes.</p>
+                </div>
+
+                <!-- Drawing Palette -->
+                <div class="space-y-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-ruler"></i> Tactical Drawing Palette
+                    </h3>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btnToolDraw" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-pencil text-amber-400 w-4 text-center"></i> Freehand Sketch
+                        </button>
+                        <button id="btnToolArrow" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-arrow-up text-blue-400 w-4 text-center"></i> Route Arrow
+                        </button>
+                        <button id="btnToolBlock" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-t text-emerald-400 w-4 text-center"></i> Block (T-Bar)
+                        </button>
+                        <button id="btnToolMotion" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-ellipsis text-amber-400 w-4 text-center"></i> Motion Line
+                        </button>
+                        <button id="btnToolStunt" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-shuffle text-purple-400 w-4 text-center"></i> Def. Stunt Curve
+                        </button>
+                        <button id="btnToolStraight" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-slash text-blue-300 w-4 text-center"></i> Straight Line
+                        </button>
+                        <button id="btnToolCurveRoute" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-wave-square text-blue-300 w-4 text-center"></i> Curved Route
+                        </button>
+                        <button id="btnAddCustomRoute" type="button" onclick="if(window.app) window.app.promptAddCustomRoute()" class="tool-btn bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 p-2 rounded text-xs text-left flex items-center gap-2 col-span-2 cursor-pointer text-emerald-200">
+                            <i class="fa-solid fa-bookmark text-emerald-400 w-4 text-center"></i> + Add Drawn Route to Preset Library
+                        </button>
+                        <button id="btnToolEraseLine" type="button" class="tool-btn bg-slate-800 border border-slate-700 p-2 rounded text-xs text-left flex items-center gap-2 col-span-2 cursor-pointer">
+                            <i class="fa-solid fa-eraser text-rose-400 w-4 text-center"></i> Tap a Route/Line to Delete It
+                        </button>
+                    </div>
+
+                    <!-- CUSTOM SAVED ROUTES QUICK SELECT -->
+                    <div id="customRoutesSection" class="space-y-1.5 pt-1 border-t border-slate-800">
+                        <span class="block text-[10px] font-bold text-amber-400 uppercase">Your Saved Custom Routes:</span>
+                        <div id="customRoutesList" class="flex flex-wrap gap-1">
+                            <span class="text-[10px] text-slate-500 italic">Draw a route, select a player, and click "+ Add Drawn Route" above to save it here!</span>
+                        </div>
+                    </div>
+
+                    <button id="btnFinishStraightLine" type="button" class="hidden w-full bg-blue-600 hover:bg-blue-500 text-white p-2 rounded text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-flag-checkered"></i> Finish Line
+                    </button>
+
+                    <div class="space-y-2 pt-1">
+                        <button id="btnToolClear" type="button" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 p-2 rounded text-xs text-amber-300 font-semibold flex items-center justify-center gap-2 transition cursor-pointer">
+                            <i class="fa-solid fa-eraser"></i> Erase Doodles / Telestrator
+                        </button>
+                        <button id="btnWipeRoutes" type="button" class="w-full bg-rose-950/90 hover:bg-rose-900 border border-rose-800 p-2 rounded text-xs text-rose-200 font-semibold flex items-center justify-center gap-2 transition cursor-pointer">
+                            <i class="fa-solid fa-trash-can"></i> Clear All Preset Routes
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-xs text-slate-400">Color:</span>
+                        <div class="flex gap-1.5 items-center">
+                            <button type="button" data-color="#f59e0b" class="color-btn w-6 h-6 rounded-full bg-amber-500 ring-2 ring-white"></button>
+                            <button type="button" data-color="#3b82f6" class="color-btn w-6 h-6 rounded-full bg-blue-500"></button>
+                            <button type="button" data-color="#10b981" class="color-btn w-6 h-6 rounded-full bg-emerald-500"></button>
+                            <button type="button" data-color="#ef4444" class="color-btn w-6 h-6 rounded-full bg-red-500"></button>
+                            <button type="button" data-color="#a855f7" class="color-btn w-6 h-6 rounded-full bg-purple-500"></button>
+                            <button type="button" data-color="#000000" class="color-btn w-6 h-6 rounded-full bg-black border border-slate-600"></button>
+                            <input type="color" id="customColorPicker" value="#f59e0b" class="w-6 h-6 rounded-full border-0 p-0 bg-transparent cursor-pointer" title="Custom color">
+                        </div>
+                    </div>
+
+                    <!-- FIELD BACKGROUND COLOR & YARD NUMBERS TOGGLE -->
+                    <div class="space-y-2 pt-2 border-t border-slate-800">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-slate-300 font-semibold">Field Background:</span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="if(window.app) window.app.setFieldColor('#ffffff')" class="bg-white text-slate-900 px-2 py-0.5 rounded text-[10px] font-bold border border-slate-400">white</button>
+                                <button type="button" onclick="if(window.app) window.app.setFieldColor('#064e3b')" class="bg-emerald-800 text-white px-2 py-0.5 rounded text-[10px] font-bold">Turf Green</button>
+                                <input type="color" id="fieldCustomColorPicker" value="#ffffff" onchange="if(window.app) window.app.setFieldColor(this.value)" class="w-6 h-6 rounded border-0 p-0 bg-transparent cursor-pointer" title="Custom Field Color">
+                            </div>
+                        </div>
+
+                        <label class="flex items-center gap-2 cursor-pointer pt-1">
+                            <input type="checkbox" id="chkShowYardNumbers" checked onchange="if(window.app) window.app.render()" class="rounded bg-slate-800 border-slate-700 text-emerald-600 focus:ring-0">
+                            <span class="text-xs text-slate-300 font-semibold">Show Yard Numbers on Field</span>
+                        </label>
+                    </div>
+
+                    <div class="space-y-1 pt-1">
+                        <span class="text-xs text-slate-400">End Style:</span>
+                        <div class="grid grid-cols-6 gap-1">
+                            <button id="endStyleNone" data-endstyle="none" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer" title="Plain line">
+                                <i class="fa-solid fa-minus text-slate-300"></i>
+                            </button>
+                            <button id="endStyleArrow" data-endstyle="arrow" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer ring-2 ring-white" title="Arrow">
+                                <i class="fa-solid fa-caret-up text-slate-300"></i>
+                            </button>
+                            <button id="endStyleBlock" data-endstyle="block" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer" title="T-Bar / Block">
+                                <i class="fa-solid fa-t text-slate-300"></i>
+                            </button>
+                            <button id="endStyleHookLeft" data-endstyle="hookLeft" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer" title="Curl Left">
+                                <i class="fa-solid fa-rotate-left text-slate-300"></i>
+                            </button>
+                            <button id="endStyleHookRight" data-endstyle="hookRight" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer" title="Curl Right">
+                                <i class="fa-solid fa-rotate-right text-slate-300"></i>
+                            </button>
+                            <button id="endStyleCircle" data-endstyle="circle" type="button" class="end-style-btn bg-slate-800 border border-slate-700 p-2 rounded flex items-center justify-center cursor-pointer" title="Circle / Dot">
+                                <i class="fa-regular fa-circle text-slate-300"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center justify-between">
+                        <span><i class="fa-solid fa-shield-halved"></i> Defensive Schematics</span>
+                        <button onclick="if(window.app) window.app.promptRenameFront()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-300 px-2 py-0.5 rounded cursor-pointer" title="Rename active front">Rename Front</button>
+                    </h3>
+
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Defensive Front Preset</label>
+                        <select id="frontSelect" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-1.5 text-xs">
+                            <option value="4-3">4-3 Over (4 DL, 3 LB)</option>
+                            <option value="3-4">3-4 Odd (3 DL, 4 LB)</option>
+                            <option value="4-2-5">4-2-5 Nickel (4 DL, 2 LB, 5 DB)</option>
+                            <option value="5-3">5-3 Bear (5 DL, 3 LB)</option>
+                            <option value="Custom">Custom Drag-and-Drop Front</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-xs text-slate-400">Coverage Shell</label>
+                            <button onclick="if(window.app) window.app.promptRenameCoverage()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-300 px-2 py-0.5 rounded cursor-pointer">Rename Coverage</button>
+                        </div>
+                        <select id="coverageSelect" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-1.5 text-xs">
+                            <option value="Cover2">Cover 2 Zone</option>
+                            <option value="Cover3">Cover 3 Match</option>
+                            <option value="Cover4">Cover 4 Quarters</option>
+                            <option value="Cover1">Cover 1 Man Free</option>
+                            <option value="Cover0">Cover 0 Blitz</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-purple-400 mb-1 flex items-center justify-between">
+                            <span><i class="fa-solid fa-shuffle"></i> Defensive Stunts</span>
+                            <span id="stuntBadge" class="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.5 rounded">None</span>
+                        </label>
+                        <select id="stuntSelect" class="w-full bg-slate-800 border border-slate-700 text-purple-200 rounded p-1.5 text-xs font-medium">
+                            <option value="None">None (Straight Pass Rush)</option>
+                            <option value="TE-Twist">T-E Twist (Tackle First, End Loops Inside)</option>
+                            <option value="ET-Twist">E-T Twist (End Crashes, Tackle Loops Outside)</option>
+                            <option value="AGap-Cross">A-Gap Cross Blitz (LB Crosses behind DT)</option>
+                            <option value="Pirate">Pirate Stunt (DE & DT Double Inside Slant)</option>
+                            <option value="Pinch">Pinch Front (DL Slants Hard Inside)</option>
+                            <option value="Fan">Fan / Out (DL Slants Hard Outside)</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="flex-1 flex items-center justify-center p-3">
-                    <div class="canvas-container bg-white rounded-lg overflow-hidden shadow-2xl border border-slate-700">
+                <div class="space-y-2 text-xs text-slate-300">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="chkRoutes" checked class="rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-0">
+                        <span>Show Route / Blocking Assignments</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="chkStunts" checked class="rounded bg-slate-800 border-slate-700 text-purple-600 focus:ring-0">
+                        <span>Show Defensive Stunt Vectors</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="chkYardValues" class="rounded bg-slate-800 border-slate-700 text-emerald-600 focus:ring-0">
+                        <span>Show Yard Values (route/line length)</span>
+                    </label>
+                </div>
+
+            </aside>
+
+            <!-- Center Workspace -->
+            <main class="flex-1 flex flex-col bg-slate-950 relative overflow-hidden order-first lg:order-none">
+                
+                <div class="flex-1 flex items-center justify-center p-2 sm:p-4 bg-slate-950">
+                    <div class="canvas-container rounded-xl overflow-hidden border-2 border-slate-800 shadow-2xl bg-field">
                         <canvas id="fieldCanvas"></canvas>
                     </div>
                 </div>
 
-                <div class="p-2 border-t border-slate-800 flex items-center gap-2">
-                    <button onclick="window.app.playAnimation()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 rounded text-xs font-semibold"><i class="fas fa-play mr-1"></i>Play</button>
-                    <button onclick="window.app.resetAnimation()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-xs"><i class="fas fa-undo"></i></button>
-                    <input type="range" id="scrubber" min="0" max="100" value="0" class="flex-1" oninput="window.app.scrub(this.value)">
-                    <span id="timeDisplay" class="text-xs text-slate-400 w-12">0.0s</span>
-                </div>
-            </main>
+                <!-- Play Control Bar -->
+                <div class="bg-slate-900 border-t border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                    
+                    <div class="flex items-center gap-2">
+                        <button id="btnPlay" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg transition shadow-lg cursor-pointer">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button id="btnPause" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-full flex items-center justify-center text-lg transition border border-slate-700 cursor-pointer">
+                            <i class="fa-solid fa-pause"></i>
+                        </button>
+                        <button id="btnReset" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-full flex items-center justify-center text-lg transition border border-slate-700 cursor-pointer">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                        
+                        <div class="flex items-center gap-2 ml-2">
+                            <input type="range" id="scrubber" min="0" max="100" value="0" class="w-28 sm:w-44 accent-emerald-500">
+                            <span id="timeDisplay" class="text-xs font-mono text-slate-400 w-12">0.0s</span>
+                        </div>
+                    </div>
 
-            <!-- RIGHT SIDEBAR - INSPECTOR -->
-            <aside class="w-72 bg-slate-900 border-l border-slate-800 flex flex-col shrink-0 overflow-y-auto">
-                <div class="p-3 border-b border-slate-800">
-                    <div class="text-xs font-bold uppercase text-slate-400 mb-2">Player Inspector</div>
-                    <div id="inspectorContent" class="text-sm text-slate-300">Select a player to edit</div>
-                </div>
-                <div class="p-3 border-b border-slate-800">
-                    <div class="text-xs font-bold uppercase text-slate-400 mb-2">Teaching Tape / Video Clip</div>
-                    <input id="clipTitle" placeholder="Clip title" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs mb-1">
-                    <input id="clipUrl" placeholder="URL" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs mb-1">
-                    <select id="clipAngle" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs mb-2">
-                        <option>All-22</option><option>Endzone</option><option>Sideline</option><option>Broadcast</option>
-                    </select>
-                    <button onclick="window.app.attachClip()" class="w-full bg-blue-600 hover:bg-blue-500 text-xs py-1.5 rounded font-semibold">Attach Clip to Play</button>
-                </div>
-                <div class="p-3">
-                    <div class="text-xs font-bold uppercase text-slate-400 mb-2">Tendencies</div>
-                    <div class="grid grid-cols-3 gap-2 text-center">
-                        <div class="bg-slate-800 rounded p-2"><div class="text-lg font-bold text-blue-400" id="tendRun">0%</div><div class="text-[10px] text-slate-400">Run</div></div>
-                  tendST">0%</div><div class="text-[10px] text-slate-400">ST</div></div>
+                    <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+                        <span class="text-slate-500 px-2 font-semibold">Speed:</span>
+                        <button type="button" data-speed="0.5" class="speed-btn px-2 py-1 rounded text-slate-400 hover:text-white">0.5x</button>
+                        <button type="button" data-speed="1.0" class="speed-btn px-2 py-1 rounded bg-slate-800 text-white font-bold">1.0x</button>
+                        <button type="button" data-speed="1.5" class="speed-btn px-2 py-1 rounded text-slate-400 hover:text-white">1.5x</button>
                     </div>
                 </div>
-            </aside>
+
+                <!-- Tactical Breakdown Panel -->
+                <div class="bg-slate-900/90 border-t border-slate-800 p-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs overflow-y-auto max-h-48">
+                    
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="flex items-center gap-2 flex-1 mr-2">
+                                <h4 id="playTitle" class="font-bold text-sm text-blue-400">Play Name</h4>
+                                <input type="text" id="editPlayTitleInput" class="hidden bg-slate-900 border border-blue-500 text-white font-bold text-xs rounded px-2 py-0.5 flex-1" />
+                            </div>
+                            <button id="btnEditNotes" type="button" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 px-2 py-0.5 rounded font-semibold cursor-pointer flex items-center gap-1">
+                                <i class="fa-solid fa-pen"></i> Edit
+                            </button>
+                        </div>
+                        <p id="playDesc" class="text-slate-300 leading-relaxed flex-1">Select a play to view execution notes.</p>
+                        <textarea id="editPlayDesc" class="hidden w-full bg-slate-900 border border-amber-600 text-white rounded p-2 text-xs flex-1" rows="3"></textarea>
+                    </div>
+
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col">
+                        <h4 class="font-bold text-amber-400 mb-1 flex items-center gap-1">
+                            <i class="fa-solid fa-eye"></i> QB Progression & Keys
+                        </h4>
+                        <ul id="qbProgression" class="list-disc list-inside text-slate-300 space-y-1 flex-1">
+                            <li>Pre-Snap: Read safety alignment & motion leverage.</li>
+                        </ul>
+                        <textarea id="editQbProgression" class="hidden w-full bg-slate-900 border border-amber-600 text-white rounded p-2 text-xs mt-2 flex-1" rows="4" placeholder="One key per line"></textarea>
+                        <button id="btnSaveNotes" type="button" class="hidden mt-2 w-full bg-amber-600 hover:bg-amber-500 text-white py-1.5 rounded text-xs font-bold cursor-pointer">
+                            <i class="fa-solid fa-check"></i> Save Notes
+                        </button>
+                    </div>
+
+                    <div class="bg-slate-950 p-3 rounded border border-purple-900/40 flex flex-col">
+                        <div class="flex items-center justify-between mb-1">
+                            <h4 id="coachNotesTitle" class="font-bold text-purple-400 flex items-center gap-1">
+                                <i class="fa-solid fa-clipboard-question"></i> Offensive Expectations
+                            </h4>
+                            <span class="text-[9px] bg-purple-950 text-purple-300 border border-purple-800 px-1.5 py-0.5 rounded">Coach Notes</span>
+                        </div>
+                        <p id="coachNotesDisplay" class="text-slate-300 text-[11px] leading-relaxed flex-1 italic">Expect quarters or zone shell; look for leverage against invert safety.</p>
+                        <textarea id="editCoachNotes" class="hidden w-full bg-slate-900 border border-purple-600 text-white rounded p-2 text-xs flex-1" rows="3" placeholder="Enter notes here..."></textarea>
+                    </div>
+
+                </div>
+
+            </main>
         </div>
     </div>
 
-    <!-- CALL SHEET MODAL -->
-    <div id="callSheetModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-6xl max-h-[90vh] flex flex-col shadow-2xl">
-            <div class="flex items-center justify-between px-5 py-3 border-b border-slate-700">
-                <div class="font-bold text-lg">Situational Call Sheet / Matrix</div>
-                <div class="flex items-center gap-2">
-                    <button onclick="window.app.addCallSheetRow()" class="text-xs bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 rounded"><i class="fas fa-plus mr-1"></i>Add Row</button>
-                    <button onclick="window.app.addCallSheetCol()" class="text-xs bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded"><i class="fas fa-plus mr-1"></i>Add Column</button>
-                    <button onclick="window.app.loadStockCallSheet()" class="text-xs bg-amber-700 hover:bg-amber-600 px-3 py-1.5 rounded">Load Stock Layout</button>
-                    <button onclick="window.app.closeCallSheet()" class="text-slate-400 hover:text-white text-xl leading-none">×</button>
+    <!-- NEW PLAY BUILDER MODAL -->
+    <div id="newPlayModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-square-plus text-blue-500"></i> Build New Custom Play
+                </h3>
+                <button id="btnCloseModal" type="button" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1">Play Name</label>
+                    <input type="text" id="modalPlayName" value="Gun Trips Right - Dig Concept" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2 text-sm focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1">Play Category / Folder</label>
+                    <select id="modalCategory" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2">
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1">Offensive Formation Preset</label>
+                    <select id="modalOffensePreset" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2">
+                        <option value="spread2x2">2x2 Spread (2 WR Left, 2 WR Right)</option>
+                        <option value="tripsRight">3x1 Trips Right (3 WR Right, 1 WR Left)</option>
+                        <option value="blank">Blank Offense (Manual Drag & Drop)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1">Defensive Front Preset</label>
+                    <select id="modalDefensePreset" class="w-full bg-slate-800 border border-slate-700 text-white rounded p-2">
+                        <option value="4-3">4-3 Over (4 DL, 3 LB, 4 DB)</option>
+                        <option value="3-4">3-4 Odd (3 DL, 4 LB, 4 DB)</option>
+                        <option value="blank">Blank Field (No Defense)</option>
+                    </select>
                 </div>
             </div>
-            <div class="flex-1 overflow-auto p-4">
-                <div id="callSheetContainer" class="space-y-4"></div>
-            </div>
-            <div class="px-5 py-3 border-t border-slate-700 flex justify-between items-center">
-                <div class="text-xs text-slate-400">Click any cell to edit. Add unlimited rows & columns. Name headers by clicking them.</div>
-                <button onclick="window.app.closeCallSheet()" class="bg-slate-700 hover:bg-slate-600 px-4 py-1.5 rounded text-sm">Close</button>
-            </div>
-        </div>
-    </div>
 
-    <!-- PLAY PICKER MODAL -->
-    <div id="playPickerModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col">
-            <div class="flex items-center justify-between px-5 py-3 border-b border-slate-700">
-                <div class="font-bold">Dropbox Play Picker</div>
-                <button onclick="window.app.closePlayPicker()" class="text-slate-400 hover:text-white text-xl">×</button>
-            </div>
-            <div class="p-4">
-                <input id="pickerSearch" oninput="window.app.filterPicker()" placeholder="Type to filter or enter custom call..." class="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm mb-3">
-                <div id="pickerList" class="space-y-1 max-h-80 overflow-y-auto"></div>
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                <button id="btnCancelModal" type="button" class="px-4 py-2 rounded text-slate-400 hover:text-white font-semibold text-xs">Cancel</button>
+                <button id="btnCreatePlaySubmit" type="button" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded text-xs font-bold transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-check"></i> Create Play & Start Editing
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- AI MENTOR PANEL -->
-    <div id="aiMentorPanel" class="fixed bottom-4 right-4 w-96 max-h-[70vh] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-40 hidden flex flex-col">
-        <div class="flex items-center justify-between px-4 py-2 border-b border-slate-700">
-            <div class="font-bold text-sm flex items-center gap-2"><i class="fas fa-robot text-violet-400"></i> AI Mentor</div>
-            <button onclick="window.app.toggleAIMentor()" class="text-slate-400 hover:text-white">×</button>
-        </div>
-        <div id="aiChat" class="flex-1 overflow-y-auto p-3 space-y-2 text-sm"></div>
-        <div class="p-3 border-t border-slate-700 flex gap-2">
-            <input id="aiInput" placeholder="Ask about schemes, releases, coverages..." class="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-sm" onkeydown="if(event.key==='Enter')window.app.sendAI()">
-            <button onclick="window.app.sendAI()" class="bg-violet-600 hover:bg-violet-500 px-3 py-1.5 rounded text-sm">Send</button>
-        </div>
-    </div>
+    <!-- FORMATION PICKER MODAL -->
+    <div id="formationPickerModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="formationPickerTitle" class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-users text-blue-500"></i> Choose Formation
+                </h3>
+                <button id="btnCloseFormationPicker" type="button" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
 
-<script>
-class PlaybookApp {
-    constructor() {
-        this.plays = [];
-        this.currentPlay = null;
-        this.folders = { offense: [], defense: [], specialteams: [], rungame: [], passgame: [] };
-        this.currentFolder = 'offense';
-        this.interactionMode = 'move';
-        this.players = [];
-        this.selectedPlayerObj = null;
-        this.draggedPlayer = null;
-        this.pointerDownPos = null;
-        this.potentialDrag = null;
-        this.dragThreshold = 6;
-        this.isDragging = false;
-        this.draggedRouteNodeIndex = null;
-        this.hash = 'middle';
-        this.canvas = null;
-        this.ctx = null;
-        this.callSheet = { sections: [] };
-        this.init();
-    }
+            <div>
+                <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Standard Formations</h4>
+                <div id="formationPickerStandardList" class="space-y-1.5"></div>
+            </div>
 
-    init() {
-        window.app = this;
-        this.canvas = document.getElementById('fieldCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.resizeCanvas();
-        window.addEventListener('resize', () => this.resizeCanvas());
-
-        this.canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
-        this.canvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
-        this.canvas.addEventListener('pointerup', (e) => this.onPointerUp(e));
-        this.canvas.addEventListener('pointerleave', (e) => this.onPointerUp(e));
-
-        this.loadStockCallSheet();
-        this.loadDefaultFormation();
-        this.newPlay();
-    }
-
-    enterApp() {
-        document.getElementById('authScreen').classList.add('hidden');
-        document.getElementById('appScreen').classList.remove('hidden');
-        this.resizeCanvas();
-        this.render();
-        this.addAIWelcome();
-    }
-
-    async cloudSignIn() {
-        const email = document.getElementById('authEmail').value;
-        const pass = document.getElementById('authPassword').value;
-        if (!email || !pass) { alert('Enter email and password'); return; }
-        try {
-            await window.ChalkboardCloud.signIn(email, pass);
-            alert('Signed in successfully!');
-            this.enterApp();
-        } catch(err) {
-            alert('Sign in error: ' + err.message);
-        }
-    }
-
-    async cloudSignUp() {
-        const email = document.getElementById('authEmail').value;
-        const pass = document.getElementById('authPassword').value;
-        if (!email || !pass) { alert('Enter email and password'); return; }
-        try {
-            await window.ChalkboardCloud.signUp(email, pass);
-            alert('Account created successfully!');
-            this.enterApp();
-        } catch(err) {
-            alert('Sign up error: ' + err.message);
-        }
-    }
-
-    resizeCanvas() {
-        const container = this.canvas.parentElement;
-        this.canvas.width = container.clientWidth;
-        this.canvas.height = container.clientHeight;
-        this.render();
-    }
-
-    setMode(m) {
-        this.interactionMode = m;
-        ['modeMove','modeRoute','modeDraw'].forEach(id => {
-            const el = document.getElementById(id);
-            const active = id === 'mode' + m.charAt(0).toUpperCase() + m.slice(1);
-            el.classList.toggle('bg-blue-600', active);
-            el.classList.toggle('hover:bg-slate-800', !active);
-        });
-    }
-
-    loadDefaultFormation() {
-        this.players = [
-            { id: 'LT', label: 'LT', x: 0.28, y: 0.55, side: 'offense', color: '#3b82f6', route: [] },
-            { id: 'LG', label: 'LG', x: 0.34, y: 0.55, side: 'offense', color: '#3b82f6', route: [] },
-            { id: 'C', label: 'C', x: 0.40, y: 0.55, side: 'offense', color: '#3b82f6', route: [] },
-            { id: 'RG', label: 'RG', x: 0.46, y: 0.55, side: 'offense', color: '#3b82f6', route: [] },
-            { id: 'RT', label: 'RT', x: 0.52, y: 0.55, side: 'offense', color: '#3b82f6', route: [] },
-            { id: 'QB', label: 'QB', x: 0.40, y: 0.68, side: 'offense', color: '#3b82f6', route: [] },
-            { id: 'RB', label: 'RB', x: 0.48, y: 0.72, side: 'offense', color: '#3b82f6', route: [] },
-            { id: '1', label: 'X', x: 0.15, y: 0.55, side: 'offense', color: '#3b82f6', route: [] },
-            { id: '2', label: 'Z', x: 0.85, y: 0.55, side: 'offense', color: '#3b82f6', route: [] },
-            { id: '3', label: 'Y', x: 0.65, y: 0.58, side: 'offense', color: '#3b82f6', route: [] }
-        ];
-    }
-
-    // --- ROBUST DRAG & ROUTE DRAWING ---
-    onPointerDown(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        this.pointerDownPos = { x, y };
-        this.potentialDrag = null;
-        this.isDragging = false;
-        this.draggedRouteNodeIndex = null;
-
-        if (this.interactionMode === 'move') {
-            if (this.selectedPlayerObj && this.selectedPlayerObj.route) {
-                for (let i = 0; i < this.selectedPlayerObj.route.length; i++) {
-                    const node = this.selectedPlayerObj.route[i];
-                    if (Math.hypot(x - (node.x * this.canvas.width), y - (node.y * this.canvas.height)) < 14) {
-                        this.draggedRouteNodeIndex = i;
-                        this.draggedPlayer = this.selectedPlayerObj;
-                        this.isDragging = true;
-                        return;
-                    }
-                }
-            }
-            const hit = this.hitTestPlayer(x, y);
-            if (hit) {
-                this.selectedPlayerObj = hit;
-                this.potentialDrag = hit;
-                this.updateInspector();
-                this.render();
-                return;
-            }
-            this.selectedPlayerObj = null;
-            this.updateInspector();
-            this.render();
-        } else if (this.interactionMode === 'route') {
-            const hit = this.hitTestPlayer(x, y);
-            if (hit) {
-                this.selectedPlayerObj = hit;
-                if (!hit.route) hit.route = [];
-                hit.route.push({ x: x / this.canvas.width, y: y / this.canvas.height });
-                this.updateInspector();
-                this.render();
-            }
-        }
-    }
-
-    onPointerMove(e) {
-        if (!this.pointerDownPos) return;
-        e.preventDefault();
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        const dist = Math.hypot(x - this.pointerDownPos.x, y - this.pointerDownPos.y);
-        if (!this.isDragging && this.potentialDrag && dist > this.dragThreshold && this.interactionMode === 'move') {
-            this.isDragging = true;
-            this.draggedPlayer = this.potentialDrag;
-            this.potentialDrag = null;
-        }
-
-        if (this.isDragging && this.draggedPlayer && this.draggedRouteNodeIndex === null) {
-            this.draggedPlayer.x = Math.max(0.02, Math.min(0.98, x / this.canvas.width));
-            this.draggedPlayer.y = Math.max(0.02, Math.min(0.98, y / this.canvas.height));
-            this.render();
-        } else if (this.isDragging && this.draggedPlayer && this.draggedRouteNodeIndex !== null) {
-            const p = this.draggedPlayer;
-            if (p.route && p.route[this.draggedRouteNodeIndex]) {
-                p.route[this.draggedRouteNodeIndex].x = x / this.canvas.width;
-                p.route[this.draggedRouteNodeIndex].y = y / this.canvas.height;
-                this.render();
-            }
-        }
-    }
-
-    onPointerUp(e) {
-        this.pointerDownPos = null;
-        this.potentialDrag = null;
-        this.isDragging = false;
-        this.draggedPlayer = null;
-        this.draggedRouteNodeIndex = null;
-    }
-
-    hitTestPlayer(x, y) {
-        const w = this.canvas.width, h = this.canvas.height;
-        for (let p of this.players) {
-            const px = p.x * w, py = p.y * h;
-            if (Math.hypot(x - px, y - py) < 18) return p;
-        }
-        return null;
-    }
-
-    changeHash(val) {
-        this.hash = val;
-        this.render();
-    }
-
-    // --- RENDER WITH STRAIGHT ARROWS ---
-    render() {
-        if (!this.ctx) return;
-        const w = this.canvas.width, h = this.canvas.height;
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.fillRect(0, 0, w, h);
-
-        // Field lines
-        this.ctx.strokeStyle = '#d1d5db';
-        this.ctx.lineWidth = 2;
-        for (let i = 1; i < 10; i++) {
-            const y = (h / 10) * i;
-            this.ctx.beginPath(); this.ctx.moveTo(0, y); this.ctx.lineTo(w, y); this.ctx.stroke();
-        }
-
-        // Hash marks based on selection
-        let hashOffset = w * 0.4;
-        if (this.hash === 'left') hashOffset = w * 0.3;
-        if (this.hash === 'right') hashOffset = w * 0.7;
-        this.ctx.strokeStyle = '#94a3b8';
-        this.ctx.lineWidth = 1;
-        for (let i = 1; i < 10; i++) {
-            const y = (i / 10) * h;
-            this.ctx.beginPath();
-            this.ctx.moveTo(hashOffset - 5, y); this.ctx.lineTo(hashOffset + 5, y);
-            this.ctx.stroke();
-        }
-
-        // LOS
-        this.ctx.strokeStyle = '#3b82f6'; this.ctx.lineWidth = 3;
-        this.ctx.beginPath(); this.ctx.moveTo(0, h * 0.58); this.ctx.lineTo(w, h * 0.58); this.ctx.stroke();
-
-        // Routes and Players
-        this.players.forEach(p => {
-            const px = p.x * w, py = p.y * h;
-
-            if (p.route && p.route.length > 0) {
-                this.ctx.strokeStyle = '#f59e0b';
-                this.ctx.lineWidth = 3;
-                this.ctx.beginPath();
-                this.ctx.moveTo(px, py);
-                p.route.forEach(pt => this.ctx.lineTo(pt.x * w, pt.y * h));
-                this.ctx.stroke();
-
-                // Straight Arrowhead at the end of route
-                const last = p.route[p.route.length - 1];
-                const prev = p.route.length > 1 ? p.route[p.route.length - 2] : { x: p.x, y: p.y };
-                this.drawStraightArrow(prev.x * w, prev.y * h, last.x * w, last.y * h, '#f59e0b');
-
-                p.route.forEach(pt => {
-                    this.ctx.fillStyle = '#f59e0b';
-                    this.ctx.beginPath();
-                    this.ctx.arc(pt.x * w, pt.y * h, 5, 0, Math.PI * 2);
-                    this.ctx.fill();
-                });
-            }
-
-            this.ctx.beginPath();
-            this.ctx.arc(px, py, 14, 0, Math.PI * 2);
-            this.ctx.fillStyle = p.side === 'offense' ? '#3b82f6' : '#ef4444';
-            this.ctx.fill();
-            this.ctx.strokeStyle = this.selectedPlayerObj === p ? '#f59e0b' : '#1f2937';
-            this.ctx.lineWidth = this.selectedPlayerObj === p ? 3 : 2;
-            this.ctx.stroke();
-
-            this.ctx.fillStyle = '#fff';
-            this.ctx.font = 'bold 11px system-ui';
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'middle';
-            this.ctx.fillText(p.label || 'P', px, py);
-        });
-    }
-
-    drawStraightArrow(fromX, fromY, toX, toY, color) {
-        const headlen = 12;
-        const angle = Math.atan2(toY - fromY, toX - fromX);
-        this.ctx.fillStyle = color;
-        this.ctx.beginPath();
-        this.ctx.moveTo(toX, toY);
-        this.ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
-        this.ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
-        this.ctx.closePath();
-        this.ctx.fill();
-    }
-
-    // --- CALL SHEET ---
-    openCallSheet() {
-        document.getElementById('callSheetModal').classList.remove('hidden');
-        this.renderCallSheet();
-    }
-    closeCallSheet() {
-        document.getElementById('callSheetModal').classList.add('hidden');
-    }
-
-    loadStockCallSheet() {
-        this.callSheet.sections = [
-            {
-                title: 'DROPBACK PASS',
-                color: 'bg-red-700',
-                headers: ['Call', 'Protection', 'Concept', 'Notes'],
-                rows: [['Cover 3 Beater', 'Max Protect', 'Mesh', 'Vs 1-High'], ['Quick Game', 'Slide', 'Smash', 'Vs Soft Corners']]
-            },
-            {
-                title: 'RPO / RUN GAME',
-                color: 'bg-purple-700',
-                headers: ['Call', 'Read Key', 'Concept', 'Notes'],
-                rows: [['Inside Zone Read', 'BSDE', 'Zone', 'Fast flow'], ['Power', 'PS LB', 'Gap', 'Pull G']]
-            },
-            {
-                title: '3RD DOWN & FAST FOOD',
-                color: 'bg-amber-700',
-                headers: ['Down & Dist', 'Call', 'Expectation', 'Notes'],
-                rows: [['3rd & Long', 'Levels', 'Expect Zero', 'Hot read on slot'], ['3rd & Med', 'Stick', 'Base', 'Quick out']]
-            },
-            {
-                title: 'RED ZONE / GOAL LINE',
-                color: 'bg-rose-800',
-                headers: ['Situation', 'Call', 'Notes'],
-                rows: [['Red Zone (20-10)', 'Fade / Corner', 'ISO X'], ['Goal Line (5-GL)', 'Duo / Jumbo', 'Power run']]
-            }
-        ];
-        this.renderCallSheet();
-    }
-
-    renderCallSheet() {
-        const container = document.getElementById('callSheetContainer');
-        container.innerHTML = '';
-        this.callSheet.sections.forEach((sec, sIdx) => {
-            const sectionEl = document.createElement('div');
-            sectionEl.className = 'border border-slate-700 rounded-lg overflow-hidden';
-            sectionEl.innerHTML = `
-                <div class="${sec.color} callsheet-header text-white px-3 py-2 text-sm flex justify-between items-center">
-                    <span contenteditable="true" onblur="window.app.renameSection(${sIdx}, this.textContent)">${sec.title}</span>
-                    <button onclick="window.app.removeSection(${sIdx})" class="text-white/70 hover:text-white text-xs"><i class="fas fa-trash"></i></button>
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Your Saved Formations</h4>
+                    <button id="btnSaveCurrentFormation" type="button" class="text-[10px] bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 px-2 py-1 rounded font-semibold cursor-pointer">
+                        <i class="fa-solid fa-plus"></i> Save Current as New
+                    </button>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs">
-                        <thead>
-                            <tr class="bg-slate-800">
-                                ${sec.headers.map((h, hIdx) => `<th class="callsheet-cell px-2 py-1.5 text-left font-semibold" contenteditable="true" onblur="window.app.renameHeader(${sIdx},${hIdx},this.textContent)">${h}</th>`).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${sec.rows.map((row, rIdx) => `
-                                <tr>
-                                    ${row.map((cell, cIdx) => `<td class="callsheet-cell px-2 py-1.5 bg-slate-900" contenteditable="true" onblur="window.app.editCell(${sIdx},${rIdx},${cIdx},this.textContent)">${cell}</td>`).join('')}
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                <div id="formationPickerCustomList" class="space-y-1.5">
+                    <p class="text-[11px] text-slate-500 italic">No saved formations yet.</p>
                 </div>
-            `;
-            container.appendChild(sectionEl);
-        });
-    }
-
-    addCallSheetRow() {
-        if (this.callSheet.sections.length === 0) return;
-        const last = this.callSheet.sections[this.callSheet.sections.length - 1];
-        last.rows.push(new Array(last.headers.length).fill(''));
-        this.renderCallSheet();
-    }
-
-    addCallSheetCol() {
-        if (this.callSheet.sections.length === 0) return;
-        const last = this.callSheet.sections[this.callSheet.sections.length - 1];
-        last.headers.push('New Col');
-        last.rows.forEach(r => r.push(''));
-        this.renderCallSheet();
-    }
-
-    renameSection(idx, name) { this.callSheet.sections[idx].title = name; }
-    renameHeader(sIdx, hIdx, name) { this.callSheet.sections[sIdx].headers[hIdx] = name; }
-    editCell(sIdx, rIdx, cIdx, val) { this.callSheet.sections[sIdx].rows[rIdx][cIdx] = val; }
-    removeSection(idx) { this.callSheet.sections.splice(idx, 1); this.renderCallSheet(); }
-
-    // --- AI MENTOR ---
-    toggleAIMentor() {
-        document.getElementById('aiMentorPanel').classList.toggle('hidden');
-    }
-
-    addAIWelcome() {
-        const chat = document.getElementById('aiChat');
-        chat.innerHTML = `<div class="ai-bubble-bot px-3 py-2 text-sm">Hey Coach — I'm your AI Mentor. Ask me about route releases, run schemes, coverages, or playcalls. For human support email <b>chalkboardpro.support</b>.</div>`;
-    }
-
-    sendAI() {
-        const input = document.getElementById('aiInput');
-        const q = input.value.trim();
-        if (!q) return;
-        const chat = document.getElementById('aiChat');
-        chat.innerHTML += `<div class="ai-bubble-user px-3 py-2 text-sm ml-8">${q}</div>`;
-        input.value = '';
-        const reply = this.getAIReply(q);
-        setTimeout(() => {
-            chat.innerHTML += `<div class="ai-bubble-bot px-3 py-2 text-sm mr-8">${reply}</div>`;
-            chat.scrollTop = chat.scrollHeight;
-        }, 400);
-    }
-
-    getAIReply(query) {
-        const q = query.toLowerCase();
-        if (q.includes('release') || q.includes('jab') || q.includes('speed')) {
-            return 'Releases: <b>Jab</b> = hard step inside then break out. <b>Speed</b> = pure vertical stem. Set your player routes in Route mode and use the Call Sheet to script progressions.';
-        }
-        if (q.includes('cover 3') || q.includes('cover3')) {
-            return 'Cover 3 Beaters: Attack seams with deep digs, or use flood concepts to overload the flat and curl-flat defenders.';
-        }
-        if (q.includes('blitz') || q.includes('pressure')) {
-            return 'Vs Blitz: Call quick game, hot routes, or max protection with slide towards the overload. Contact <b>chalkboardpro.support</b> for full install notes.';
-        }
-        return 'I can assist with playbook installs, situational call sheets, coverages, and route combinations. For custom playbooks reach out to <b>chalkboardpro.support</b>.';
-    }
-
-    // --- FOLDERS & PLAYS ---
-    newPlay() {
-        const p = { id: Date.now(), name: 'Play ' + (this.plays.length + 1), folder: this.currentFolder, players: JSON.parse(JSON.stringify(this.players)) };
-        this.plays.push(p);
-        this.selectPlay(p.id);
-        this.renderPlayList();
-    }
-
-    selectPlay(id) {
-        this.currentPlay = this.plays.find(p => p.id === id);
-        if (this.currentPlay) {
-            this.players = JSON.parse(JSON.stringify(this.currentPlay.players));
-        }
-        this.renderPlayList();
-        this.render();
-    }
-
-    renderPlayList() {
-        const el = document.getElementById('playList');
-        el.innerHTML = this.plays.filter(p => p.folder === this.currentFolder).map(p => `
-            <div class="p-2 rounded hover:bg-slate-800 cursor-pointer text-sm ${this.currentPlay === p ? 'bg-slate-800 border border-blue-600' : ''}" onclick="window.app.selectPlay(${p.id})">
-                ${p.name}
             </div>
-        `).join('') || '<div class="text-xs text-slate-500 p-2">No plays in folder</div>';
-    }
+        </div>
+    </div>
 
-    onFolderChange() {
-        this.currentFolder = document.getElementById('folderSelect').value;
-        this.renderPlayList();
-    }
+    <!-- DROPBOX-STYLE PLAY PICKER MODAL -->
+    <div id="playPickerModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass text-cyan-400"></i> Dropbox Play Picker
+                </h3>
+                <button onclick="if(window.app) window.app.closePlayPicker()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-4 border-b border-slate-800">
+                <input type="text" id="playPickerSearch" placeholder="Type to filter plays..." class="w-full bg-slate-800 border border-slate-600 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500" oninput="if(window.app) window.app.filterPlayPicker(this.value)">
+            </div>
+            <div id="playPickerList" class="flex-1 overflow-y-auto p-3 space-y-1.5"></div>
+            <div class="p-4 border-t border-slate-800 flex justify-between items-center">
+                <span class="text-xs text-slate-500">Click a play to load it</span>
+                <button onclick="if(window.app) window.app.useCustomCallFromPicker()" class="bg-cyan-700 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Use Custom Call</button>
+            </div>
+        </div>
+    </div>
 
-    createFolder() {
-        const name = prompt('Folder name:');
-        if (name) {
-            const id = name.toLowerCase().replace(/\s+/g, '');
-            this.folders[id] = [];
-            const sel = document.getElementById('folderSelect');
-            const opt = document.createElement('option');
-            opt.value = id;
-            opt.textContent = name;
-            sel.appendChild(opt);
-        }
-    }
+    <!-- SITUATIONAL MATRIX / CALL SHEET MODAL -->
+    <div id="callSheetModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-table-cells text-indigo-400"></i> Situational Matrix Builder
+                </h3>
+                <button onclick="if(window.app) window.app.closeCallSheet()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="flex border-b border-slate-800 text-xs font-semibold">
+                <button data-matrix="opening" onclick="if(window.app) window.app.switchMatrixTab('opening')" class="matrix-tab flex-1 py-2.5 text-white bg-indigo-900/50 border-b-2 border-indigo-500">Opening Script</button>
+                <button data-matrix="redzone" onclick="if(window.app) window.app.switchMatrixTab('redzone')" class="matrix-tab flex-1 py-2.5 text-slate-400 hover:text-white">Red Zone</button>
+                <button data-matrix="3rddown" onclick="if(window.app) window.app.switchMatrixTab('3rddown')" class="matrix-tab flex-1 py-2.5 text-slate-400 hover:text-white">3rd Down</button>
+                <button data-matrix="2min" onclick="if(window.app) window.app.switchMatrixTab('2min')" class="matrix-tab flex-1 py-2.5 text-slate-400 hover:text-white">2-Minute</button>
+                <button data-matrix="st" onclick="if(window.app) window.app.switchMatrixTab('st')" class="matrix-tab flex-1 py-2.5 text-slate-400 hover:text-white">Special Teams</button>
+            </div>
+            <div class="p-4 flex-1 overflow-y-auto">
+                <div class="grid grid-cols-4 gap-2 mb-4 text-center text-[10px] font-bold text-slate-400 uppercase">
+                    <div>Slot 1</div><div>Slot 2</div><div>Slot 3</div><div>Slot 4</div>
+                </div>
+                <div id="matrixGrid" class="grid grid-cols-4 gap-2"></div>
+                <div class="mt-6 bg-slate-950 border border-slate-800 rounded-xl p-4">
+                    <h4 class="text-xs font-bold text-amber-400 mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-pie"></i> Live Tendency Tracking</h4>
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div class="text-2xl font-black text-blue-400" id="tendRunPct">0%</div>
+                            <div class="text-[10px] text-slate-400 uppercase">Run</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-black text-emerald-400" id="tendPassPct">0%</div>
+                            <div class="text-[10px] text-slate-400 uppercase">Pass</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-black text-purple-400" id="tendSTCount">0</div>
+                            <div class="text-[10px] text-slate-400 uppercase">Special Teams</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-800 flex justify-end gap-3">
+                <button onclick="if(window.app) window.app.exportWristband()" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-id-badge"></i> Wristband Export</button>
+                <button onclick="if(window.app) window.app.exportCallSheetPrint()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-print"></i> Print-Ready</button>
+            </div>
+        </div>
+    </div>
 
-    openPlayPicker() { document.getElementById('playPickerModal').classList.remove('hidden'); this.filterPicker(); }
-    closePlayPicker() { document.getElementById('playPickerModal').classList.add('hidden'); }
-    filterPicker() {
-        const q = (document.getElementById('pickerSearch').value || '').toLowerCase();
-        const list = document.getElementById('pickerList');
-        const filtered = this.plays.filter(p => p.name.toLowerCase().includes(q));
-        list.innerHTML = filtered.map(p => `<div class="p-2 rounded hover:bg-slate-800 cursor-pointer text-sm" onclick="window.app.selectPlay(${p.id});window.app.closePlayPicker()">${p.name}</div>`).join('');
-    }
+    <!-- AI MENTOR ASSISTANT PANEL -->
+    <div id="aiMentorPanel" class="fixed bottom-4 right-4 w-96 max-w-[95vw] bg-slate-900 border border-violet-700 rounded-2xl shadow-2xl z-50 flex flex-col hidden" style="height: 480px;">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-violet-950/50 rounded-t-2xl">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-robot text-violet-400"></i> AI Mentor Assistant
+            </h3>
+            <button onclick="if(window.app) window.app.toggleAIMentor()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="aiChatMessages" class="flex-1 overflow-y-auto p-3 space-y-3 text-xs">
+            <div class="ai-bubble-bot p-3">
+                <strong>AI Mentor:</strong> Hey Coach! Ask me about blitz counters, coverage shells, or red-zone concepts.
+            </div>
+        </div>
+        <div class="p-3 border-t border-slate-800 flex gap-2">
+            <input type="text" id="aiMentorInput" placeholder="e.g. How do I attack Cover 3?" class="flex-1 bg-slate-800 border border-slate-600 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-violet-500" onkeydown="if(event.key==='Enter' && window.app) window.app.sendAIMentorQuery()">
+            <button onclick="if(window.app) window.app.sendAIMentorQuery()" class="bg-violet-600 hover:bg-violet-500 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
 
-    updateInspector() {
-        const el = document.getElementById('inspectorContent');
-        if (!this.selectedPlayerObj) { el.textContent = 'Select a player to edit'; return; }
-        el.innerHTML = `
-            <div class="font-semibold text-blue-400">Player: ${this.selectedPlayerObj.label}</div>
-            <div class="text-xs text-slate-400 mt-1">Switch to 'Draw Routes' mode to add route nodes.</div>
-            <button onclick="window.app.clearPlayerRoute()" class="w-full bg-slate-800 hover:bg-slate-700 text-xs py-1 rounded mt-2 border border-slate-700">Clear Route</button>
-        `;
-    }
-
-    clearPlayerRoute() {
-        if (this.selectedPlayerObj) {
-            this.selectedPlayerObj.route = [];
-            this.render();
-        }
-    }
-
-    clearRoutes() {
-        this.players.forEach(p => p.route = []);
-        this.render();
-    }
-
-    attachClip() { alert('Teaching tape clip attached successfully.'); }
-    exportPrint() { window.print(); }
-    playAnimation() { alert('Animation simulator active. Routes are displayed.'); }
-    resetAnimation() { this.render(); }
-    scrub() {}
-}
-
-window.addEventListener('DOMContentLoaded', () => { window.app = new PlaybookApp(); });
-</script>
+    <!-- Application Script Engine Placeholder & Initialization -->
+    <script>
+        // Core Engine Initializer
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log("CHALKBOARD PRO Studio loaded successfully.");
+        });
+    </script>
 </body>
 </html>
