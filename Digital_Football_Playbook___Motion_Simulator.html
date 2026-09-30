@@ -221,6 +221,12 @@
         </header>
 
         <main class="flex-1 p-6 max-w-6xl w-full mx-auto overflow-y-auto space-y-6">
+<div id="folderBreadcrumb" class="flex items-center gap-2 text-xs text-slate-400 flex-wrap"></div>
+<div id="stTemplatesBar" class="hidden bg-slate-900 border border-purple-800 rounded-xl p-4 space-y-2">
+    <h3 class="text-xs font-bold text-purple-300 uppercase">Special Teams Modules</h3>
+    <div class="flex flex-wrap gap-2" id="stTemplateButtons"></div>
+</div>
+
             <div class="flex items-center justify-between">
                 <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400">Your Folders & Playbook Categories</h2>
                 <span class="text-xs text-slate-500">Click any folder to open its plays</span>
@@ -399,6 +405,50 @@
                 <!-- PLAYBOOK CATEGORY / FOLDER FILTER -->
                 <div class="space-y-2">
                     <div class="flex items-center justify-between">
+<div class="bg-slate-950 p-3 rounded-lg border border-amber-800/50 space-y-2">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Default Player Settings</h3>
+    <p class="text-[10px] text-slate-500">These apply to newly added players.</p>
+    <label class="block text-[10px] text-slate-400">Default Offense Name Prefix</label>
+    <input type="text" id="defaultOffName" value="WR" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+    <div class="grid grid-cols-2 gap-2">
+        <div>
+            <label class="block text-[10px] text-slate-400">Offense Shape</label>
+            <select id="defaultOffShape" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                <option value="circle">Circle</option>
+                <option value="square">Square</option>
+                <option value="rectangle">Rectangle</option>
+                <option value="star">Star</option>
+                <option value="triangle">Triangle</option>
+                <option value="textonly">Text-Only</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-[10px] text-slate-400">Offense Color</label>
+            <input type="color" id="defaultOffColor" value="#3b82f6" class="w-full h-7 rounded">
+        </div>
+    </div>
+    <label class="block text-[10px] text-slate-400">Default Defense Name Prefix</label>
+    <input type="text" id="defaultDefName" value="LB" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+    <div class="grid grid-cols-2 gap-2">
+        <div>
+            <label class="block text-[10px] text-slate-400">Defense Shape</label>
+            <select id="defaultDefShape" class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                <option value="square" selected>Square</option>
+                <option value="circle">Circle</option>
+                <option value="rectangle">Rectangle</option>
+                <option value="star">Star</option>
+                <option value="triangle">Triangle</option>
+                <option value="textonly">Text-Only</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-[10px] text-slate-400">Defense Color</label>
+            <input type="color" id="defaultDefColor" value="#ef4444" class="w-full h-7 rounded">
+        </div>
+    </div>
+    <button type="button" onclick="if(window.app) window.app.saveDefaultPlayerSettings()" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-1.5 rounded text-[11px] font-bold">Save Defaults</button>
+</div>
+
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Playbook Library</label>
                         <span class="text-[10px] text-slate-500 font-semibold">Folder Filter</span>
                     </div>
@@ -633,6 +683,15 @@
                             <input type="color" id="routeColorPicker" value="#3b82f6" class="w-6 h-6 rounded-full border-0 p-0 bg-transparent cursor-pointer" title="This player's route color">
                         </div>
                     </div>
+<div id="routeSearchBox" class="space-y-2">
+    <label class="block text-[11px] font-semibold text-cyan-300">Search Any Football Route</label>
+    <input type="text" id="routeSearchInput" placeholder="Search: post corner, sluggo, wheel..." class="w-full bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs" oninput="if(window.app) window.app.filterRouteLibrary(this.value)">
+    <div id="routeSearchResults" class="max-h-40 overflow-y-auto space-y-1"></div>
+    <div class="flex gap-2">
+        <input type="text" id="renameRouteInput" placeholder="Rename selected route" class="flex-1 bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+        <button type="button" onclick="if(window.app) window.app.renameSelectedRoutePreset()" class="bg-slate-800 text-amber-300 border border-slate-700 px-2 py-1 rounded text-[10px] font-bold">Rename</button>
+    </div>
+</div>
 
                     <div id="routePresetsStandard">
                         <label class="block text-[11px] font-semibold text-slate-300 mb-1">Route / Assignment Responsibility</label>
@@ -705,6 +764,8 @@
                         </button>
                     </div>
                     <p id="modeDesc" class="text-[11px] text-slate-400 italic mt-1">Click & drag any player icon or route vertex handle to adjust alignment and routes.</p>
+<p id="dragPlayersNote" class="text-[10px] text-amber-300 font-semibold mt-1">Must click and hold, then drag. Clicking alone will not move a player.</p>
+
                 </div>
 
                 <!-- Drawing Palette -->
@@ -863,7 +924,11 @@
                             <option value="Pirate">Pirate Stunt (DE & DT Double Inside Slant)</option>
                             <option value="Pinch">Pinch Front (DL Slants Hard Inside)</option>
                             <option value="Fan">Fan / Out (DL Slants Hard Outside)</option>
+<option value="TEXAS">TEXAS (DT slant weak + WLB through B)</option>
+
                         </select>
+<div id="stuntProtectionInfo" class="text-[11px] text-slate-400 italic">No defensive stunts active.</div>
+
                     </div>
                 </div>
 
@@ -1353,6 +1418,27 @@
 
                 // Dragging smooth damping factor - further reduced for less sensitivity
                 this.dragSmoothing = 0.22;
+this.DRAG_THRESHOLD = 8;
+this.pendingDrag = null;
+this.currentFolderParent = null;
+this.playPickerContext = 'load';
+this.customRouteNames = {};
+this.selectedRoutePresetId = null;
+this.folderParents = {
+    'Run Game': 'Offense',
+    'Pass Game': 'Offense',
+    'Passing': 'Pass Game',
+    'Running': 'Run Game',
+    'Play Action': 'Offense',
+    'RPO': 'Offense',
+    'Kickoff': 'Special Teams',
+    'Kick Return': 'Special Teams',
+    'Punt': 'Special Teams',
+    'Punt Return': 'Special Teams',
+    'Field Goal': 'Special Teams'
+};
+
+
 
                 // Global icon template defaults across future plays
                 this.globalIconDefaults = {
@@ -1411,55 +1497,73 @@
 
             // ========== NEW FEATURE METHODS ==========
 
-            openPlayPicker() {
-                document.getElementById('playPickerModal').classList.remove('hidden');
-                this.filterPlayPicker('');
-                document.getElementById('playPickerSearch').focus();
-            }
-            closePlayPicker() {
-                document.getElementById('playPickerModal').classList.add('hidden');
-            }
-            filterPlayPicker(query) {
-                const list = document.getElementById('playPickerList');
-                list.innerHTML = '';
-                const q = (query || '').toLowerCase().trim();
-                const filtered = this.plays.filter(p => {
-                    if (!q) return true;
-                    return (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q);
-                });
-                if (filtered.length === 0) {
-                    list.innerHTML = `<p class="text-xs text-slate-500 p-3 italic">No plays match. Type a custom call name and click "Use Custom Call".</p>`;
-                    return;
-                }
-                filtered.forEach(p => {
-                    const btn = document.createElement('button');
-                    btn.className = 'w-full text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2.5 rounded-lg text-xs text-slate-200 flex items-center justify-between cursor-pointer';
-                    btn.innerHTML = `<span><span class="text-amber-400 font-bold">[${p.category || 'Custom'}]</span> ${p.name}</span><i class="fa-solid fa-chevron-right text-slate-500"></i>`;
-                    btn.onclick = () => {
-                        this.loadPlay(p.id);
-                        this.closePlayPicker();
-                    };
-                    list.appendChild(btn);
-                });
-            }
-            useCustomCallFromPicker() {
-                const name = document.getElementById('playPickerSearch').value.trim();
-                if (!name) { alert('Type a custom call name first.'); return; }
-                const newPlay = {
-                    id: 'custom_' + Date.now(),
-                    name: name,
-                    category: this.selectedCategoryFilter !== 'ALL' ? this.selectedCategoryFilter : 'Custom',
-                    desc: 'Custom call entered via Play Picker.',
-                    qbKeys: ['Execute the called play'],
-                    coachNotes: '',
-                    offense: []
-                };
-                this.plays.push(newPlay);
-                this.savePlays();
-                this.populatePlaySelect();
-                this.loadPlay(newPlay.id);
+            openPlayPicker(context) {
+    this.playPickerContext = context || 'load';
+    document.getElementById('playPickerModal').classList.remove('hidden');
+    this.filterPlayPicker(document.getElementById('playPickerSearch').value || '');
+    document.getElementById('playPickerSearch').focus();
+}
+closePlayPicker() {
+    document.getElementById('playPickerModal').classList.add('hidden');
+    this.playPickerContext = 'load';
+}
+filterPlayPicker(query) {
+    const list = document.getElementById('playPickerList');
+    list.innerHTML = '';
+    const q = (query || '').toLowerCase().trim();
+    const filtered = this.plays.filter(p => {
+        if (!q) return true;
+        return (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q);
+    });
+    if (filtered.length === 0) {
+        list.innerHTML = '<p class="text-xs text-slate-500 p-3 italic">No plays match. Type a custom call name and click "Use Custom Call".</p>';
+        return;
+    }
+    filtered.forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'w-full text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2.5 rounded-lg text-xs text-slate-200 flex items-center justify-between cursor-pointer';
+        btn.innerHTML = '<span><span class="text-amber-400 font-bold">[' + (p.category || 'Custom') + ']</span> ' + p.name + '</span><i class="fa-solid fa-chevron-right text-slate-500"></i>';
+        btn.onclick = () => {
+            if (String(this.playPickerContext).startsWith('matrix:')) {
+                const idx = parseInt(this.playPickerContext.split(':')[1], 10);
+                this.matrixData[this.currentMatrixTab][idx] = p.name;
+                this.closePlayPicker();
+                this.renderMatrixGrid();
+                this.updateTendencies();
+            } else {
+                this.loadPlay(p.id);
                 this.closePlayPicker();
             }
+        };
+        list.appendChild(btn);
+    });
+}
+useCustomCallFromPicker() {
+    const name = document.getElementById('playPickerSearch').value.trim();
+    if (!name) { alert('Type a custom call name first.'); return; }
+    if (String(this.playPickerContext).startsWith('matrix:')) {
+        const idx = parseInt(this.playPickerContext.split(':')[1], 10);
+        this.matrixData[this.currentMatrixTab][idx] = name;
+        this.closePlayPicker();
+        this.renderMatrixGrid();
+        this.updateTendencies();
+        return;
+    }
+    const newPlay = {
+        id: 'custom_' + Date.now(),
+        name: name,
+        category: this.selectedCategoryFilter !== 'ALL' ? this.selectedCategoryFilter : 'Custom',
+        desc: 'Custom call entered via Play Picker.',
+        qbKeys: ['Execute the called play'],
+        coachNotes: '',
+        offense: []
+    };
+    this.plays.push(newPlay);
+    this.savePlays();
+    this.populatePlaySelect();
+    this.loadPlay(newPlay.id);
+    this.closePlayPicker();
+}
 
             openCallSheet() {
                 document.getElementById('callSheetModal').classList.remove('hidden');
@@ -1491,7 +1595,9 @@
                     const slot = document.createElement('div');
                     slot.className = 'bg-slate-800 border border-slate-700 rounded-lg p-2 min-h-[60px] flex flex-col items-center justify-center text-center cursor-pointer hover:border-indigo-500 transition';
                     if (slots[i]) {
-                        slot.innerHTML = `<span class="text-[10px] font-bold text-indigo-300 truncate w-full">slots[i]</span><buttonclass="text-[9px]text-rose-400mt-1"onclick="event.stopPropagation();window.app.clearMatrixSlot({i})">clear</button>`;
+                       slot.innerHTML = '<span class="text-[10px] font-bold text-indigo-300 truncate w-full">' + slots[i] + '</span><button class="text-[9px] text-rose-400 mt-1" type="button">clear</button>';
+slot.querySelector('button').onclick = (ev) => { ev.stopPropagation(); this.clearMatrixSlot(i); };
+
                     } else {
                         slot.innerHTML = `<span class="text-[10px] text-slate-500">+ Add Call</span>`;
                         slot.onclick = () => this.addToMatrixSlot(i);
@@ -1500,12 +1606,9 @@
                 }
             }
             addToMatrixSlot(idx) {
-                const name = prompt('Enter play / call name for this slot:');
-                if (!name || !name.trim()) return;
-                this.matrixData[this.currentMatrixTab][idx] = name.trim();
-                this.renderMatrixGrid();
-                this.updateTendencies();
-            }
+    this.openPlayPicker('matrix:' + idx);
+}
+
             clearMatrixSlot(idx) {
                 this.matrixData[this.currentMatrixTab][idx] = null;
                 this.renderMatrixGrid();
@@ -1530,8 +1633,13 @@
                 window.print();
             }
             exportWristband() {
-                alert('Wristband export prepared. Use the Print-Ready button or Export Playcard for physical media.');
-            }
+    const calls = (this.matrixData[this.currentMatrixTab] || []).filter(Boolean);
+    const w = window.open('', '_blank');
+    w.document.write('<html><head><title>Wristband</title><style>body{font-family:sans-serif;padding:16px}.g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.c{border:1px solid #333;padding:8px;font-size:12px;font-weight:700}</style></head><body><h2>' + this.currentMatrixTab + ' Wristband</h2><div class="g">' + calls.map(c => '<div class="c">' + c + '</div>').join('') + '</div></body></html>');
+    w.document.close();
+    w.print();
+}
+
 
             toggleAIMentor() {
                 const panel = document.getElementById('aiMentorPanel');
@@ -1593,7 +1701,8 @@
                 this.savePlays();
                 const disp = document.getElementById('currentVideoClipDisplay');
                 disp.classList.remove('hidden');
-                disp.innerHTML = `<i class="fa-solid fa-video text-cyan-400"></i> <strong>title||'Clip'</strong>({angle}) ${url ? '— <a href="'+url+'" target="_blank" class="text-cyan-300 underline">Open</a>' : ''}`;
+               disp.innerHTML = '<i class="fa-solid fa-video text-cyan-400"></i> <strong>' + (title || 'Clip') + '</strong> (' + angle + ')' + (url ? ' — <a href="'+url+'" target="_blank" class="text-cyan-300 underline">Open</a>' : '');
+
                 alert('Video clip attached to current play!');
             }
 
@@ -1765,6 +1874,28 @@
                     if (saved) this.globalIconDefaults = JSON.parse(saved);
                 } catch(e){}
             }
+readDefaultPlayerSettings() {
+    const offShape = document.getElementById('defaultOffShape');
+    const offColor = document.getElementById('defaultOffColor');
+    const defShape = document.getElementById('defaultDefShape');
+    const defColor = document.getElementById('defaultDefColor');
+    if (offShape && offColor) this.globalIconDefaults.offense = { shape: offShape.value, color: offColor.value };
+    if (defShape && defColor) this.globalIconDefaults.defense = { shape: defShape.value, color: defColor.value };
+    this.defaultOffName = (document.getElementById('defaultOffName') || {}).value || 'WR';
+    this.defaultDefName = (document.getElementById('defaultDefName') || {}).value || 'LB';
+}
+saveDefaultPlayerSettings() {
+    this.readDefaultPlayerSettings();
+    try {
+        localStorage.setItem('chalkboard_global_icon_defaults_' + this.profileKey, JSON.stringify(this.globalIconDefaults));
+        localStorage.setItem('chalkboard_default_names_' + this.profileKey, JSON.stringify({
+            offense: this.defaultOffName,
+            defense: this.defaultDefName
+        }));
+    } catch (e) {}
+    alert('Defaults saved. New players will use these shapes, colors, and names.');
+}
+
 
             // Route Grab & Reshaping Utilities
             straightenSelectedRoute() {
@@ -2242,6 +2373,8 @@
             spawnPlayer(side, label) {
                 this.saveHistoryState();
                 const newId = side + '_' + Date.now() + '_' + (this.spawnCounter++);
+this.readDefaultPlayerSettings();
+
                 const defaults = this.globalIconDefaults[side] || (side === 'offense' ? { shape: 'circle', color: '#3b82f6' } : { shape: 'square', color: '#ef4444' });
 
                 if (side === 'offense') {
@@ -2354,6 +2487,16 @@
                         this.blitzGapSelect.value = p.blitzGap || 'A-Gap';
                     }
                 }
+const searchBox = document.getElementById('routeSearchBox');
+if (searchBox) {
+    if (side === 'offense') {
+        searchBox.classList.remove('hidden');
+        this.filterRouteLibrary('');
+    } else {
+        searchBox.classList.add('hidden');
+    }
+}
+
                 this.render();
             }
 
@@ -2455,6 +2598,85 @@
 
                 this.render();
             }
+getRouteLibrary() {
+    const saved = this.customRouteNames || {};
+    const base = [
+        { id: 'fly', name: 'Go / Fly / Streak' },
+        { id: 'fade', name: 'Fade' },
+        { id: 'post', name: 'Post' },
+        { id: 'corner', name: 'Corner / Flag' },
+        { id: 'postcorner', name: 'Post Corner' },
+        { id: 'cornerpost', name: 'Corner Post' },
+        { id: 'postdig', name: 'Post Dig' },
+        { id: 'dig', name: 'Dig / In' },
+        { id: 'out', name: 'Out' },
+        { id: 'comeback', name: 'Comeback' },
+        { id: 'curl', name: 'Curl' },
+        { id: 'hitch', name: 'Hitch / Stop' },
+        { id: 'slant', name: 'Slant' },
+        { id: 'sluggo', name: 'Slant-and-Go / Sluggo' },
+        { id: 'hitchgo', name: 'Hitch-and-Go' },
+        { id: 'outup', name: 'Out-and-Up' },
+        { id: 'whip', name: 'Whip / Pivot' },
+        { id: 'stick', name: 'Stick' },
+        { id: 'drag', name: 'Drag / Shallow Cross' },
+        { id: 'over', name: 'Over / Deep Cross' },
+        { id: 'seam', name: 'Seam' },
+        { id: 'sail', name: 'Sail' },
+        { id: 'flat', name: 'Flat' },
+        { id: 'block', name: 'Pass Block' },
+        { id: 'check', name: 'Check-Release' },
+        { id: 'swing', name: 'Swing' },
+        { id: 'wheel', name: 'Wheel' },
+        { id: 'angle', name: 'Angle' },
+        { id: 'texas', name: 'Texas' },
+        { id: 'screen', name: 'Screen' }
+    ];
+    return base.map(r => ({ id: r.id, name: saved[r.id] || r.name }));
+}
+filterRouteLibrary(query) {
+    const box = document.getElementById('routeSearchResults');
+    if (!box) return;
+    const q = (query || '').toLowerCase().trim();
+    const list = this.getRouteLibrary().filter(r => !q || r.name.toLowerCase().includes(q) || r.id.includes(q));
+    box.innerHTML = '';
+    list.forEach(r => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'w-full text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1 rounded text-[11px] text-cyan-200';
+        btn.textContent = r.name;
+        btn.onclick = () => {
+            this.selectedRoutePresetId = r.id;
+            const rename = document.getElementById('renameRouteInput');
+            if (rename) rename.value = r.name;
+            this.applyExpandedRoute(r.id);
+        };
+        box.appendChild(btn);
+    });
+}
+renameSelectedRoutePreset() {
+    if (!this.selectedRoutePresetId) { alert('Click a route first.'); return; }
+    const name = (document.getElementById('renameRouteInput').value || '').trim();
+    if (!name) return;
+    this.customRouteNames = this.customRouteNames || {};
+    this.customRouteNames[this.selectedRoutePresetId] = name;
+    try { localStorage.setItem('chalkboard_route_names_' + this.profileKey, JSON.stringify(this.customRouteNames)); } catch (e) {}
+    this.filterRouteLibrary(document.getElementById('routeSearchInput').value || '');
+}
+applyExpandedRoute(id) {
+    if (!this.selectedPlayerObj || this.selectedPlayerObj.side !== 'offense') {
+        alert('Click a WR, TE, or RB first.');
+        return;
+    }
+    const map = {
+        fade: 'fly', postcorner: 'corner', cornerpost: 'post', postdig: 'dig',
+        comeback: 'curl', hitch: 'curl', sluggo: 'fly', hitchgo: 'fly',
+        outup: 'fly', whip: 'out', stick: 'curl', drag: 'flat', over: 'dig',
+        seam: 'fly', sail: 'corner', angle: 'check', texas: 'check'
+    };
+    this.applyRoutePreset(map[id] || id);
+}
+
 
             deleteSelectedPlayer() {
                 if (!this.selectedPlayerObj) return;
@@ -3020,36 +3242,93 @@
                 this.renderFolderGrid();
             }
 
-            renderFolderGrid() {
-                const grid = document.getElementById('foldersGrid');
-                if (!grid) return;
-                grid.innerHTML = '';
+           childFolderNames(parentName) {
+    return this.folders.filter(f => (this.folderParents[f] || null) === parentName);
+}
 
-                this.folders.forEach(folderName => {
-                    const playCount = this.plays.filter(p => (p.category || 'Custom') === folderName).length;
+renderFolderGrid() {
+    const grid = document.getElementById('foldersGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
 
-                    const card = document.createElement('div');
-                    card.className = 'bg-slate-900 hover:bg-slate-880 border border-slate-800 hover:border-slate-700 rounded-xl p-5 flex flex-col justify-between transition shadow-lg cursor-pointer group';
-                    card.innerHTML = `
-                        <div>
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="p-3 bg-blue-950/80 text-blue-400 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition">
-                                    <i class="fa-solid fa-folder text-xl"></i>
-                                </div>
-                                <span class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-semibold">${playCount} Play(s)</span>
-                            </div>
-                            <h3 class="font-bold text-base text-white mb-1 group-hover:text-blue-300 transition">${folderName}</h3>
-                            <p class="text-xs text-slate-400">Click to open playbook folder & view tactical plays.</p>
-                        </div>
-                        <div class="pt-4 flex items-center justify-between text-xs text-blue-400 font-bold">
-                            <span>Open Folder</span>
-                            <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition"></i>
-                        </div>
-                    `;
-                    card.addEventListener('click', () => this.openFolder(folderName));
-                    grid.appendChild(card);
-                });
+    const crumb = document.getElementById('folderBreadcrumb');
+    if (crumb) {
+        crumb.innerHTML = '<button type="button" class="text-cyan-300 font-semibold">Library</button>';
+        crumb.querySelector('button').onclick = () => { this.currentFolderParent = null; this.renderFolderGrid(); };
+        if (this.currentFolderParent) {
+            crumb.innerHTML += ' / <span class="text-white font-semibold">' + this.currentFolderParent + '</span>';
+        }
+    }
+
+    const stBar = document.getElementById('stTemplatesBar');
+    if (stBar) {
+        const showST = this.currentFolderParent === 'Special Teams' || ['Kickoff','Kick Return','Punt','Punt Return','Field Goal'].includes(this.currentFolderParent);
+        stBar.classList.toggle('hidden', !showST);
+        const wrap = document.getElementById('stTemplateButtons');
+        if (showST && wrap) {
+            wrap.innerHTML = '';
+            Object.keys(ST_TEMPLATES).forEach(k => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'bg-purple-900 hover:bg-purple-800 text-purple-100 px-3 py-1.5 rounded text-xs font-bold';
+                btn.textContent = k;
+                btn.onclick = () => this.createSTTemplate(k);
+                wrap.appendChild(btn);
+            });
+        }
+    }
+
+    this.childFolderNames(this.currentFolderParent).forEach(folderName => {
+        const playCount = this.plays.filter(p => (p.category || 'Custom') === folderName).length;
+        const hasKids = this.childFolderNames(folderName).length > 0;
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 hover:bg-slate-880 border border-slate-800 hover:border-slate-700 rounded-xl p-5 flex flex-col justify-between transition shadow-lg cursor-pointer group';
+        card.innerHTML = `
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="p-3 bg-blue-950/80 text-blue-400 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-folder text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-semibold">${playCount} Play(s)</span>
+                </div>
+                <h3 class="font-bold text-base text-white mb-1 group-hover:text-blue-300 transition">${folderName}</h3>
+                <p class="text-xs text-slate-400">Click to open playbook folder & view tactical plays.</p>
+            </div>
+            <div class="pt-4 flex items-center justify-between text-xs text-blue-400 font-bold">
+                <span>${hasKids ? 'Open Subfolders / Plays' : 'Open Folder'}</span>
+                <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition"></i>
+            </div>
+        `;
+        card.addEventListener('click', () => {
+            if (hasKids) {
+                this.currentFolderParent = folderName;
+                this.renderFolderGrid();
+            } else {
+                this.openFolder(folderName);
             }
+        });
+        grid.appendChild(card);
+    });
+}
+
+createSTTemplate(key) {
+    const t = ST_TEMPLATES[key];
+    if (!t) return;
+    const play = {
+        id: 'st_' + Date.now(),
+        name: t.name,
+        category: t.category,
+        desc: t.desc,
+        qbKeys: t.qbKeys,
+        coachNotes: t.coachNotes,
+        offense: JSON.parse(JSON.stringify(OFFENSE_PRESETS.spread2x2))
+    };
+    this.plays.push(play);
+    this.savePlays();
+    this.openFolder(t.category);
+    this.loadPlay(play.id);
+}
+
 
             openNewFolderPrompt() {
                 const folderName = prompt('Enter new folder name (e.g. Formations, Red Zone Offense, Blitz Packages):');
@@ -3060,6 +3339,8 @@
                     return;
                 }
                 this.folders.push(cleanName);
+if (this.currentFolderParent) this.folderParents[cleanName] = this.currentFolderParent;
+
                 this.saveFoldersForProfile();
                 this.updateCategoryDropdowns();
                 this.renderFolderGrid();
@@ -3086,26 +3367,52 @@
             }
 
             openFolder(folderName) {
-                this.selectedCategoryFilter = folderName;
-                if (this.categoryFilterSelect) this.categoryFilterSelect.value = folderName;
+    this.selectedCategoryFilter = folderName;
+    if (this.categoryFilterSelect) this.categoryFilterSelect.value = folderName;
 
-                this.folderScreen.classList.add('hidden');
-                this.appScreen.classList.remove('hidden');
+    const matchingPlays = this.plays.filter(p => (p.category || 'Custom') === folderName);
 
-                this.initCanvas();
-                this.populatePlaySelect();
+    if (matchingPlays.length === 0) {
+        const makeNew = confirm('Folder "' + folderName + '" has no plays yet.\n\nOK = create a blank play here\nCancel = stay in folders');
+        if (!makeNew) return;
+        const newPlay = {
+            id: 'play_' + Date.now(),
+            name: folderName + ' Play 1',
+            category: folderName,
+            desc: 'New play in ' + folderName,
+            qbKeys: ['Install this play'],
+            coachNotes: '',
+            offense: []
+        };
+        this.plays.push(newPlay);
+        this.savePlays();
+        this.folderScreen.classList.add('hidden');
+        this.appScreen.classList.remove('hidden');
+        this.initCanvas();
+        this.populatePlaySelect();
+        this.loadPlay(newPlay.id);
+        this.setupEvents();
+        this.startAnimationLoop();
+        setTimeout(() => this.resizeCanvas(), 50);
+        return;
+    }
 
-                const matchingPlays = this.plays.filter(p => (p.category || 'Custom') === folderName);
-                if (matchingPlays.length > 0) {
-                    this.loadPlay(matchingPlays[0].id);
-                } else if (this.plays.length > 0) {
-                    this.loadPlay(this.plays[0].id);
-                }
+    const pick = matchingPlays.map((p, i) => (i + 1) + '. ' + p.name).join('\n');
+    const choice = prompt('Plays in "' + folderName + '":\n\n' + pick + '\n\nType the NUMBER of the play to open:', '1');
+    if (choice === null) return;
+    const idx = parseInt(choice, 10) - 1;
+    const chosen = matchingPlays[idx] || matchingPlays[0];
 
-                this.setupEvents();
-                this.startAnimationLoop();
-                setTimeout(() => this.resizeCanvas(), 50);
-            }
+    this.folderScreen.classList.add('hidden');
+    this.appScreen.classList.remove('hidden');
+    this.initCanvas();
+    this.populatePlaySelect();
+    this.loadPlay(chosen.id);
+    this.setupEvents();
+    this.startAnimationLoop();
+    setTimeout(() => this.resizeCanvas(), 50);
+}
+
 
             returnToFolderView() {
                 this.appScreen.classList.add('hidden');
@@ -3183,7 +3490,8 @@
                         document.getElementById('videoClipUrl').value = vc.url || '';
                         document.getElementById('videoClipAngle').value = vc.angle || 'All-22';
                         disp.classList.remove('hidden');
-                        disp.innerHTML = `<i class="fa-solid fa-video text-cyan-400"></i> <strong>vc.title||'Clip'</strong>({vc.angle}) ${vc.url ? '— <a href="'+vc.url+'" target="_blank" class="text-cyan-300 underline">Open</a>' : ''}`;
+                        disp.innerHTML = '<i class="fa-solid fa-video text-cyan-400"></i> <strong>' + (vc.title || 'Clip') + '</strong> (' + vc.angle + ')' + (vc.url ? ' — <a href="'+vc.url+'" target="_blank" class="text-cyan-300 underline">Open</a>' : '');
+
                     } else {
                         document.getElementById('videoClipTitle').value = '';
                         document.getElementById('videoClipUrl').value = '';
@@ -3626,13 +3934,20 @@
                             const px = this.getAdjustedX(p.x, w);
                             const py = p.y * h;
                             const dist = Math.hypot(x - px, y - py);
-                            if (dist <= 22) {
-                                this.saveHistoryState();
-                                this.draggedPlayer = { type: 'offense', player: p };
-                                this.dragOffset = { x: x - px, y: y - py };
-                                this.inspectPlayer('offense', p);
-                                return;
-                            }
+                           if (dist <= 22) {
+    this.inspectPlayer('offense', p);
+    this.pendingDrag = {
+        kind: 'player',
+        type: 'offense',
+        player: p,
+        startX: e.clientX,
+        startY: e.clientY,
+        offset: { x: x - px, y: y - py },
+        dragging: false
+    };
+    return;
+}
+
                         }
                     }
 
@@ -3641,13 +3956,20 @@
                             const dx = this.getAdjustedX(d.x, w);
                             const dy = d.y * h;
                             const dist = Math.hypot(x - dx, y - dy);
-                            if (dist <= 22) {
-                                this.saveHistoryState();
-                                this.draggedPlayer = { type: 'defense', player: d };
-                                this.dragOffset = { x: x - dx, y: y - dy };
-                                this.inspectPlayer('defense', d);
-                                return;
-                            }
+                           if (dist <= 22) {
+    this.inspectPlayer('defense', d);
+    this.pendingDrag = {
+        kind: 'player',
+        type: 'defense',
+        player: d,
+        startX: e.clientX,
+        startY: e.clientY,
+        offset: { x: x - dx, y: y - dy },
+        dragging: false
+    };
+    return;
+}
+
                         }
                     }
                     this.deselectPlayer();
@@ -3691,6 +4013,17 @@
             }
 
             handlePointerMove(e) {
+if (this.pendingDrag && !this.pendingDrag.dragging) {
+    const dist = Math.hypot(e.clientX - this.pendingDrag.startX, e.clientY - this.pendingDrag.startY);
+    if (dist < this.DRAG_THRESHOLD) return;
+    this.pendingDrag.dragging = true;
+    this.saveHistoryState();
+    if (this.pendingDrag.kind === 'player') {
+        this.draggedPlayer = { type: this.pendingDrag.type, player: this.pendingDrag.player };
+        this.dragOffset = this.pendingDrag.offset;
+    }
+}
+
                 const rect = this.canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
@@ -3738,6 +4071,8 @@
             }
 
             handlePointerUp() {
+this.pendingDrag = null;
+
                 if (this.draggedRouteNodeIndex !== null) {
                     this.draggedRouteNodeIndex = null;
                 }
