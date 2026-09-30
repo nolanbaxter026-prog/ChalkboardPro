@@ -232,7 +232,15 @@
                 <span class="text-xs text-slate-500">Click any folder to open its plays</span>
             </div>
 
-            <div id="foldersGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+           <div id="folderPlayListPanel" class="hidden bg-slate-900 border border-slate-700 rounded-xl p-4 space-y-3">
+    <div class="flex items-center justify-between gap-2">
+        <h3 id="folderPlayListTitle" class="text-sm font-bold text-white">Plays in folder</h3>
+        <button type="button" onclick="if(window.app) window.app.closeFolderPlayList()" class="text-xs text-slate-400 hover:text-white">Back to folders</button>
+    </div>
+    <div id="folderPlayList" class="space-y-2"></div>
+</div>
+
+ <div id="foldersGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 <!-- Dynamically populated folder cards -->
             </div>
         </main>
@@ -992,7 +1000,11 @@
                     <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col">
                         <div class="flex items-center justify-between mb-1">
                             <div class="flex items-center gap-2 flex-1 mr-2">
+<button type="button" id="prevPlayBtn" onclick="if(window.app) window.app.loadPrevPlayInFolder()" class="bg-slate-800 hover:bg-slate-700 text-white w-8 h-8 rounded-lg border border-slate-600 font-bold">‹</button>
+
                                 <h4 id="playTitle" class="font-bold text-sm text-blue-400">Play Name</h4>
+<button type="button" id="nextPlayBtn" onclick="if(window.app) window.app.loadNextPlayInFolder()" class="bg-slate-800 hover:bg-slate-700 text-white w-8 h-8 rounded-lg border border-slate-600 font-bold">›</button>
+
                                 <input type="text" id="editPlayTitleInput" class="hidden bg-slate-900 border border-blue-500 text-white font-bold text-xs rounded px-2 py-0.5 flex-1" />
                             </div>
                             <button id="btnEditNotes" type="button" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 px-2 py-0.5 rounded font-semibold cursor-pointer flex items-center gap-1">
@@ -3366,52 +3378,98 @@ if (this.currentFolderParent) this.folderParents[cleanName] = this.currentFolder
                 } catch (e) {}
             }
 
-            openFolder(folderName) {
+     openFolder(folderName) {
     this.selectedCategoryFilter = folderName;
     if (this.categoryFilterSelect) this.categoryFilterSelect.value = folderName;
+    this.showFolderPlayList(folderName);
+}
+playsInCurrentFolder() {
+    const folder = this.selectedCategoryFilter || 'Custom';
+    return this.plays.filter(p => (p.category || 'Custom') === folder);
+}
+
+showFolderPlayList(folderName) {
+    const panel = document.getElementById('folderPlayListPanel');
+    const list = document.getElementById('folderPlayList');
+    const title = document.getElementById('folderPlayListTitle');
+    const grid = document.getElementById('foldersGrid');
+    if (!panel || !list) return;
+
+    title.textContent = 'Plays in "' + folderName + '"';
+    list.innerHTML = '';
 
     const matchingPlays = this.plays.filter(p => (p.category || 'Custom') === folderName);
 
     if (matchingPlays.length === 0) {
-        const makeNew = confirm('Folder "' + folderName + '" has no plays yet.\n\nOK = create a blank play here\nCancel = stay in folders');
-        if (!makeNew) return;
-        const newPlay = {
-            id: 'play_' + Date.now(),
-            name: folderName + ' Play 1',
-            category: folderName,
-            desc: 'New play in ' + folderName,
-            qbKeys: ['Install this play'],
-            coachNotes: '',
-            offense: []
+        list.innerHTML = '<p class="text-xs text-slate-400">No plays in this folder yet.</p>';
+        const makeBtn = document.createElement('button');
+        makeBtn.type = 'button';
+        makeBtn.className = 'bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded text-xs font-bold';
+        makeBtn.textContent = 'Create first play in this folder';
+        makeBtn.onclick = () => {
+            const newPlay = {
+                id: 'play_' + Date.now(),
+                name: folderName + ' Play 1',
+                category: folderName,
+                desc: 'New play in ' + folderName,
+                qbKeys: ['Install this play'],
+                coachNotes: '',
+                offense: []
+            };
+            this.plays.push(newPlay);
+            this.savePlays();
+            this.openPlayFromFolder(newPlay.id);
         };
-        this.plays.push(newPlay);
-        this.savePlays();
-        this.folderScreen.classList.add('hidden');
-        this.appScreen.classList.remove('hidden');
-        this.initCanvas();
-        this.populatePlaySelect();
-        this.loadPlay(newPlay.id);
-        this.setupEvents();
-        this.startAnimationLoop();
-        setTimeout(() => this.resizeCanvas(), 50);
-        return;
+        list.appendChild(makeBtn);
+    } else {
+        matchingPlays.forEach((p, i) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'w-full text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2.5 rounded-lg text-sm text-white flex items-center justify-between';
+            btn.innerHTML = '<span>' + (i + 1) + '. ' + p.name + '</span><span class="text-cyan-300 text-xs">Open</span>';
+            btn.onclick = () => this.openPlayFromFolder(p.id);
+            list.appendChild(btn);
+        });
     }
 
-    const pick = matchingPlays.map((p, i) => (i + 1) + '. ' + p.name).join('\n');
-    const choice = prompt('Plays in "' + folderName + '":\n\n' + pick + '\n\nType the NUMBER of the play to open:', '1');
-    if (choice === null) return;
-    const idx = parseInt(choice, 10) - 1;
-    const chosen = matchingPlays[idx] || matchingPlays[0];
+    panel.classList.remove('hidden');
+    if (grid) grid.classList.add('hidden');
+}
 
+closeFolderPlayList() {
+    const panel = document.getElementById('folderPlayListPanel');
+    const grid = document.getElementById('foldersGrid');
+    if (panel) panel.classList.add('hidden');
+    if (grid) grid.classList.remove('hidden');
+}
+
+openPlayFromFolder(playId) {
     this.folderScreen.classList.add('hidden');
     this.appScreen.classList.remove('hidden');
     this.initCanvas();
     this.populatePlaySelect();
-    this.loadPlay(chosen.id);
+    this.loadPlay(playId);
     this.setupEvents();
     this.startAnimationLoop();
     setTimeout(() => this.resizeCanvas(), 50);
 }
+
+loadPrevPlayInFolder() {
+    const list = this.playsInCurrentFolder();
+    if (!list.length || !this.currentPlay) return;
+    const idx = list.findIndex(p => p.id === this.currentPlay.id);
+    const next = list[(idx - 1 + list.length) % list.length];
+    this.loadPlay(next.id);
+}
+
+loadNextPlayInFolder() {
+    const list = this.playsInCurrentFolder();
+    if (!list.length || !this.currentPlay) return;
+    const idx = list.findIndex(p => p.id === this.currentPlay.id);
+    const next = list[(idx + 1) % list.length];
+    this.loadPlay(next.id);
+}
+
 
 
             returnToFolderView() {
@@ -4770,4 +4828,5 @@ this.pendingDrag = null;
     </script>
 </body>
 </html>
+
 
