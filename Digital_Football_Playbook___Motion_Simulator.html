@@ -2681,7 +2681,7 @@ applyExpandedRoute(id) {
                     btn.className = 'w-full text-left bg-slate-900 hover:bg-slate-880 border border-slate-700 px-2.5 py-1.5 rounded text-xs text-slate-200 flex items-center justify-between cursor-pointer';
                     btn.innerHTML = `
                         <span class="truncate font-semibold"><i class="fa-solid fa-folder-plus text-emerald-400 mr-1.5"></i>${fm.name}</span>
-                        <span class="text-[9px] uppercase px-1.5 py-0.5 rounded 𝑓𝑚.𝑡𝑦𝑝𝑒 === '𝑜𝑓𝑓𝑒𝑛𝑠𝑒'?'𝑏𝑔 − 𝑏𝑙𝑢𝑒 − 950𝑡𝑒𝑥𝑡 − 𝑏𝑙𝑢𝑒 − 300':'𝑏𝑔 − 𝑟𝑜𝑠𝑒 − 950𝑡𝑒𝑥𝑡 − 𝑟𝑜𝑠𝑒 − 300'" > {fm.type}</span>
+                        <span class="text-[9px] uppercase px-1.5 py-0.5 rounded ${fm.type === 'offense' ? 'bg-blue-950 text-blue-300' : 'bg-rose-950 text-rose-300'}">${fm.type}</span>
                     `;
                     btn.addEventListener('click', () => {
                         this.saveHistoryState();
@@ -2987,8 +2987,7 @@ createSTTemplate(key) {
         };
         this.plays.push(play);
         this.savePlays();
-        this.openFolder(t.category);
-        this.loadPlay(play.id);
+        this.selectedCategoryFilter = t.category; this.openPlayFromFolder(play.id);
 }
             openNewFolderPrompt() {
                 const folderName = prompt('Enter new folder name (e.g. Formations, Red Zone Offense, Blitz Packages):');
@@ -3316,7 +3315,7 @@ loadNextPlayInFolder() {
                     const stunt = STUNT_CONFIGS[this.selectedStunt];
                     if (stunt && this.selectedStunt !== 'None') {
                         this.stuntBadge.textContent = stunt.name;
-                        this.stuntProtectionInfo.innerHTML = `<p class="font-bold text-purple-300"> 𝑠𝑡𝑢𝑛𝑡.𝑛𝑎𝑚𝑒 < /𝑝 >< 𝑝𝑐𝑙𝑎𝑠𝑠 = "𝑡𝑒𝑥𝑡 − 𝑠𝑙𝑎𝑡𝑒 − 300𝑡𝑒𝑥𝑡 − [11𝑝𝑥]" > {stunt.protectionRule}</p>`;
+                        this.stuntProtectionInfo.innerHTML = `<p class="font-bold text-purple-300">${stunt.name}</p><p class="text-slate-300 text-[11px]">${stunt.protectionRule}</p>`;
                     } else {
                         this.stuntBadge.textContent = 'None';
                         this.stuntProtectionInfo.innerHTML = `<span class="text-slate-400 italic">No defensive stunts active.</span>`;
@@ -4344,7 +4343,7 @@ function build(a,id){
 const origPreset=P.applyRoutePreset;
 P.applyRoutePreset=function(t){const id=t in ALIAS?ALIAS[t]:t;if(id&&R[id])return build(this,id);return origPreset.call(this,t)};
 P.applyExpandedRoute=function(id){if(R[id])build(this,id)};
-P.getRouteLibrary=function(){const u=LS('cbp_use')||{},d=LS('cbp_dict')||{};return Object.keys(R).map(id=>({id,name:(d['r_'+id]&&d['r_'+id][0])||R[id][0]})).sort((x,y)=>(u[y.id]||0)-(u[x.id]||0))};
+P.getRouteLibrary=function(){const u=LS('cbp_use')||{},d=LS('cbp_dict')||{},cn=Object.assign({},LS('chalkboard_route_names_'+this.profileKey)||{},this.customRouteNames||{});return Object.keys(R).map(id=>({id,name:(d['r_'+id]&&d['r_'+id][0])||cn[id]||R[id][0]})).sort((x,y)=>(u[y.id]||0)-(u[x.id]||0))};
 // ===== Dictionary (name, definition). Defense entries come from the team's Defense ID guide.
 const D={
 defense:{
@@ -4404,7 +4403,7 @@ function open(a,tab){
  m.querySelectorAll('input[data-k]').forEach(i=>i.onchange=()=>{const d=lsDict(),k=i.dataset.k,ix=+i.dataset.i;let o=d[k];if(!o){const t=k.split('_')[0],kk=k.slice(t.length+1);o=k.startsWith('r_')?[R[k.slice(2)][0],R[k.slice(2)][3],R[k.slice(2)][1],R[k.slice(2)][4]]:D[t][kk].slice()}o[ix]=i.value;d[k]=o;LS('cbp_dict',d)});
  if(tab==='heat')drawHeat(a);
  if(tab==='settings'){$('sLv').onchange=e=>$('sMsg').textContent=LEVEL[e.target.value];
-  $('sSave').onclick=()=>{const n={lv:$('sLv').value,mode:$('sMode').value,field:$('sField').value,pen:$('sPen').value,off:$('sOff').value,def:$('sDef').value,speed:$('sSpd').value};LS('cbp_set',n);applySet(a,n);a.render()};
+  $('sSave').onclick=()=>{const n={lv:$('sLv').value,mode:$('sMode').value,field:$('sField').value,pen:$('sPen').value,off:$('sOff').value,def:$('sDef').value,speed:$('sSpd').value};LS('cbp_set',n);const lv={highschool:'highschool',cfb:'college',nfl:'nfl'}[n.lv];a.selectedLevel=lv;if(a.levelSelect)a.levelSelect.value=lv;applySet(a,n);a.render()};
   $('sExp').onclick=()=>{const l=document.createElement('a');l.href='data:application/json,'+encodeURIComponent(JSON.stringify({dict:lsDict(),set:LS('cbp_set')}));l.download='chalkboard_dictionary.json';l.click()};
   $('sImp').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{const j=JSON.parse(t);LS('cbp_dict',j.dict||{});if(j.set)LS('cbp_set',j.set);open(a,'settings')})}}
 }
@@ -4425,11 +4424,11 @@ P.sayCall=function(txt){
  a.currentPlay&&(a.currentPlay.defCall=txt);a.render();$('cbpOut').textContent=out.join(' | ')||'No front/coverage found. Try "Under Cover 3 Fire".';sv(a);
 };
 const origRender=P.render;
-P.render=function(){origRender.call(this);const h=this.currentPlay&&this.currentPlay.hot;if(!h||!this.ctx||!$('cbpHotOn')||!$('cbpHotOn').checked)return;
+P.render=function(){origRender.call(this);const _cp=this.currentPlay;if(_cp&&this.canvas){_cp.drawnLines=this.drawnLines;_cp.defense=this.currentDefense;_cp.front=this.selectedFront;_cp.coverage=this.selectedCoverage}const h=this.currentPlay&&this.currentPlay.hot;if(!h||!this.ctx||!$('cbpHotOn')||!$('cbpHotOn').checked)return;
  const x=this.ctx,w=this.canvas.width,H=this.canvas.height;x.save();x.setLineDash([6,5]);x.strokeStyle='#f43f5e';x.lineWidth=2;
- this.currentPlay.offense.forEach(p=>{const id=h[p.id];if(!id||!R[id])return;const s=p.x>.5?1:-1,d=R[id][1];let px=this.getAdjustedX(p.x,w),py=p.y*H;x.beginPath();x.moveTo(px,py);R[id][2](d).forEach(([ox,up])=>x.lineTo(this.getAdjustedX(p.x+s*ox/53.3,w),(p.y-up/100)*H));x.stroke()});x.restore()};
+ this.currentPlay.offense.forEach(p=>{const id=h[p.id];if(!id||!R[id])return;const s=p.x>.5?1:-1,d=+((JSON.parse(localStorage.getItem('cbp_dict')||'{}')['r_'+id]||[])[2])||R[id][1];let px=this.getAdjustedX(p.x,w),py=p.y*H;x.beginPath();x.moveTo(px,py);R[id][2](d).forEach(([ox,up])=>x.lineTo(this.getAdjustedX(p.x+s*ox/53.3,w),(p.y-up/100)*H));x.stroke()});x.restore()};
 // ===== Autosave (plays, lines, defense) so nothing is lost
-let tm;function sv(a){clearTimeout(tm);tm=setTimeout(()=>{const cp=a.currentPlay;if(!cp)return;cp.drawnLines=JSON.parse(JSON.stringify(a.drawnLines||[]));cp.defense=JSON.parse(JSON.stringify(a.currentDefense||[]));cp.front=a.selectedFront;cp.coverage=a.selectedCoverage;const c=JSON.parse(JSON.stringify(cp)),i=a.plays.findIndex(p=>p.id===cp.id);i>=0?a.plays[i]=c:a.plays.push(c);a.savePlays()},600)}
+let tm,lastSig='';function sv(a){clearTimeout(tm);tm=setTimeout(()=>{const cp=a.currentPlay;if(!cp||!a.canvas||a.appScreen.classList.contains('hidden'))return;cp.drawnLines=JSON.parse(JSON.stringify(a.drawnLines||[]));cp.defense=JSON.parse(JSON.stringify(a.currentDefense||[]));cp.front=a.selectedFront;cp.coverage=a.selectedCoverage;const c=JSON.parse(JSON.stringify(cp)),i=a.plays.findIndex(p=>p.id===cp.id);if(i<0)return;const sig=JSON.stringify(c);if(sig===lastSig)return;lastSig=sig;a.plays[i]=c;a.savePlays()},600)}
 const oHist=P.saveHistoryState;P.saveHistoryState=function(){oHist.call(this);sv(this)};
 const oUp=P.handlePointerUp;P.handlePointerUp=function(){oUp.call(this);sv(this)};
 const oLoad=P.loadPlay;P.loadPlay=function(id){oLoad.call(this,id);const f=this.plays.find(p=>p.id===id);if(!f)return;this.drawnLines=JSON.parse(JSON.stringify(f.drawnLines||[]));if(f.defense&&f.defense.length)this.currentDefense=JSON.parse(JSON.stringify(f.defense));if(f.front&&this.frontSelect)this.selectedFront=this.frontSelect.value=f.front;if(f.coverage&&this.coverageSelect)this.selectedCoverage=this.coverageSelect.value=f.coverage;this.render()};
@@ -4458,7 +4457,7 @@ const sv=a=>a.saveHistoryState&&0; // autosave is triggered by saveHistoryState/
 // ===== Play modes + one-frame tabbed sidebar (no scrolling between sections)
 const MODES={offense:['Offense',/Default Player|Saved Formations|Add Players|Inspector|Teaching|Drawing/],defense:['Defense',/Default Player|Saved Formations|Add Players|Inspector|Defensive|Drawing/],both:['Off/Def',/./],st:['Special Teams',/Default Player|Saved Formations|Add Players|Inspector|Drawing/],call:['Play Call',/Defensive|Teaching|Saved Formations/]};
 let mode=LS('cbp_mode')||'both',tab=0;
-function groups(){const out=[];document.querySelectorAll('aside h3').forEach(h=>{const g=h.closest('aside > *');if(g&&!out.find(o=>o.g===g))out.push({g,label:h.textContent.replace(/\s+/g,' ').trim()})});return out}
+function groups(){const out=[];document.querySelectorAll('aside h3').forEach(h=>{const g=h.closest('aside > *');if(g&&!g.querySelector('#playSelect')&&!out.find(o=>o.g===g))out.push({g,label:h.textContent.replace(/\s+/g,' ').trim()})});return out}
 function layout(){
  const gs=groups(),re=MODES[mode][1],vis=gs.filter(o=>re.test(o.label));
  if(tab>=vis.length)tab=0;
@@ -4468,12 +4467,13 @@ function layout(){
  strip.querySelectorAll('button').forEach(b=>b.onclick=()=>{tab=+b.dataset.i;layout()});
  document.querySelectorAll('#cbpModes button').forEach(b=>b.className='px-1.5 py-1 rounded text-[10px] '+(b.dataset.m===mode?'bg-amber-600':'bg-slate-800'));
 }
+const oI=P.inspectPlayer;P.inspectPlayer=function(sd,p){oI.call(this,sd,p);const vis=groups().filter(o=>MODES[mode][1].test(o.label)),i=vis.findIndex(o=>/Inspector/.test(o.label));if(i>=0&&tab!==i){tab=i;layout()}};
 function setMode(a,m){mode=m;LS('cbp_mode',m);tab=0;if(m==='defense')a.coachRole='defensive';else if(m==='offense')a.coachRole='offensive';try{a.updateCoachRoleUI()}catch(e){}
  const hide=m==='defense'?'offense':m==='offense'?'defense':null; layout();a.render()}
 // ===== Assignment text on every player + blocking toolkit
 const SCHEMES={'Inside Zone':{OL:'Zone step playside, combo then climb',RB:'Aim at playside A-gap, one cut',TE:'Reach/seal edge',WR:'Stalk corner'},'Power':{OL:'Down block backside, play side blocks DOWN',G:'Backside guard pulls and kicks out',RB:'Follow pulling guard, hit the C-gap',TE:'Down block',WR:'Stalk'},'Counter':{OL:'Play side down, BS G and T pull (kick/wrap)',RB:'Counter step, follow wrapper',TE:'Down block',WR:'Crack'},'Pass Pro (Slide)':{OL:'Slide protection to the call side, man to the back',RB:'Scan the weak-side blitz, block it',TE:'Chip then release',WR:'Run route'},'Draw':{OL:'Show pass set, then drive block',RB:'Delay, then hit the A-gap',TE:'Show pass',WR:'Sell the route'},'Screen':{OL:'Pass set 2 counts, release to lead block',RB:'Slip out behind the LOS',TE:'Block force',WR:'Block corner'}};
 P.applyBlockScheme=function(name){const sc=SCHEMES[name],cp=this.currentPlay;if(!sc||!cp)return;this.saveHistoryState();
- cp.offense.forEach(p=>{const k=p.role==='OL'?((p.label==='LG'||p.label==='RG')&&sc.G?'G':'OL'):p.role==='QB'?null:(sc[p.role]?p.role:p.role==='Slot'?'WR':null);const t=k&&sc[k];p.assign=t||'';});
+ cp.offense.forEach(p=>{const k=p.role==='OL'?((p.label==='LG'||p.label==='RG')&&sc.G?'G':'OL'):p.role==='QB'?null:(sc[p.role]?p.role:p.role==='Slot'?'WR':p.role==='Y'?'TE':['X','Z','1','2','3','4'].includes(p.role)?'WR':null);const t=k&&sc[k];p.assign=t||'';});
  cp.blockScheme=name;this.render()};
 const oR=P.render;P.render=function(){oR.call(this);const cp=this.currentPlay;if(!cp||!this.ctx||!$('cbpAsg')||!$('cbpAsg').checked)return;const x=this.ctx,w=this.canvas.width,h=this.canvas.height;
  x.save();x.font='9px sans-serif';x.fillStyle='#fde68a';x.textAlign='center';(cp.offense||[]).forEach(p=>{if(!p.assign)return;const t=p.assign.length>22?p.assign.slice(0,21)+'…':p.assign;x.fillText(t,this.getAdjustedX(p.x,w),p.y*h+26)});x.restore()};
@@ -4485,10 +4485,10 @@ P.applyConcept=function(n){const c=(LS('cbp_concepts')||{})[n];if(!c)return;this
  recv(this).forEach((p,i)=>{const r=c[i];if(!r||r.length<2)return;const s=p.x>.5?1:-1;p.route=r.map(q=>({x:cl(p.x+s*q.o),y:cl(p.y-q.u)}))});this.render()};
 const DEFPICK=[['Over','Over'],['Under','Under'],['Okie','Okie'],['Tite','Tite'],['Bear','Bear'],['Under BUG','Under BUG'],['Under MUG','Under MUG'],['Cover 0','Cover 0'],['Cover 1 Man','Cover 1'],['Cover 2','Cover 2'],['Cover 3 Strong','Cover 3'],['Cover 3 Weak','Cover 3'],['Cover 4 Quarters','Cover 4'],['Cover 24','Cover 24'],['Cover 42','Cover 42'],['Cover 3 Fire','Cover 3 Fire'],['Cover 3 Hot','Cover 3 Zero']];
 const DK=['O','U','OK','TI','BE','BU','MU','C0','C1','C2','C3S','C3W','C4','C24','C42','C3B','C3Z'];
-function fillPick(){const s=$('cbpPick');if(!s)return;const d=LS('cbp_dict')||{},base={O:1,U:1};s.innerHTML='<option value="">Defense ID call…</option>'+DEFPICK.map((p,i)=>{const e=d['defense_'+DK[i]];return`<option value="${p[1]}">${(e&&e[0])||p[0]}</option>`}).join('')}
+function fillPick(){const s=$('cbpPick');if(!s)return;const d=LS('cbp_dict')||{},base={O:1,U:1};const h='<option value="">Defense ID call…</option>'+DEFPICK.map((p,i)=>{const e=d['defense_'+DK[i]];return`<option value="${p[1]}">${(e&&e[0])||p[0]}</option>`}).join('');if(s.dataset.h!==h){s.dataset.h=h;s.innerHTML=h}}
 function fillConcepts(){const s=$('cbpCon');if(!s)return;s.innerHTML='<option value="">Concepts…</option>'+Object.keys(LS('cbp_concepts')||{}).map(k=>`<option>${k}</option>`).join('')}
 document.addEventListener('DOMContentLoaded',()=>{const a=window.app;
- const st=document.createElement('style');st.textContent='.cbp-off{display:none!important}aside{overflow-y:hidden!important}';document.head.appendChild(st);
+ const st=document.createElement('style');st.textContent='.cbp-off{display:none!important}';document.head.appendChild(st);
  const asd=document.querySelector('aside');
  if(asd){const bar=document.createElement('div');bar.className='space-y-1 shrink-0';bar.innerHTML='<div id="cbpModes" class="flex flex-wrap gap-1">'+Object.entries(MODES).map(([k,v])=>`<button data-m="${k}">${v[0]}</button>`).join('')+'</div><div id="cbpTabs" class="flex flex-wrap gap-1"></div>';asd.prepend(bar);
   bar.querySelectorAll('#cbpModes button').forEach(b=>b.onclick=()=>setMode(a,b.dataset.m))}
@@ -4524,7 +4524,7 @@ P.startAnimationLoop=function(){if(this.animating)return;this.animating=true;let
    if(a.progress===0&&cp&&!a.pre){const ml=(a.drawnLines||[]).filter(l=>l.type==='motion'&&l.points.length>1);
     a.pre={t:0,mv:ml.map(l=>{const st=l.points[0];let best=null,bd=1e9;(cp.offense||[]).forEach(p=>{const d=Math.hypot(a.getAdjustedX(p.x,w)-st.x,p.y*h-st.y);if(d<bd){bd=d;best=p}});return bd<60?{p:best,l}:null}).filter(Boolean),hot:$('cbpHotOn')&&$('cbpHotOn').checked&&cp.hot,hotDone:false}}
    const pr=a.pre;
-   if(pr&&!pr.done){pr.t+=dt;const MT=pr.mv.length?1.2:0;
+   if(pr&&!pr.done){pr.t+=dt;const MT=pr.mv.length?1.2:0;if(pr.t>=MT&&!pr.mvDone){pr.mvDone=true;const o2=a.selectedHashPosition==='left'?-.15:a.selectedHashPosition==='right'?.15:0;pr.mv.forEach(m=>{const p=m.p,e=m.l.points[m.l.points.length-1];shadow(p);p.x=e.x/w-o2;p.y=e.y/h;if(p._o.route&&p._o.route.length>1)p.route=[{x:p.x,y:p.y}].concat(p._o.route.slice(1))})}
     if(pr.t<MT){pr.mv.forEach(m=>{shadow(m.p);const pts=m.l.points,f=pr.t/MT,i=Math.min(pts.length-2,Math.floor(f*(pts.length-1))),q=f*(pts.length-1)-i,A=pts[i],B=pts[i+1],X=A.x+(B.x-A.x)*q,Y=A.y+(B.y-A.y)*q;
       const off=a.selectedHashPosition==='left'?-.15:a.selectedHashPosition==='right'?.15:0;m.p.x=X/w-off;m.p.y=Y/h});banner('MOTION');a.render()}
     else if(pr.hot&&!pr.hotDone){pr.hotDone=true;pr.hotEnd=pr.t+1.3;const names=[];(cp.offense||[]).forEach(p=>{const id=pr.hot[p.id];if(id&&C.R[id]){shadow(p);p.route=hotRoute(p,id);names.push(p.label+': '+C.R[id][0])}});banner('HOT / ALERT: '+names.join(', '));a.render()}
@@ -4546,12 +4546,12 @@ function wb(a,g){const m=$('cbpWB');m&&m.remove();const gs=LS('cbp_groups')||{},
 P.exportWristband=function(){wb(this)};
 // ===== Drag and drop: chips (routes, concepts, blocking schemes) dropped onto the field or onto a single player
 const recv=a=>(a.currentPlay.offense||[]).filter(p=>!['OL','QB'].includes(p.role)).sort((u,v)=>u.x-v.x);
-function schemeFor(p,sc){const k=p.role==='OL'?((p.label==='LG'||p.label==='RG')&&sc.G?'G':'OL'):p.role==='QB'?null:(sc[p.role]?p.role:p.role==='Slot'?'WR':null);return k&&sc[k]||''}
+function schemeFor(p,sc){const k=p.role==='OL'?((p.label==='LG'||p.label==='RG')&&sc.G?'G':'OL'):p.role==='QB'?null:(sc[p.role]?p.role:p.role==='Slot'?'WR':p.role==='Y'?'TE':['X','Z','1','2','3','4'].includes(p.role)?'WR':null);return k&&sc[k]||''}
 function palette(a){let d=$('cbpPal');if(!d){d=document.createElement('div');d.id='cbpPal';d.className='fixed right-2 top-24 z-40 w-36 max-h-[60vh] overflow-y-auto bg-slate-900/95 border border-slate-700 rounded-lg p-1 text-[10px] space-y-1';document.body.appendChild(d)}
  const use=LS('cbp_use')||{},con=LS('cbp_concepts')||{},rt=Object.keys(C.R).sort((x,y)=>(use[y]||0)-(use[x]||0)).slice(0,10);
  const chip=(t,l,c)=>`<div draggable="true" data-d="${t}" class="cursor-grab px-1 py-0.5 rounded ${c}">${l}</div>`;
- d.innerHTML='<div class="text-slate-400">Drag onto a player or the field</div>'+rt.map(k=>chip('r:'+k,C.R[k][0],'bg-cyan-900')).join('')+Object.keys(con).map(k=>chip('c:'+k,'◆ '+k,'bg-indigo-800')).join('')+Object.keys(C.S).map(k=>chip('b:'+k,'▣ '+k,'bg-amber-800')).join('');
- d.querySelectorAll('[data-d]').forEach(el=>{el.ondragstart=e=>{window.__cbpDrag=1;e.dataTransfer.setData('text/plain',el.dataset.d)};el.ondragend=()=>{window.__cbpDrag=0}})}
+ const html='<div class="text-slate-400">Drag onto a player or the field</div>'+rt.map(k=>chip('r:'+k,C.R[k][0],'bg-cyan-900')).join('')+Object.keys(con).map(k=>chip('c:'+k,'◆ '+k,'bg-indigo-800')).join('')+Object.keys(C.S).map(k=>chip('b:'+k,'▣ '+k,'bg-amber-800')).join('');
+ if(d.dataset.h===html)return;d.dataset.h=html;d.innerHTML=html;d.querySelectorAll('[data-d]').forEach(el=>{el.ondragstart=e=>{window.__cbpDrag=1;e.dataTransfer.setData('text/plain',el.dataset.d)};el.ondragend=()=>{window.__cbpDrag=0}})}
 function drop(a,e){e.preventDefault();const t=e.dataTransfer.getData('text/plain');if(!t||!a.currentPlay)return;const rc=a.canvas.getBoundingClientRect(),x=(e.clientX-rc.left)*a.canvas.width/rc.width,y=(e.clientY-rc.top)*a.canvas.height/rc.height,w=a.canvas.width,h=a.canvas.height;
  let hit=null,bd=30;(a.currentPlay.offense||[]).forEach(p=>{const d=Math.hypot(a.getAdjustedX(p.x,w)-x,p.y*h-y);if(d<bd){bd=d;hit=p}});
  const k=t.slice(2),cl=v=>Math.max(.02,Math.min(.98,v));
@@ -4559,7 +4559,13 @@ function drop(a,e){e.preventDefault();const t=e.dataTransfer.getData('text/plain
  else if(t[0]==='b'){a.saveHistoryState();const sc=C.S[k];if(hit)hit.assign=schemeFor(hit,sc);else a.applyBlockScheme(k);a.render()}
  else if(t[0]==='c'){const c=(LS('cbp_concepts')||{})[k];if(!c)return;if(hit&&!['OL','QB'].includes(hit.role)){a.saveHistoryState();const r=c[recv(a).indexOf(hit)],s=hit.x>.5?1:-1;if(r&&r.length>1)hit.route=r.map(q=>({x:cl(hit.x+s*q.o),y:cl(hit.y-q.u)}));a.render()}else a.applyConcept(k)}
  palette(a)}
-document.addEventListener('DOMContentLoaded',()=>{const a=window.app;palette(a);a.canvas.addEventListener('dragover',e=>e.preventDefault());a.canvas.addEventListener('drop',e=>drop(a,e));setInterval(()=>{if(!window.__cbpDrag)palette(a)},4000)});
+document.addEventListener('DOMContentLoaded',()=>{const a=window.app;palette(a);document.addEventListener('dragover',e=>{if(e.target.id==='fieldCanvas')e.preventDefault()});document.addEventListener('drop',e=>{if(e.target.id==='fieldCanvas')drop(a,e)});setInterval(()=>{if(!window.__cbpDrag)palette(a)},4000)});
+})();
+</script>
+<script>
+(function(){const P=PlaybookApp.prototype;
+STUNT_CONFIGS.TEXAS={name:'TEXAS (DT slant weak + WLB through B)',protectionRule:'DT slants to the weak side while the WLB loops through the B-gap behind him. Guard passes the DT, Tackle and RB pick up the looper.',tracks:{DT1:[{x:.45,y:.52},{x:.40,y:.56}],WLB:[{x:.32,y:.44},{x:.38,y:.50},{x:.42,y:.58}]}};
+const oF=P.flipPlay;P.flipPlay=function(){oF.call(this);const w=this.canvas&&this.canvas.width;if(w)(this.drawnLines||[]).forEach(l=>l.points.forEach(p=>{p.x=w-p.x}));this.render()};
 })();
 </script>
 </body>
