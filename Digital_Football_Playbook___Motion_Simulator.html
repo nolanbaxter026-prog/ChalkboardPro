@@ -5128,6 +5128,27 @@ document.addEventListener('DOMContentLoaded',()=>{
   setInterval(build, 800);
 })();
 </script>
+<script>
+(function () {
+  const css = document.createElement('style');
+  css.textContent = '#frameTop,#framePhoneTabs,#phoneTabs,#editModeBar,#lookRail,#lookDrawer{display:none!important}#appScreen.look,#appScreen.frame-laptop,#appScreen.frame-phone{display:flex!important;flex-direction:column!important;height:100vh!important;overflow:hidden!important;grid-template-columns:none!important}#appScreen header{display:flex!important}#appScreen main{flex:1!important;min-height:0!important;display:flex!important;flex-direction:column!important}#appScreen main>.flex-1{flex:1!important;min-height:480px!important;display:flex!important;align-items:center!important;justify-content:center!important}#appScreen .canvas-container{width:min(100%,900px)!important;height:540px!important;aspect-ratio:4/3!important;position:relative!important;max-height:none!important}#appScreen canvas{width:100%!important;height:100%!important;display:block!important}';
+  document.head.appendChild(css);
+  function clean() {
+    ['frameTop', 'framePhoneTabs', 'phoneTabs', 'editModeBar', 'lookRail', 'lookDrawer'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
+    const app = document.getElementById('appScreen');
+    if (!app) return;
+    app.classList.remove('frame-laptop', 'frame-phone');
+    const titles = app.querySelectorAll('#lookTitle');
+    titles.forEach((el, i) => { if (i > 0) el.parentElement.remove(); });
+    if (window.app && window.app.resizeCanvas) window.app.resizeCanvas();
+  }
+  document.addEventListener('DOMContentLoaded', clean);
+  setInterval(clean, 1000);
+})();
+</script>
 
 </body>
 </html>
