@@ -2681,7 +2681,7 @@ applyExpandedRoute(id) {
                     btn.className = 'w-full text-left bg-slate-900 hover:bg-slate-880 border border-slate-700 px-2.5 py-1.5 rounded text-xs text-slate-200 flex items-center justify-between cursor-pointer';
                     btn.innerHTML = `
                         <span class="truncate font-semibold"><i class="fa-solid fa-folder-plus text-emerald-400 mr-1.5"></i>${fm.name}</span>
-                        <span class="text-[9px] uppercase px-1.5 py-0.5 rounded ${fm.type === 'offense' ? 'bg-blue-950 text-blue-300' : 'bg-rose-950 text-rose-300'}">${fm.type}</span>
+                        <span class="text-[9px] uppercase px-1.5 py-0.5 rounded fm.type==='offense'?'bg-blue-950text-blue-300':'bg-rose-950text-rose-300'">{fm.type}</span>
                     `;
                     btn.addEventListener('click', () => {
                         this.saveHistoryState();
@@ -3315,7 +3315,7 @@ loadNextPlayInFolder() {
                     const stunt = STUNT_CONFIGS[this.selectedStunt];
                     if (stunt && this.selectedStunt !== 'None') {
                         this.stuntBadge.textContent = stunt.name;
-                        this.stuntProtectionInfo.innerHTML = `<p class="font-bold text-purple-300">${stunt.name}</p><p class="text-slate-300 text-[11px]">${stunt.protectionRule}</p>`;
+                        this.stuntProtectionInfo.innerHTML = `<p class="font-bold text-purple-300">stunt.name</p><pclass="text-slate-300text-[11px]">{stunt.protectionRule}</p>`;
                     } else {
                         this.stuntBadge.textContent = 'None';
                         this.stuntProtectionInfo.innerHTML = `<span class="text-slate-400 italic">No defensive stunts active.</span>`;
@@ -3504,7 +3504,7 @@ loadNextPlayInFolder() {
                     this.populatePlaySelect();
                     this.playSelect.value = newPlayObj.id;
                     this.loadPlay(newPlayObj.id);
-                    alert(`Created new play copy "${newPlayObj.name}" in folder "${newPlayObj.category}"!`);
+                    alert(`Created new play copy "newPlayObj.name"infolder"{newPlayObj.category}"!`);
                 });
                 document.getElementById('btnDeletePlay').addEventListener('click', () => {
                     if (this.plays.length > 1 && this.currentPlay) {
@@ -4377,14 +4377,14 @@ const LEVEL={nfl:'NFL: heavy two-high shells (Cover 2/4/6) and light boxes. Run 
 const lsDict=()=>LS('cbp_dict')||{};
 function rowsFor(tab){
  const d=lsDict();
- if(tab==='routes')return Object.keys(R).map(k=>{const o=d['r_'+k]||[];return `<div class="grid grid-cols-12 gap-1 mb-1 text-[11px]"><input data-k="r_${k}" data-i="0" value="${o[0]||R[k][0]}" class="col-span-3 bg-slate-800 rounded px-1"><input data-k="r_${k}" data-i="2" type="number" value="${o[2]||R[k][1]}" class="col-span-1 bg-slate-800 rounded px-1" title="depth yds"><input data-k="r_${k}" data-i="1" value="${o[1]||R[k][3]}" class="col-span-4 bg-slate-800 rounded px-1"><input data-k="r_${k}" data-i="3" value="${o[3]||R[k][4]}" class="col-span-4 bg-slate-800 rounded px-1" title="best used for / against"></div>`}).join('');
- return Object.keys(D[tab]).map(k=>{const o=d[tab+'_'+k]||D[tab][k];return `<div class="grid grid-cols-12 gap-1 mb-1 text-[11px]"><input data-k="${tab}_${k}" data-i="0" value="${o[0]}" class="col-span-3 bg-slate-800 rounded px-1"><input data-k="${tab}_${k}" data-i="1" value="${o[1]}" class="col-span-9 bg-slate-800 rounded px-1"></div>`}).join('');
+ if(tab==='routes')return Object.keys(R).map(k=>{const o=d['r_'+k]||[];return `<div class="grid grid-cols-12 gap-1 mb-1 text-[11px]"><input data-k="r_k"data-i="0"value="{o[0]||R[k][0]}" class="col-span-3 bg-slate-800 rounded px-1"><input data-k="r_k"data-i="2"type="number"value="{o[2]||R[k][1]}" class="col-span-1 bg-slate-800 rounded px-1" title="depth yds"><input data-k="r_k"data-i="1"value="{o[1]||R[k][3]}" class="col-span-4 bg-slate-800 rounded px-1"><input data-k="r_k"data-i="3"value="{o[3]||R[k][4]}" class="col-span-4 bg-slate-800 rounded px-1" title="best used for / against"></div>`}).join('');
+ return Object.keys(D[tab]).map(k=>{const o=d[tab+'_'+k]||D[tab][k];return `<div class="grid grid-cols-12 gap-1 mb-1 text-[11px]"><input data-k="${tab}_${k}" data-i="0" value="o[0]"class="col-span-3bg-slate-800roundedpx-1"><inputdata-k="{tab}_k"data-i="1"value="{o[1]}" class="col-span-9 bg-slate-800 rounded px-1"></div>`}).join('');
 }
 function heat(a){
  const cat={};a.plays.forEach(p=>cat[p.category||'None']=(cat[p.category||'None']||0)+1);
  const sit=Object.keys(a.matrixData).map(k=>`${k}: ${(a.matrixData[k]||[]).filter(Boolean).length} calls`).join(' | ');
  const max=Math.max(1,...Object.values(cat));
- return `<div class="text-[11px] mb-2">${sit}</div>`+Object.entries(cat).map(([k,v])=>`<div class="flex items-center gap-2 text-[11px]"><span class="w-24">${k}</span><div class="bg-amber-500 h-3" style="width:${v/max*60}%"></div> ${v}</div>`).join('')+'<canvas id="cbpHeat" width="213" height="400" class="mt-2 border border-slate-700 rounded" style="position:static;width:213px;height:400px"></canvas><div class="text-[10px] text-slate-400">Route endpoints across all saved plays (red = most frequent).</div>';
+ return `<div class="text-[11px] mb-2">sit</div>`+Object.entries(cat).map(([k,v])=>`<divclass="flexitems-centergap-2text-[11px]"><spanclass="w-24">{k}</span><div class="bg-amber-500 h-3" style="width:${v/max*60}%"></div> ${v}</div>`).join('')+'<canvas id="cbpHeat" width="213" height="400" class="mt-2 border border-slate-700 rounded" style="position:static;width:213px;height:400px"></canvas><div class="text-[10px] text-slate-400">Route endpoints across all saved plays (red = most frequent).</div>';
 }
 function drawHeat(a){const c=$('cbpHeat');if(!c)return;const x=c.getContext('2d');x.fillStyle='#14532d';x.fillRect(0,0,213,400);
  a.plays.forEach(p=>(p.offense||[]).forEach(o=>{const r=o.route;if(!r||r.length<2)return;const e=r[r.length-1],g=x.createRadialGradient(e.x*213,e.y*400,0,e.x*213,e.y*400,22);g.addColorStop(0,'rgba(239,68,68,.35)');g.addColorStop(1,'rgba(239,68,68,0)');x.fillStyle=g;x.fillRect(0,0,213,400)}))}
@@ -4392,18 +4392,18 @@ function open(a,tab){
  let m=$('cbpModal');if(!m){m=document.createElement('div');m.id='cbpModal';m.className='fixed inset-0 z-[70] bg-black/70 flex items-center justify-center p-3';document.body.appendChild(m)}
  const s=LS('cbp_set')||{},tabs=[['settings','Settings'],['routes','Routes'],['defense','Defense ID'],['personnel','Personnel'],['zones','Zones'],['tech','Techniques'],['pos','Positions'],['heat','Heatmap']];
  let body;
- if(tab==='settings')body=`<div class="space-y-2 text-xs"><label class="block">Level <select id="sLv" class="bg-slate-800 rounded p-1">${['highschool','cfb','nfl'].map(l=>`<option value="${l}" ${s.lv===l?'selected':''}>${l}</option>`).join('')}</select></label><div id="sMsg" class="text-amber-200 italic">${LEVEL[s.lv||'highschool']}</div>
+ if(tab==='settings')body=`<div class="space-y-2 text-xs"><label class="block">Level <select id="sLv" class="bg-slate-800 rounded p-1">${['highschool','cfb','nfl'].map(l=>`<option value="${l}" s.lv===l?'selected':''>{l}</option>`).join('')}</select></label><div id="sMsg" class="text-amber-200 italic">${LEVEL[s.lv||'highschool']}</div>
 <label class="block">Mode <select id="sMode" class="bg-slate-800 rounded p-1"><option value="dark">Dark</option><option value="light" ${s.mode==='light'?'selected':''}>Light</option></select></label>
-<label class="block">Field color <input id="sField" type="color" value="${s.field||'#ffffff'}"></label><label class="block">Route color <input id="sPen" type="color" value="${s.pen||'#f59e0b'}"></label><label class="block">Offense color <input id="sOff" type="color" value="${s.off||'#3b82f6'}"></label><label class="block">Defense color <input id="sDef" type="color" value="${s.def||'#ef4444'}"></label>
+<label class="block">Field color <input id="sField" type="color" value="s.field||'#ffffff'"></label><labelclass="block">Routecolor<inputid="sPen"type="color"value="{s.pen||'#f59e0b'}"></label><label class="block">Offense color <input id="sOff" type="color" value="s.off||'#3b82f6'"></label><labelclass="block">Defensecolor<inputid="sDef"type="color"value="{s.def||'#ef4444'}"></label>
 <label class="block">Play speed <input id="sSpd" type="range" min="0.25" max="3" step="0.25" value="${s.speed||1}"></label><button id="sSave" class="bg-emerald-600 px-3 py-1 rounded font-bold">Save &amp; apply</button> <button id="sExp" class="bg-slate-700 px-3 py-1 rounded">Export dictionary</button> <label class="bg-slate-700 px-3 py-1 rounded cursor-pointer">Import<input id="sImp" type="file" class="hidden"></label></div>`;
  else if(tab==='heat')body=heat(a);
  else body=(tab==='routes'?'<div class="text-[10px] text-slate-400 mb-1">name | depth (yds) | definition | best used for / against. All editable, saved automatically.</div>':'')+rowsFor(tab);
- m.innerHTML=`<div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col"><div class="flex items-center gap-1 p-2 border-b border-slate-700 flex-wrap">${tabs.map(t=>`<button data-t="${t[0]}" class="px-2 py-1 rounded text-xs ${t[0]===tab?'bg-emerald-600':'bg-slate-800'}">${t[1]}</button>`).join('')}<button id="cbpX" class="ml-auto px-2">✕</button></div><div class="p-3 overflow-y-auto">${body}</div></div>`;
+ m.innerHTML=`<div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col"><div class="flex items-center gap-1 p-2 border-b border-slate-700 flex-wrap">${tabs.map(t=>`<button data-t="${t[0]}" class="px-2 py-1 rounded text-xs t[0]===tab?'bg-emerald-600':'bg-slate-800'">{t[1]}</button>`).join('')}<button id="cbpX" class="ml-auto px-2">✕</button></div><div class="p-3 overflow-y-auto">${body}</div></div>`;
  m.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>open(a,b.dataset.t));$('cbpX').onclick=()=>m.remove();
  m.querySelectorAll('input[data-k]').forEach(i=>i.onchange=()=>{const d=lsDict(),k=i.dataset.k,ix=+i.dataset.i;let o=d[k];if(!o){const t=k.split('_')[0],kk=k.slice(t.length+1);o=k.startsWith('r_')?[R[k.slice(2)][0],R[k.slice(2)][3],R[k.slice(2)][1],R[k.slice(2)][4]]:D[t][kk].slice()}o[ix]=i.value;d[k]=o;LS('cbp_dict',d)});
  if(tab==='heat')drawHeat(a);
- if(tab==='settings'){$('sLv').onchange=e=>$('sMsg').textContent=LEVEL[e.target.value];
-  $('sSave').onclick=()=>{const n={lv:$('sLv').value,mode:$('sMode').value,field:$('sField').value,pen:$('sPen').value,off:$('sOff').value,def:$('sDef').value,speed:$('sSpd').value};LS('cbp_set',n);const lv={highschool:'highschool',cfb:'college',nfl:'nfl'}[n.lv];a.selectedLevel=lv;if(a.levelSelect)a.levelSelect.value=lv;applySet(a,n);a.render()};
+ if(tab==='settings'){('sLv').onchange=e=>('sMsg').textContent=LEVEL[e.target.value];
+  $('sSave').onclick=()=>{const n={lv:$('sLv').value,mode:('sMode').value,field:('sField').value,pen:('sPen').value,off:('sOff').value,def:('sDef').value,speed:('sSpd').value};LS('cbp_set',n);const lv={highschool:'highschool',cfb:'college',nfl:'nfl'}[n.lv];a.selectedLevel=lv;if(a.levelSelect)a.levelSelect.value=lv;applySet(a,n);a.render()};
   $('sExp').onclick=()=>{const l=document.createElement('a');l.href='data:application/json,'+encodeURIComponent(JSON.stringify({dict:lsDict(),set:LS('cbp_set')}));l.download='chalkboard_dictionary.json';l.click()};
   $('sImp').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{const j=JSON.parse(t);LS('cbp_dict',j.dict||{});if(j.set)LS('cbp_set',j.set);open(a,'settings')})}}
 }
@@ -4424,7 +4424,7 @@ P.sayCall=function(txt){
  a.currentPlay&&(a.currentPlay.defCall=txt);a.render();$('cbpOut').textContent=out.join(' | ')||'No front/coverage found. Try "Under Cover 3 Fire".';sv(a);
 };
 const origRender=P.render;
-P.render=function(){origRender.call(this);const _cp=this.currentPlay;if(_cp&&this.canvas){_cp.drawnLines=this.drawnLines;_cp.defense=this.currentDefense;_cp.front=this.selectedFront;_cp.coverage=this.selectedCoverage}const h=this.currentPlay&&this.currentPlay.hot;if(!h||!this.ctx||!$('cbpHotOn')||!$('cbpHotOn').checked)return;
+P.render=function(){origRender.call(this);const _cp=this.currentPlay;if(_cp&&this.canvas){_cp.drawnLines=this.drawnLines;_cp.defense=this.currentDefense;_cp.front=this.selectedFront;_cp.coverage=this.selectedCoverage}const h=this.currentPlay&&this.currentPlay.hot;if(!h||!this.ctx||!('cbpHotOn')||!('cbpHotOn').checked)return;
  const x=this.ctx,w=this.canvas.width,H=this.canvas.height;x.save();x.setLineDash([6,5]);x.strokeStyle='#f43f5e';x.lineWidth=2;
  this.currentPlay.offense.forEach(p=>{const id=h[p.id];if(!id||!R[id])return;const s=p.x>.5?1:-1,d=+((JSON.parse(localStorage.getItem('cbp_dict')||'{}')['r_'+id]||[])[2])||R[id][1];let px=this.getAdjustedX(p.x,w),py=p.y*H;x.beginPath();x.moveTo(px,py);R[id][2](d).forEach(([ox,up])=>x.lineTo(this.getAdjustedX(p.x+s*ox/53.3,w),(p.y-up/100)*H));x.stroke()});x.restore()};
 // ===== Autosave (plays, lines, defense) so nothing is lost
@@ -4442,7 +4442,7 @@ document.addEventListener('DOMContentLoaded',()=>{const a=window.app;
  const bar=document.createElement('div');bar.className='fixed bottom-2 left-2 z-40 bg-slate-900/95 border border-slate-700 rounded-lg p-2 text-xs flex flex-wrap items-center gap-1 max-w-[95vw]';
  bar.innerHTML='<input id="cbpSay" placeholder="Call: Under Cover 3 Fire" class="bg-slate-800 rounded px-2 py-1 w-52"><button id="cbpGo" class="bg-emerald-600 px-2 py-1 rounded">Set</button><button id="cbpMic" class="bg-violet-700 px-2 py-1 rounded" title="Say a call"><i class="fa-solid fa-microphone"></i></button><label><input id="cbpHotOn" type="checkbox" checked> hot routes</label><span id="cbpOut" class="text-amber-200"></span>';
  document.body.appendChild(bar);
- $('cbpGo').onclick=()=>a.sayCall($('cbpSay').value);$('cbpSay').onkeydown=e=>{if(e.key==='Enter')a.sayCall(e.target.value)};
+ ('cbpGo').onclick=()=>a.sayCall(('cbpSay').value);$('cbpSay').onkeydown=e=>{if(e.key==='Enter')a.sayCall(e.target.value)};
  $('cbpMic').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Voice not supported in this browser; type the call.');return}const r=new SR();r.onresult=e=>{const t=e.results[0][0].transcript;$('cbpSay').value=t;a.sayCall(t)};r.start()};
  const ti=a.editPlayTitleInput;if(ti)ti.addEventListener('input',()=>{const v=ti.value,cp=a.currentPlay;if(!cp)return;cp.name=v;a.playTitle.textContent=v;const o=[...a.playSelect.options].find(o=>o.value===cp.id);if(o)o.textContent=v;sv(a)});
  applySet(a,LS('cbp_set'));
@@ -4463,7 +4463,7 @@ function layout(){
  if(tab>=vis.length)tab=0;
  gs.forEach(o=>o.g.classList.toggle('cbp-off',vis[tab]!==o));
  const strip=$('cbpTabs');if(!strip)return;
- strip.innerHTML=vis.map((o,i)=>`<button data-i="${i}" class="px-1.5 py-1 rounded text-[10px] ${i===tab?'bg-emerald-600':'bg-slate-800'}">${o.label.replace(/^(Add|Default|Selected|Tactical)\s*/,'').slice(0,16)}</button>`).join('');
+ strip.innerHTML=vis.map((o,i)=>`<button data-i="${i}" class="px-1.5 py-1 rounded text-[10px] i===tab?'bg-emerald-600':'bg-slate-800'">{o.label.replace(/^(Add|Default|Selected|Tactical)\s*/,'').slice(0,16)}</button>`).join('');
  strip.querySelectorAll('button').forEach(b=>b.onclick=()=>{tab=+b.dataset.i;layout()});
  document.querySelectorAll('#cbpModes button').forEach(b=>b.className='px-1.5 py-1 rounded text-[10px] '+(b.dataset.m===mode?'bg-amber-600':'bg-slate-800'));
 }
@@ -4475,7 +4475,7 @@ const SCHEMES={'Inside Zone':{OL:'Zone step playside, combo then climb',RB:'Aim 
 P.applyBlockScheme=function(name){const sc=SCHEMES[name],cp=this.currentPlay;if(!sc||!cp)return;this.saveHistoryState();
  cp.offense.forEach(p=>{const k=p.role==='OL'?((p.label==='LG'||p.label==='RG')&&sc.G?'G':'OL'):p.role==='QB'?null:(sc[p.role]?p.role:p.role==='Slot'?'WR':p.role==='Y'?'TE':['X','Z','1','2','3','4'].includes(p.role)?'WR':null);const t=k&&sc[k];p.assign=t||'';});
  cp.blockScheme=name;this.render()};
-const oR=P.render;P.render=function(){oR.call(this);const cp=this.currentPlay;if(!cp||!this.ctx||!$('cbpAsg')||!$('cbpAsg').checked)return;const x=this.ctx,w=this.canvas.width,h=this.canvas.height;
+const oR=P.render;P.render=function(){oR.call(this);const cp=this.currentPlay;if(!cp||!this.ctx||!('cbpAsg')||!('cbpAsg').checked)return;const x=this.ctx,w=this.canvas.width,h=this.canvas.height;
  x.save();x.font='9px sans-serif';x.fillStyle='#fde68a';x.textAlign='center';(cp.offense||[]).forEach(p=>{if(!p.assign)return;const t=p.assign.length>22?p.assign.slice(0,21)+'…':p.assign;x.fillText(t,this.getAdjustedX(p.x,w),p.y*h+26)});x.restore()};
 // ===== Concept library: save receiver routes as a named concept, apply to any formation (mirrors by side)
 window.CBP.S=SCHEMES;const recv=a=>(a.currentPlay.offense||[]).filter(p=>!['OL','QB'].includes(p.role)).sort((u,v)=>u.x-v.x);
@@ -4486,16 +4486,16 @@ P.applyConcept=function(n){const c=(LS('cbp_concepts')||{})[n];if(!c)return;this
 const DEFPICK=[['Over','Over'],['Under','Under'],['Okie','Okie'],['Tite','Tite'],['Bear','Bear'],['Under BUG','Under BUG'],['Under MUG','Under MUG'],['Cover 0','Cover 0'],['Cover 1 Man','Cover 1'],['Cover 2','Cover 2'],['Cover 3 Strong','Cover 3'],['Cover 3 Weak','Cover 3'],['Cover 4 Quarters','Cover 4'],['Cover 24','Cover 24'],['Cover 42','Cover 42'],['Cover 3 Fire','Cover 3 Fire'],['Cover 3 Hot','Cover 3 Zero']];
 const DK=['O','U','OK','TI','BE','BU','MU','C0','C1','C2','C3S','C3W','C4','C24','C42','C3B','C3Z'];
 function fillPick(){const s=$('cbpPick');if(!s)return;const d=LS('cbp_dict')||{},base={O:1,U:1};const h='<option value="">Defense ID call…</option>'+DEFPICK.map((p,i)=>{const e=d['defense_'+DK[i]];return`<option value="${p[1]}">${(e&&e[0])||p[0]}</option>`}).join('');if(s.dataset.h!==h){s.dataset.h=h;s.innerHTML=h}}
-function fillConcepts(){const s=$('cbpCon');if(!s)return;s.innerHTML='<option value="">Concepts…</option>'+Object.keys(LS('cbp_concepts')||{}).map(k=>`<option>${k}</option>`).join('')}
+function fillConcepts(){const s=('cbpCon');if(!s)return;s.innerHTML='<optionvalue="">Concepts…</option>'+Object.keys(LS('cbpconcepts')||).map(k=>`<option>{k}</option>`).join('')}
 document.addEventListener('DOMContentLoaded',()=>{const a=window.app;
  const st=document.createElement('style');st.textContent='.cbp-off{display:none!important}';document.head.appendChild(st);
  const asd=document.querySelector('aside');
- if(asd){const bar=document.createElement('div');bar.className='space-y-1 shrink-0';bar.innerHTML='<div id="cbpModes" class="flex flex-wrap gap-1">'+Object.entries(MODES).map(([k,v])=>`<button data-m="${k}">${v[0]}</button>`).join('')+'</div><div id="cbpTabs" class="flex flex-wrap gap-1"></div>';asd.prepend(bar);
+ if(asd){const bar=document.createElement('div');bar.className='space-y-1 shrink-0';bar.innerHTML='<div id="cbpModes" class="flex flex-wrap gap-1">'+Object.entries(MODES).map(([k,v])=>`<button data-m="k">{v[0]}</button>`).join('')+'</div><div id="cbpTabs" class="flex flex-wrap gap-1"></div>';asd.prepend(bar);
   bar.querySelectorAll('#cbpModes button').forEach(b=>b.onclick=()=>setMode(a,b.dataset.m))}
- const bb=$('cbpSay')&&$('cbpSay').parentNode;
+ const bb=('cbpSay')&&('cbpSay').parentNode;
  if(bb){bb.insertAdjacentHTML('beforeend','<select id="cbpPick" class="bg-slate-800 rounded px-1 py-1"></select><select id="cbpCon" class="bg-slate-800 rounded px-1 py-1"></select><button id="cbpSaveCon" class="bg-indigo-700 px-2 py-1 rounded" title="Save the receivers\' routes as a named concept">Save concept</button><select id="cbpBlk" class="bg-slate-800 rounded px-1 py-1"><option value="">Blocking scheme…</option>'+Object.keys(SCHEMES).map(k=>`<option>${k}</option>`).join('')+'</select><label><input id="cbpAsg" type="checkbox" checked> assignments</label>');
   $('cbpPick').onchange=e=>{if(e.target.value){$('cbpSay').value=e.target.value;a.sayCall(e.target.value)}};
-  $('cbpCon').onchange=e=>{if(e.target.value)a.applyConcept(e.target.value)};$('cbpSaveCon').onclick=()=>a.saveConcept();$('cbpBlk').onchange=e=>{if(e.target.value)a.applyBlockScheme(e.target.value)};
+  ('cbpCon').onchange=e=>if(e.target.value)a.applyConcept(e.target.value);('cbpSaveCon').onclick=()=>a.saveConcept();$('cbpBlk').onchange=e=>{if(e.target.value)a.applyBlockScheme(e.target.value)};
   $('cbpAsg').onchange=()=>a.render();fillPick();fillConcepts()}
  const gear=document.querySelector('button[title="Settings & Dictionary"]');
  if(gear){const c=document.createElement('button');c.type='button';c.title='Teaching tape / All-22 clip';c.className='bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1.5 rounded-lg text-xs';c.innerHTML='<i class="fa-solid fa-paperclip"></i>';
@@ -4522,7 +4522,7 @@ P.startAnimationLoop=function(){if(this.animating)return;this.animating=true;let
  const loop=now=>{const dt=(now-last)/1000;last=now;const a=this;
   if(a.isPlaying){const cp=a.currentPlay,w=a.canvas.width,h=a.canvas.height;
    if(a.progress===0&&cp&&!a.pre){const ml=(a.drawnLines||[]).filter(l=>l.type==='motion'&&l.points.length>1);
-    a.pre={t:0,mv:ml.map(l=>{const st=l.points[0];let best=null,bd=1e9;(cp.offense||[]).forEach(p=>{const d=Math.hypot(a.getAdjustedX(p.x,w)-st.x,p.y*h-st.y);if(d<bd){bd=d;best=p}});return bd<60?{p:best,l}:null}).filter(Boolean),hot:$('cbpHotOn')&&$('cbpHotOn').checked&&cp.hot,hotDone:false}}
+    a.pre={t:0,mv:ml.map(l=>{const st=l.points[0];let best=null,bd=1e9;(cp.offense||[]).forEach(p=>{const d=Math.hypot(a.getAdjustedX(p.x,w)-st.x,p.y*h-st.y);if(d<bd){bd=d;best=p}});return bd<60?{p:best,l}:null}).filter(Boolean),hot:('cbpHotOn')&&('cbpHotOn').checked&&cp.hot,hotDone:false}}
    const pr=a.pre;
    if(pr&&!pr.done){pr.t+=dt;const MT=pr.mv.length?1.2:0;if(pr.t>=MT&&!pr.mvDone){pr.mvDone=true;const o2=a.selectedHashPosition==='left'?-.15:a.selectedHashPosition==='right'?.15:0;pr.mv.forEach(m=>{const p=m.p,e=m.l.points[m.l.points.length-1];shadow(p);p.x=e.x/w-o2;p.y=e.y/h;if(p._o.route&&p._o.route.length>1)p.route=[{x:p.x,y:p.y}].concat(p._o.route.slice(1))})}
     if(pr.t<MT){pr.mv.forEach(m=>{shadow(m.p);const pts=m.l.points,f=pr.t/MT,i=Math.min(pts.length-2,Math.floor(f*(pts.length-1))),q=f*(pts.length-1)-i,A=pts[i],B=pts[i+1],X=A.x+(B.x-A.x)*q,Y=A.y+(B.y-A.y)*q;
@@ -4535,21 +4535,21 @@ P.startAnimationLoop=function(){if(this.animating)return;this.animating=true;let
 // ===== Wristbands by user-defined call groups
 function wb(a,g){const m=$('cbpWB');m&&m.remove();const gs=LS('cbp_groups')||{},cur=a.matrixData[a.currentMatrixTab]||[];
  const d=document.createElement('div');d.id='cbpWB';d.className='fixed inset-0 z-[70] bg-black/70 flex items-center justify-center p-3';
- d.innerHTML=`<div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md p-3 space-y-2 text-xs"><b>Wristband call groups</b><select id="wbG" class="bg-slate-800 rounded p-1 w-full"><option value="">New group…</option>${Object.keys(gs).map(k=>`<option ${k===g?'selected':''}>${k}</option>`).join('')}</select>
-<input id="wbN" placeholder="Group name (e.g. 3rd & Long)" class="bg-slate-800 rounded p-1 w-full" value="${g||''}"><textarea id="wbT" rows="8" placeholder="One call per line" class="bg-slate-800 rounded p-1 w-full">${(g&&gs[g]||cur.filter(Boolean)).join('\n')}</textarea>
+ d.innerHTML=`<div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md p-3 space-y-2 text-xs"><b>Wristband call groups</b><select id="wbG" class="bg-slate-800 rounded p-1 w-full"><option value="">New group…</option>${Object.keys(gs).map(k=>`<option k===g?'selected':''>{k}</option>`).join('')}</select>
+<input id="wbN" placeholder="Group name (e.g. 3rd & Long)" class="bg-slate-800 rounded p-1 w-full" value="g||''"><textareaid="wbT"rows="8"placeholder="Onecallperline"class="bg-slate-800roundedp-1w-full">{(g&&gs[g]||cur.filter(Boolean)).join('\n')}</textarea>
 <div class="flex gap-2 items-center"><select id="wbS" class="bg-slate-800 rounded p-1"><option>2x2</option><option>3x3</option><option>2x3</option></select><label><input id="wbC" type="checkbox" checked> color</label><button id="wbSv" class="bg-emerald-600 px-2 py-1 rounded">Save</button><button id="wbP" class="bg-amber-600 px-2 py-1 rounded">Print</button><button id="wbX" class="ml-auto">✕</button></div></div>`;document.body.appendChild(d);
  const lines=()=>$('wbT').value.split('\n').map(x=>x.trim()).filter(Boolean);
- $('wbG').onchange=e=>wb(a,e.target.value);$('wbX').onclick=()=>d.remove();
+ ('wbG').onchange=e=>wb(a,e.target.value);('wbX').onclick=()=>d.remove();
  $('wbSv').onclick=()=>{const n=$('wbN').value.trim();if(!n)return;gs[n]=lines();LS('cbp_groups',gs);wb(a,n)};
  $('wbP').onclick=()=>{const [c,r]=$('wbS').value.split('x').map(Number),col=$('wbC').checked,L=lines(),w=window.open('','_blank');
-  w.document.write(`<html><head><title>${$('wbN').value||'Wristband'}</title><style>body{font-family:sans-serif;margin:8px}table{border-collapse:collapse}td{border:2px solid #000;width:${Math.floor(560/c)}px;height:60px;text-align:center;font-weight:700;font-size:13px;${col?'':'color:#000;background:#fff'}}.n{font-size:10px;display:block;${col?'color:#b45309':''}}</style></head><body><h3>${$('wbN').value||''}</h3><table>`+Array.from({length:r},(_,i)=>'<tr>'+Array.from({length:c},(_,j)=>{const k=i*c+j;return`<td${col&&k%2?' style="background:#e0f2fe"':''}><span class="n">${k+1}</span>${L[k]||''}</td>`}).join('')+'</tr>').join('')+'</table></body></html>');w.document.close();w.print()}}
+  w.document.write(`<html><head><title>${$('wbN').value||'Wristband'}</title><style>body{font-family:sans-serif;margin:8px}table{border-collapse:collapse}td{border:2px solid #000;width:Math.floor(560/c)px;height:60px;text-align:center;font-weight:700;font-size:13px;{col?'':'color:#000;background:#fff'}}.n{font-size:10px;display:block;${col?'color:#b45309':''}}</style></head><body><h3>${$('wbN').value||''}</h3><table>`+Array.from({length:r},(_,i)=>'<tr>'+Array.from({length:c},(_,j)=>{const k=i*c+j;return`<td${col&&k%2?' style="background:#e0f2fe"':''}><span class="n">k+1</span>{L[k]||''}</td>`}).join('')+'</tr>').join('')+'</table></body></html>');w.document.close();w.print()}}
 P.exportWristband=function(){wb(this)};
 // ===== Drag and drop: chips (routes, concepts, blocking schemes) dropped onto the field or onto a single player
 const recv=a=>(a.currentPlay.offense||[]).filter(p=>!['OL','QB'].includes(p.role)).sort((u,v)=>u.x-v.x);
 function schemeFor(p,sc){const k=p.role==='OL'?((p.label==='LG'||p.label==='RG')&&sc.G?'G':'OL'):p.role==='QB'?null:(sc[p.role]?p.role:p.role==='Slot'?'WR':p.role==='Y'?'TE':['X','Z','1','2','3','4'].includes(p.role)?'WR':null);return k&&sc[k]||''}
 function palette(a){let d=$('cbpPal');if(!d){d=document.createElement('div');d.id='cbpPal';d.className='fixed right-2 top-24 z-40 w-36 max-h-[60vh] overflow-y-auto bg-slate-900/95 border border-slate-700 rounded-lg p-1 text-[10px] space-y-1';document.body.appendChild(d)}
  const use=LS('cbp_use')||{},con=LS('cbp_concepts')||{},rt=Object.keys(C.R).sort((x,y)=>(use[y]||0)-(use[x]||0)).slice(0,10);
- const chip=(t,l,c)=>`<div draggable="true" data-d="${t}" class="cursor-grab px-1 py-0.5 rounded ${c}">${l}</div>`;
+ const chip=(t,l,c)=>`<div draggable="true" data-d="${t}" class="cursor-grab px-1 py-0.5 rounded c">{l}</div>`;
  const html='<div class="text-slate-400">Drag onto a player or the field</div>'+rt.map(k=>chip('r:'+k,C.R[k][0],'bg-cyan-900')).join('')+Object.keys(con).map(k=>chip('c:'+k,'◆ '+k,'bg-indigo-800')).join('')+Object.keys(C.S).map(k=>chip('b:'+k,'▣ '+k,'bg-amber-800')).join('');
  if(d.dataset.h===html)return;d.dataset.h=html;d.innerHTML=html;d.querySelectorAll('[data-d]').forEach(el=>{el.ondragstart=e=>{window.__cbpDrag=1;e.dataTransfer.setData('text/plain',el.dataset.d)};el.ondragend=()=>{window.__cbpDrag=0}})}
 function drop(a,e){e.preventDefault();const t=e.dataTransfer.getData('text/plain');if(!t||!a.currentPlay)return;const rc=a.canvas.getBoundingClientRect(),x=(e.clientX-rc.left)*a.canvas.width/rc.width,y=(e.clientY-rc.top)*a.canvas.height/rc.height,w=a.canvas.width,h=a.canvas.height;
@@ -4568,5 +4568,328 @@ STUNT_CONFIGS.TEXAS={name:'TEXAS (DT slant weak + WLB through B)',protectionRule
 const oF=P.flipPlay;P.flipPlay=function(){oF.call(this);const w=this.canvas&&this.canvas.width;if(w)(this.drawnLines||[]).forEach(l=>l.points.forEach(p=>{p.x=w-p.x}));this.render()};
 })();
 </script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+document.addEventListener('DOMContentLoaded',()=>{
+ const st=document.createElement('style');
+ st.textContent='body.cbp-hide-tools #cbpPal,body.cbp-hide-tools .cbp-bar,body.cbp-noapp #cbpPal,body.cbp-noapp .cbp-bar{display:none!important}#cbpPal{opacity:.92}';
+ document.head.appendChild(st);
+ const say=$('cbpSay');if(say)say.parentNode.classList.add('cbp-bar');
+ let hide=localStorage.getItem('cbp_hide_tools')!=='0';
+ const apply=()=>document.body.classList.toggle('cbp-hide-tools',hide);apply();
+ const gear=document.querySelector('button[title="Settings & Dictionary"]');
+ if(gear){const b=document.createElement('button');b.type='button';b.title='Show / hide the quick tools (call bar and drag palette)';
+  b.className='bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold';b.innerHTML='<i class="fa-solid fa-toolbox"></i> Tools';
+  b.onclick=()=>{hide=!hide;localStorage.setItem('cbp_hide_tools',hide?'1':'0');apply()};gear.before(b)}
+ setInterval(()=>{const a=window.app;if(a&&a.appScreen)document.body.classList.toggle('cbp-noapp',a.appScreen.classList.contains('hidden'))},400);
+});
+})();
+</script>
+<script>
+(function () {
+  const P = PlaybookApp.prototype;
+  const $ = (id) => document.getElementById(id);
+  const LS = (k, v) => {
+    try {
+      if (v === undefined) return JSON.parse(localStorage.getItem(k));
+      localStorage.setItem(k, JSON.stringify(v));
+    } catch (e) { return null; }
+  };
+
+  function editorOpen() {
+    const app = $('appScreen');
+    const folders = $('folderScreen');
+    return app && !app.classList.contains('hidden') && (!folders || folders.classList.contains('hidden'));
+  }
+
+  function hideFieldTools() {
+    const on = editorOpen();
+    const pal = $('cbpPal');
+    if (pal) pal.style.display = on ? '' : 'none';
+    document.querySelectorAll('.cbp-bar').forEach((el) => { el.style.display = on ? '' : 'none'; });
+  }
+
+  function askFolder(app, current) {
+    const names = (app.folders || []).join('\n');
+    const pick = prompt('Keep in this folder, or type another folder name:\n\n' + names, current || 'Custom');
+    if (!pick || !pick.trim()) return current || 'Custom';
+    const name = pick.trim();
+    if (!app.folders.includes(name)) {
+      app.folders.push(name);
+      if (app.saveFoldersForProfile) app.saveFoldersForProfile();
+      if (app.updateCategoryDropdowns) app.updateCategoryDropdowns();
+    }
+    return name;
+  }
+
+  function snapshotPlay(app, folder, name) {
+    const copy = JSON.parse(JSON.stringify(app.currentPlay));
+    copy.id = 'play_' + Date.now();
+    copy.name = name;
+    copy.category = folder;
+    copy.drawnLines = JSON.parse(JSON.stringify(app.drawnLines || []));
+    copy.defense = JSON.parse(JSON.stringify(app.currentDefense || []));
+    copy.front = app.selectedFront;
+    copy.coverage = app.selectedCoverage;
+    copy.hash = app.selectedHashPosition;
+    copy.level = app.selectedLevel;
+    copy.stunt = app.selectedStunt;
+    return copy;
+  }
+
+  function loadSnapshotBits(app) {
+    const p = app.currentPlay;
+    if (!p) return;
+    if (p.drawnLines) app.drawnLines = JSON.parse(JSON.stringify(p.drawnLines));
+    if (p.defense && p.defense.length) app.currentDefense = JSON.parse(JSON.stringify(p.defense));
+    if (p.hash && app.hashPositionSelect) { app.selectedHashPosition = p.hash; app.hashPositionSelect.value = p.hash; }
+    if (p.level && app.levelSelect) { app.selectedLevel = p.level; app.levelSelect.value = p.level; }
+    if (p.front && app.frontSelect) { app.selectedFront = p.front; app.frontSelect.value = p.front; }
+    if (p.coverage && app.coverageSelect) { app.selectedCoverage = p.coverage; app.coverageSelect.value = p.coverage; }
+    app.render();
+  }
+
+  const oldLoad = P.loadPlay;
+  P.loadPlay = function (id) {
+    oldLoad.call(this, id);
+    loadSnapshotBits(this);
+    const recent = LS('cbp_recent') || [];
+    const next = [id].concat(recent.filter((x) => x !== id)).slice(0, 5);
+    LS('cbp_recent', next);
+    this.dirty = false;
+    markSave(false);
+  };
+
+  function markSave(dirty) {
+    const btn = $('btnSavePlay');
+    if (!btn) return;
+    btn.textContent = dirty ? 'Save Play •' : 'Save Play';
+  }
+
+  const oldHist = P.saveHistoryState;
+  P.saveHistoryState = function () {
+    oldHist.call(this);
+    this.dirty = true;
+    markSave(true);
+  };
+
+  const oldSavePlays = P.savePlays;
+  P.savePlays = function () {
+    oldSavePlays.call(this);
+    this.dirty = false;
+    markSave(false);
+  };
+
+  const oldReturn = P.returnToFolderView;
+  P.returnToFolderView = function () {
+    if (this.dirty && !confirm('You have unsaved changes. Leave without saving?')) return;
+    oldReturn.call(this);
+    hideFieldTools();
+  };
+
+  const oldGrid = P.renderFolderGrid;
+  P.renderFolderGrid = function () {
+    oldGrid.call(this);
+    const cards = document.querySelectorAll('#foldersGrid h3');
+    cards.forEach((h) => {
+      const name = h.textContent.trim();
+      const kids = this.childFolderNames ? this.childFolderNames(name) : [];
+      const count = this.plays.filter((p) => (p.category || 'Custom') === name).length;
+      const badge = h.parentElement && h.parentElement.parentElement && h.parentElement.parentElement.querySelector('span');
+      if (badge && kids.length) badge.textContent = kids.length + ' subfolder(s), ' + count + ' play(s)';
+    });
+    const recent = LS('cbp_recent') || [];
+    if (!recent.length || $('recentRow')) return;
+    const main = document.querySelector('#folderScreen main');
+    if (!main) return;
+    const row = document.createElement('div');
+    row.id = 'recentRow';
+    row.className = 'text-xs text-slate-300';
+    row.innerHTML = '<div class="font-bold text-slate-400 mb-1">Recent</div>' + recent.map((id) => {
+      const p = this.plays.find((x) => x.id === id);
+      return p ? '<button type="button" data-recent="' + id + '" class="mr-2 underline">' + p.name + '</button>' : '';
+    }).join('');
+    main.prepend(row);
+    row.querySelectorAll('[data-recent]').forEach((b) => b.onclick = () => this.openPlayFromFolder(b.dataset.recent));
+  };
+
+  const oldList = P.showFolderPlayList;
+  P.showFolderPlayList = function (folderName) {
+    oldList.call(this, folderName);
+    const list = $('folderPlayList');
+    if (!list) return;
+    const pins = LS('cbp_pins') || [];
+    list.querySelectorAll('button').forEach((btn) => {
+      const label = btn.textContent || '';
+      const play = this.plays.find((p) => label.indexOf(p.name) !== -1 && (p.category || 'Custom') === folderName);
+      if (!play || btn.querySelector('[data-pin]')) return;
+      const star = document.createElement('span');
+      star.dataset.pin = play.id;
+      star.textContent = pins.includes(play.id) ? ' ★' : ' ☆';
+      star.className = 'text-amber-300 ml-2';
+      star.onclick = (ev) => {
+        ev.stopPropagation();
+        const now = LS('cbp_pins') || [];
+        const i = now.indexOf(play.id);
+        if (i >= 0) now.splice(i, 1); else now.unshift(play.id);
+        LS('cbp_pins', now);
+        this.showFolderPlayList(folderName);
+      };
+      btn.appendChild(star);
+    });
+    if (!this.plays.some((p) => (p.category || 'Custom') === folderName) && !list.querySelector('[data-from-form]')) {
+      const b = document.createElement('button');
+      b.dataset.fromForm = '1';
+      b.className = 'bg-emerald-700 text-white px-3 py-2 rounded text-xs font-bold';
+      b.textContent = 'New play from saved formation';
+      b.onclick = () => {
+        const names = (this.customOffenseFormations || []).map((f) => f.name);
+        const pick = prompt('Formation name:\n' + names.join('\n'));
+        const fm = (this.customOffenseFormations || []).find((f) => f.name === pick);
+        if (!fm) return;
+        const play = snapshotPlay(this, folderName, pick + ' Play');
+        play.offense = JSON.parse(JSON.stringify(fm.players));
+        this.plays.push(play);
+        this.savePlays();
+        this.openPlayFromFolder(play.id);
+      };
+      list.appendChild(b);
+    }
+  };
+
+  function saveFormation(app) {
+    const name = prompt('Name this formation');
+    if (!name || !app.currentPlay) return;
+    app.customOffenseFormations = app.customOffenseFormations || [];
+    app.customOffenseFormations.push({
+      id: 'form_' + Date.now(),
+      name: name.trim(),
+      locked: true,
+      players: JSON.parse(JSON.stringify(app.currentPlay.offense || [])),
+      defense: JSON.parse(JSON.stringify(app.currentDefense || [])),
+      lines: JSON.parse(JSON.stringify(app.drawnLines || [])),
+      hash: app.selectedHashPosition,
+      level: app.selectedLevel
+    });
+    app.saveCustomFormations('offense');
+    if (app.renderSavedFormationsSidebar) app.renderSavedFormationsSidebar();
+    alert('Formation saved. It is locked, so editing a play will not change this master.');
+  }
+
+  function applyMode(mode) {
+    const aside = document.querySelector('#appScreen aside');
+    if (!aside) return;
+    const rules = {
+      offense: /offense|formation|player|route|drawing|teaching|default|clear|playbook/i,
+      defense: /defense|front|coverage|stunt|player|drawing|default|clear|playbook/i,
+      both: /./,
+      st: /special|drawing|player|teaching|default|clear|playbook/i
+    };
+    const re = rules[mode] || rules.both;
+    aside.querySelectorAll(':scope > div').forEach((block) => {
+      block.style.display = mode === 'both' || re.test(block.innerText || '') ? '' : 'none';
+    });
+    document.querySelectorAll('[data-edit-mode]').forEach((btn) => {
+      btn.classList.toggle('bg-amber-600', btn.dataset.editMode === mode);
+    });
+    LS('cbp_edit_mode', mode);
+  }
+
+  function ensureBars() {
+    if (!$('editModeBar')) {
+      const header = document.querySelector('#appScreen header');
+      if (header) {
+        const bar = document.createElement('div');
+        bar.id = 'editModeBar';
+        bar.className = 'bg-slate-950 border-b border-slate-800 px-4 py-2 flex flex-wrap gap-2';
+        [['offense', 'Offense'], ['defense', 'Defense'], ['both', 'Offense / Defense'], ['st', 'Special Teams']].forEach(([id, label]) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.dataset.editMode = id;
+          b.className = 'bg-slate-800 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold';
+          b.textContent = label;
+          b.onclick = () => applyMode(id);
+          bar.appendChild(b);
+        });
+        header.insertAdjacentElement('afterend', bar);
+      }
+    }
+    if (!$('btnSaveFormationQuick') && $('savedFormationsSpawnList')) {
+      const b = document.createElement('button');
+      b.id = 'btnSaveFormationQuick';
+      b.type = 'button';
+      b.className = 'w-full bg-emerald-700 text-white py-1.5 rounded text-[11px] font-bold';
+      b.textContent = 'Save Formation';
+      b.onclick = () => window.app && saveFormation(window.app);
+      $('savedFormationsSpawnList').before(b);
+    }
+    if (!$('btnSaveNewLook') && $('btnSaveAsNewCopy')) {
+      const b = document.createElement('button');
+      b.id = 'btnSaveNewLook';
+      b.type = 'button';
+      b.className = 'bg-purple-700 text-white px-3 py-1.5 rounded text-xs font-semibold';
+      b.textContent = 'New Look';
+      b.onclick = () => {
+        const app = window.app;
+        if (!app.currentPlay) return;
+        const name = prompt('Name this look', (app.currentPlay.name || 'Play') + ' vs front');
+        if (!name) return;
+        const folder = askFolder(app, app.currentPlay.category);
+        const copy = snapshotPlay(app, folder, name.trim());
+        app.plays.push(copy);
+        app.savePlays();
+        app.populatePlaySelect();
+        app.loadPlay(copy.id);
+      };
+      $('btnSaveAsNewCopy').after(b);
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest && e.target.closest('#btnSaveAsNewCopy');
+    if (!btn || !window.app || !window.app.currentPlay) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const app = window.app;
+    const name = prompt('Name for the copy', (app.currentPlay.name || 'Play') + ' (Copy)');
+    if (!name) return;
+    const folder = askFolder(app, app.currentPlay.category);
+    const copy = snapshotPlay(app, folder, name.trim());
+    app.plays.push(copy);
+    app.savePlays();
+    app.populatePlaySelect();
+    app.loadPlay(copy.id);
+  }, true);
+
+  document.addEventListener('keydown', (e) => {
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (!editorOpen() || !window.app) return;
+    const app = window.app;
+    if (e.key === 'Escape') { app.deselectPlayer(); return; }
+    if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+    e.preventDefault();
+    if (app.selectedPlayerObj && app.selectedPlayerObj.side === 'offense' && app.selectedPlayerObj.player.route) {
+      app.saveHistoryState();
+      delete app.selectedPlayerObj.player.route;
+      app.render();
+      return;
+    }
+    if (app.selectedPlayerObj) { app.deleteSelectedPlayer(); return; }
+    if (app.drawnLines && app.drawnLines.length) {
+      app.saveHistoryState();
+      app.drawnLines.pop();
+      app.render();
+    }
+  });
+
+  setInterval(() => { hideFieldTools(); if (editorOpen()) ensureBars(); }, 500);
+  document.addEventListener('DOMContentLoaded', () => { hideFieldTools(); ensureBars(); applyMode(LS('cbp_edit_mode') || 'both'); });
+})();
+</script>
+
 </body>
 </html>
+
+
