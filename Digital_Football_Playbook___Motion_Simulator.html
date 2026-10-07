@@ -47,7 +47,11 @@
 #appScreen.look aside { grid-column: 1; grid-row: 2; overflow-y: auto; border-right: 1px solid #1e293b; }
 #appScreen.look main { grid-column: 2; grid-row: 2; min-height: 0; display: flex; }
 #appScreen.look main > .flex-1 { flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px; }
-#appScreen.look .canvas-container { width: min(100%, 860px); aspect-ratio: 4 / 3; height: auto; max-height: calc(100vh - 140px) !important; }
+#appScreen.look main { display: flex !important; min-height: 0; }
+#appScreen.look main > .flex-1 { flex: 1 1 auto; min-height: 420px; display: flex; align-items: center; justify-content: center; }
+#appScreen.look .canvas-container { width: min(100%, 860px); height: 520px; aspect-ratio: 4 / 3; max-height: none !important; position: relative; }
+#appScreen.look canvas { width: 100%; height: 100%; display: block; }
+
 #appScreen.look #playerInspectorPanel { display: block !important; position: fixed; top: 56px; right: 0; width: 250px; height: calc(100vh - 108px); overflow-y: auto; border-left: 1px solid #1e293b; border-radius: 0; }
 #appScreen.look #lookBottom { display: flex; grid-column: 1 / -1; align-items: center; justify-content: center; gap: 16px; background: #0f172a; border-top: 1px solid #1e293b; }
 @media (max-width: 1023px) {
