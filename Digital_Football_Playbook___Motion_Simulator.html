@@ -36,6 +36,18 @@
         /* AI Mentor chat bubbles */
         .ai-bubble-user { background: #1e40af; color: white; border-radius: 12px 12px 4px 12px; }
         .ai-bubble-bot { background: #1e293b; color: #e2e8f0; border-radius: 12px 12px 12px 4px; border: 1px solid #334155; }
+#appScreen.layout-laptop { height: 100vh; overflow: hidden; }
+#appScreen.layout-laptop > .flex-1 { display: grid; grid-template-columns: 280px 1fr 300px; min-height: 0; height: calc(100vh - 150px); }
+#appScreen.layout-laptop aside { width: 280px; max-height: 100%; overflow-y: auto; grid-column: 1; grid-row: 1; }
+#appScreen.layout-laptop main { grid-column: 2; grid-row: 1; min-height: 0; }
+#appScreen.layout-laptop .canvas-container { max-height: calc(100vh - 230px) !important; }
+#appScreen.layout-laptop #playerInspectorPanel { position: fixed; top: 150px; right: 8px; width: 280px; max-height: calc(100vh - 170px); overflow-y: auto; z-index: 30; }
+#appScreen.layout-phone { height: 100vh; overflow: hidden; }
+#appScreen.layout-phone main { order: 0; }
+#appScreen.layout-phone aside { order: 1; max-height: 38vh; overflow-y: auto; }
+#appScreen.layout-phone .canvas-container { max-height: 46vh !important; }
+#cbpPal, .cbp-bar { display: none; }
+
     </style>
     <!-- FIREBASE: real accounts + cloud-saved playbook -->
     <script type="module">
@@ -4886,6 +4898,20 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   setInterval(() => { hideFieldTools(); if (editorOpen()) ensureBars(); }, 500);
   document.addEventListener('DOMContentLoaded', () => { hideFieldTools(); ensureBars(); applyMode(LS('cbp_edit_mode') || 'both'); });
+})();
+</script>
+<script>
+(function () {
+  function fit() {
+    const app = document.getElementById('appScreen');
+    if (!app) return;
+    const laptop = window.innerWidth >= 1024;
+    app.classList.toggle('layout-laptop', laptop);
+    app.classList.toggle('layout-phone', !laptop);
+  }
+  window.addEventListener('resize', fit);
+  document.addEventListener('DOMContentLoaded', fit);
+  setInterval(fit, 800);
 })();
 </script>
 
