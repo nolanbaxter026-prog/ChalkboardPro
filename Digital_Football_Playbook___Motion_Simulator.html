@@ -5149,6 +5149,62 @@ document.addEventListener('DOMContentLoaded',()=>{
   setInterval(clean, 1000);
 })();
 </script>
+<script>
+(function () {
+  const P = PlaybookApp.prototype;
+  function card() {
+    let el = document.getElementById('jpCard');
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'jpCard';
+    el.className = 'hidden absolute z-40 bg-slate-900 border border-slate-600 rounded-xl p-2 w-44 space-y-1 shadow-xl';
+    el.innerHTML = '<div id="jpWho" class="text-xs font-bold text-white"></div><select id="jpRoute" class="w-full bg-slate-800 text-white text-[11px] rounded p-1"></select><select id="jpAngle" class="w-full bg-slate-800 text-white text-[11px] rounded p-1"><option value="vertical">Vertical release</option><option value="outside">Outside release</option><option value="inside">Inside release</option><option value="stem">Stem then break</option></select><input id="jpJob" class="w-full bg-slate-800 text-white text-[11px] rounded p-1" placeholder="Assignment"><p class="text-[9px] text-slate-400">Click the route line to remove it.</p>';
+    document.querySelector('.canvas-container').appendChild(el);
+    return el;
+  }
+  function fill(app) {
+    const sel = document.getElementById('jpRoute');
+    if (!sel || sel.options.length) return;
+    sel.innerHTML = '<option value="">Route</option>' + Object.keys(app.routeCatalog()).map((n) => '<option>' + n + '</option>').join('');
+  }
+  const oldDown = P.handlePointerDown;
+  P.handlePointerDown = function (e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+    const hit = (this.currentPlay.offense || []).find((p) => p.route && this.distToSegment);
+    let killed = false;
+    (this.currentPlay.offense || []).forEach((p) => {
+      if (!p.route || killed) return;
+      for (let i = 1; i < p.route.length; i++) {
+        const a = p.route[i - 1], b = p.route[i];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+        const d = Math.hypot(x - (a.x + t * dx), y - (a.y + t * dy));
+        if (d < 12) { this.saveHistoryState(); delete p.route; killed = true; this.render(); }
+      }
+    });
+    if (killed) return;
+    oldDown.call(this, e);
+    const box = card();
+    fill(this);
+    if (this.selectedPlayerObj && this.selectedPlayerObj.side === 'offense') {
+      const p = this.selectedPlayerObj.player;
+      box.classList.remove('hidden');
+      box.style.left = '12px';
+      box.style.top = '12px';
+      document.getElementById('jpWho').textContent = p.label + ' ' + (p.number || '');
+      document.getElementById('jpJob').value = p.assignment || '';
+      document.getElementById('jpRoute').onchange = () => {
+        const name = document.getElementById('jpRoute').value;
+        if (name) this.applyRoutePreset(name);
+      };
+      document.getElementById('jpAngle').onchange = () => { p.release = document.getElementById('jpAngle').value; this.render(); };
+      document.getElementById('jpJob').oninput = () => { p.assignment = document.getElementById('jpJob').value; };
+    } else box.classList.add('hidden');
+  };
+})();
+</script>
 
 </body>
 </html>
