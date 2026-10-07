@@ -36,17 +36,31 @@
         /* AI Mentor chat bubbles */
         .ai-bubble-user { background: #1e40af; color: white; border-radius: 12px 12px 4px 12px; }
         .ai-bubble-bot { background: #1e293b; color: #e2e8f0; border-radius: 12px 12px 12px 4px; border: 1px solid #334155; }
-#appScreen.layout-laptop { height: 100vh; overflow: hidden; }
-#appScreen.layout-laptop > .flex-1 { display: grid; grid-template-columns: 280px 1fr 300px; min-height: 0; height: calc(100vh - 150px); }
-#appScreen.layout-laptop aside { width: 280px; max-height: 100%; overflow-y: auto; grid-column: 1; grid-row: 1; }
-#appScreen.layout-laptop main { grid-column: 2; grid-row: 1; min-height: 0; }
-#appScreen.layout-laptop .canvas-container { max-height: calc(100vh - 230px) !important; }
-#appScreen.layout-laptop #playerInspectorPanel { position: fixed; top: 150px; right: 8px; width: 280px; max-height: calc(100vh - 170px); overflow-y: auto; z-index: 30; }
-#appScreen.layout-phone { height: 100vh; overflow: hidden; }
-#appScreen.layout-phone main { order: 0; }
-#appScreen.layout-phone aside { order: 1; max-height: 38vh; overflow-y: auto; }
-#appScreen.layout-phone .canvas-container { max-height: 46vh !important; }
-#cbpPal, .cbp-bar { display: none; }
+#appScreen.frame-laptop { height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #0b1220; }
+#appScreen.frame-laptop header { display: none; }
+#appScreen.frame-laptop .bg-slate-950.border-b,
+#appScreen.frame-laptop #formationWarningBanner,
+#appScreen.frame-laptop #editModeBar { display: none !important; }
+#appScreen.frame-laptop > .flex-1 { flex: 1; min-height: 0; display: grid; grid-template-columns: 230px 1fr 270px; }
+#appScreen.frame-laptop aside { width: 230px; max-height: none; overflow-y: auto; grid-column: 1; border-right: 1px solid #1e293b; }
+#appScreen.frame-laptop main { grid-column: 2; min-height: 0; display: flex; flex-direction: column; }
+#appScreen.frame-laptop main > .flex-1 { flex: 1; min-height: 0; padding: 12px; }
+#appScreen.frame-laptop .canvas-container { width: 100%; height: 100%; max-height: none !important; aspect-ratio: auto; }
+#appScreen.frame-laptop main > .bg-slate-900\/90 { display: none; }
+#appScreen.frame-laptop #playerInspectorPanel { display: block !important; position: fixed; top: 64px; right: 0; width: 270px; height: calc(100vh - 64px); overflow-y: auto; z-index: 25; border-left: 1px solid #1e293b; border-radius: 0; }
+#frameTop, #framePhoneTabs { display: none; }
+#appScreen.frame-laptop #frameTop { display: flex; }
+#appScreen.frame-phone { height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+#appScreen.frame-phone header,
+#appScreen.frame-phone .bg-slate-950.border-b,
+#appScreen.frame-phone #editModeBar,
+#appScreen.frame-phone main > .bg-slate-900\/90 { display: none !important; }
+#appScreen.frame-phone #framePhoneTabs { display: flex; }
+#appScreen.frame-phone > .flex-1 { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#appScreen.frame-phone main { order: 0; flex: 1; min-height: 0; }
+#appScreen.frame-phone aside { order: 1; max-height: 34vh; overflow-y: auto; }
+#appScreen.frame-phone .canvas-container { max-height: none !important; height: 100%; aspect-ratio: auto; }
+#cbpPal, .cbp-bar { display: none !important; }
 
     </style>
     <!-- FIREBASE: real accounts + cloud-saved playbook -->
@@ -4912,6 +4926,49 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.addEventListener('resize', fit);
   document.addEventListener('DOMContentLoaded', fit);
   setInterval(fit, 800);
+})();
+</script>
+<script>
+(function () {
+  function fit() {
+    const app = document.getElementById('appScreen');
+    if (!app) return;
+    const laptop = window.innerWidth >= 1024;
+    app.classList.toggle('frame-laptop', laptop && !app.classList.contains('hidden'));
+    app.classList.toggle('frame-phone', !laptop && !app.classList.contains('hidden'));
+    ensureChrome();
+  }
+  function ensureChrome() {
+    const app = document.getElementById('appScreen');
+    if (!app || document.getElementById('frameTop')) return;
+    const top = document.createElement('div');
+    top.id = 'frameTop';
+    top.className = 'h-14 items-center justify-between px-3 bg-slate-900 border-b border-slate-800';
+    top.innerHTML = '<button type="button" id="frameBack" class="text-white text-sm font-bold">← Folders</button><div class="text-center"><div id="frameTitle" class="font-black">Play</div><div class="text-[10px] text-slate-400">Chalkboard Pro</div></div><button type="button" id="frameGear" class="text-xs bg-slate-800 px-2 py-1 rounded">⚙ Settings</button>';
+    app.prepend(top);
+    document.getElementById('frameBack').onclick = () => window.app && window.app.returnToFolderView();
+    document.getElementById('frameGear').onclick = () => { const g = document.querySelector('button[title="Settings & Dictionary"]'); if (g) g.click(); };
+    const tabs = document.createElement('div');
+    tabs.id = 'framePhoneTabs';
+    tabs.className = 'bg-slate-900 border-b border-slate-800';
+    ['offense', 'defense', 'both', 'st'].forEach((id, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'flex-1 py-2 text-xs font-bold ' + (i === 0 ? 'text-blue-400 border-b-2 border-blue-500' : 'text-slate-400');
+      b.textContent = ['Offense', 'Defense', 'Both', 'Special Teams'][i];
+      b.onclick = () => document.querySelectorAll('#framePhoneTabs button, #editModeBar [data-edit-mode]').forEach((n) => { if (n.dataset && n.dataset.editMode === id) n.click(); });
+      tabs.appendChild(b);
+    });
+    app.insertBefore(tabs, app.children[1] || null);
+    setInterval(() => {
+      const t = document.getElementById('playTitle');
+      const f = document.getElementById('frameTitle');
+      if (t && f) f.textContent = t.textContent || 'Play';
+    }, 500);
+  }
+  window.addEventListener('resize', fit);
+  document.addEventListener('DOMContentLoaded', fit);
+  setInterval(fit, 700);
 })();
 </script>
 
