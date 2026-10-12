@@ -40,13 +40,8 @@
     <!-- FIREBASE: real accounts + cloud-saved playbook -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-        import {
-            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-            signOut, onAuthStateChanged
-        } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-        import {
-            getFirestore, doc, setDoc, getDoc
-        } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
         const firebaseConfig = {
             apiKey: "AIzaSyCaTPqxnG9oUnjpfXtUPIX7xu_LxxTTdbc",
             authDomain: "chalkboardpro-9e5be.firebaseapp.com",
@@ -62,31 +57,25 @@
         window.ChalkboardCloud = {
             ready: true,
             currentUser: null,
-            async signUp(email, password) {
-                const cred = await createUserWithEmailAndPassword(auth, email, password);
-                return cred.user;
+            async signUp(email, password) { return (await createUserWithEmailAndPassword(auth, email, password)).user; },
+            async signIn(email, password) { return (await signInWithEmailAndPassword(auth, email, password)).user; },
+            async signOutUser() { await signOut(auth); },
+            async savePlaybook(uid, plays) { await setDoc(doc(db, 'playbooks', uid), { plays, updatedAt: new Date().toISOString() }); },
+            async loadPlaybook(uid) { const snap = await getDoc(doc(db, 'playbooks', uid)); return snap.exists() ? (snap.data().plays || null) : null; },
+            // ---- shared team playbooks: one document per play, so coaches never overwrite each other's plays
+            async userTeam(uid) { const s = await getDoc(doc(db, 'users', uid)); return s.exists() ? (s.data().teamId || null) : null; },
+            async joinTeam(uid, email, teamId) {
+                await setDoc(doc(db, 'users', uid), { teamId }, { merge: true });
+                await setDoc(doc(db, 'teams', teamId), { createdAt: Date.now() }, { merge: true });
+                await setDoc(doc(db, 'teams', teamId, 'members', uid), { email, joinedAt: Date.now() }, { merge: true });
             },
-            async signIn(email, password) {
-                const cred = await signInWithEmailAndPassword(auth, email, password);
-                return cred.user;
-            },
-            async signOutUser() {
-                await signOut(auth);
-            },
-            async savePlaybook(uid, plays) {
-                await setDoc(doc(db, 'playbooks', uid), {
-                    plays,
-                    updatedAt: new Date().toISOString()
-                });
-            },
-            async loadPlaybook(uid) {
-                const snap = await getDoc(doc(db, 'playbooks', uid));
-                return snap.exists() ? (snap.data().plays || null) : null;
-            }
+            listenPlays(t, cb, err) { return onSnapshot(collection(db, 'teams', t, 'plays'), s => cb(s.docs.map(d => d.data())), err); },
+            savePlay(t, p) { return setDoc(doc(db, 'teams', t, 'plays', p.id), p); },
+            deletePlay(t, id) { return deleteDoc(doc(db, 'teams', t, 'plays', id)); },
+            listenProfiles(t, cb, err) { return onSnapshot(collection(db, 'teams', t, 'profiles'), s => cb(s.docs.map(d => d.data())), err); },
+            saveProfile(t, p) { return setDoc(doc(db, 'teams', t, 'profiles', p.id), p); }
         };
-        onAuthStateChanged(auth, (user) => {
-            window.ChalkboardCloud.currentUser = user;
-        });
+        onAuthStateChanged(auth, (user) => { window.ChalkboardCloud.currentUser = user; });
     </script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
@@ -2011,7 +2000,7 @@ saveDefaultPlayerSettings() {
                 ctx.fillStyle = '#f59e0b';
                 ctx.font = 'bold 18px system-ui';
                 ctx.fillText(`SITUATION: ${sitDown} | ${sitQtr} | HASH: ${this.selectedHashPosition.toUpperCase()}`, 30, 72);
-                ctx.drawImage(this.canvas, 30, 110, 1140, 600);
+                this.drawCanvasToCard(ctx, 30, 110, 1140, 600);
                 ctx.fillStyle = '#1e293b';
                 ctx.fillRect(30, 730, 1140, 140);
                 ctx.fillStyle = '#ffffff';
@@ -3559,7 +3548,7 @@ loadNextPlayInFolder() {
                             const px = this.getAdjustedX(p.x, w);
                             const py = p.y * h;
                             const dist = Math.hypot(x - px, y - py);
-                           if (dist <= 22) {
+                           if (dist <= (this.hitR || 22)) {
         this.inspectPlayer('offense', p);
         this.pendingDrag = {
                kind: 'player',
@@ -3579,7 +3568,7 @@ loadNextPlayInFolder() {
                             const dx = this.getAdjustedX(d.x, w);
                             const dy = d.y * h;
                             const dist = Math.hypot(x - dx, y - dy);
-                           if (dist <= 22) {
+                           if (dist <= (this.hitR || 22)) {
         this.inspectPlayer('defense', d);
         this.pendingDrag = {
                kind: 'player',
@@ -3736,54 +3725,7 @@ this.pendingDrag = null;
                 const h = this.canvas.height;
                 this.ctx.fillStyle = this.fieldColor || '#ffffff';
                 this.ctx.fillRect(0, 0, w, h);
-                if (!this.clearFieldOnlyMarks) {
-                    this.ctx.strokeStyle = '#d1d5db';
-                    this.ctx.lineWidth = 2;
-                    const numYardLines = 10;
-                    for (let i = 1; i < numYardLines; i++) {
-                        const y = (h / numYardLines) * i;
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(0, y);
-                        this.ctx.lineTo(w, y);
-                        this.ctx.stroke();
-                    }
-                    this.renderHashMarks(w, h, numYardLines);
-                    const showNumbersChk = document.getElementById('chkShowYardNumbers');
-                    if (!showNumbersChk || showNumbersChk.checked) {
-                        this.renderYardNumbers(w, h, numYardLines);
-                    }
-                    const losY = h * 0.58;
-                    const fdY = h * 0.35;
-                    this.ctx.strokeStyle = '#f59e0b';
-                    this.ctx.lineWidth = 3;
-                    this.ctx.setLineDash([6, 6]);
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(0, fdY);
-                    this.ctx.lineTo(w, fdY);
-                    this.ctx.stroke();
-                    this.ctx.setLineDash([]);
-                    this.ctx.strokeStyle = '#3b82f6';
-                    this.ctx.lineWidth = 3;
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(0, losY);
-                    this.ctx.lineTo(w, losY);
-                    this.ctx.stroke();
-                    const situationVal = document.getElementById('situationDownSelect')?.value || '';
-                    if (situationVal === 'Red Zone' || situationVal === 'Goal Line') {
-                        const rzY = situationVal === 'Goal Line' ? h * 0.06 : h * 0.14;
-                        this.ctx.strokeStyle = '#dc2626';
-                        this.ctx.lineWidth = 4;
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(0, rzY);
-                        this.ctx.lineTo(w, rzY);
-                        this.ctx.stroke();
-                        this.ctx.fillStyle = '#dc2626';
-                        this.ctx.font = 'bold 11px system-ui';
-                        this.ctx.textAlign = 'left';
-                        this.ctx.textBaseline = 'alphabetic';
-                        this.ctx.fillText(situationVal === 'Goal Line' ? 'GOAL LINE' : 'RED ZONE', 8, Math.max(12, rzY - 6));
-                    }
-                }
+                if (!this.clearFieldOnlyMarks) { this.drawFieldMarks(w, h); }
                 if (this.chkRoutes.checked && this.currentPlay && this.currentPlay.offense) {
                     this.currentPlay.offense.forEach(p => {
                         if (p.route && p.route.length > 1) {
@@ -4373,7 +4315,7 @@ personnel:{BC:['BC','Boundary Corner'],BS:['BS','Boundary Safety'],Ni:['Ni','Nic
 zones:{flat:['Flat','Underneath zone to the sideline, 0-8 yds.'],hook:['Hook/Curl','Underneath zone between the hashes and numbers, 8-12 yds.'],third:['Deep Third','Cover 3: one of three deep zones, each 1/3 of the field.'],half:['Deep Half','Cover 2: each safety takes half the field deep.'],quarter:['Deep Quarter','Cover 4: four deep defenders each take 1/4.'],mof:['Middle of Field','Deep middle between the hashes; MOF safety territory.'],hole:['Hole','Cover 2 void between the corner and the safety, 12-18 yds.'],curlflat:['Curl-Flat','Cover 3 underneath: curl and flat defenders split a short zone.']},
 tech:{d0:['DL 0 tech','Head-up on the center.'],d1:['DL 1 tech','Shaded on the center, outside shoulder.'],d3:['DL 3 tech','Outside shoulder of the guard.'],d4i:['DL 4i tech','Inside shoulder of the tackle.'],d5:['DL 5 tech','Outside shoulder of the tackle.'],d7:['DL 7 tech','Inside shoulder of the TE.'],d9:['DL 9 tech','Outside shoulder of the TE (wide).'],press:['DB press','Aligned within 1 yd, jam and carry the receiver.'],bail:['DB bail','Off-man; backpedal or turn and run to keep cushion.'],squat:['DB squat','Zone corner sits on the short route at depth.'],pm:['Pattern-match','Zone landmarks that convert to man once routes declare.'],kick:['OL kick-slide','Pass set: step back and out to cut off the rusher.'],wrap:['OL wrap','Pull or step around to block a linebacker at the second level.'],down:['OL down block','Block the defender on the inside shoulder.'],jab:['WR jab release','Jab step to freeze a defender, then a release to either side.'],swim:['WR swim release','Swim arm over to beat press.'],slip:['WR slip release','Step off the jam to slip the press.']},
 pos:{QB:['QB','Quarterback; reads progression.'],RB:['RB','Running back or tailback.'],X:['X','Split end, usually on the LOS.'],Z:['Z','Flanker, off the LOS.'],Y:['Y','Tight end.'],S:['Slot','Inside receiver off the line.'],C:['C','Center.'],G:['G','Guard.'],OT:['T (offense)','Offensive tackle.']}};
-const LEVEL={nfl:'NFL: heavy two-high shells (Cover 2/4/6) and light boxes. Run into light boxes, attack intermediate middle (digs, crossers). Starting depths: digs 12-15, outs 10-12.',cfb:'College: match-quarters and Cover 3 with nickel pressure vs RPO/tempo offenses. Put box/overhang defenders in conflict, screen vs pressure, take shots off run action.',highschool:'High school: Cover 3 and Cover 1 most common, little disguise. Flood and curl-flat vs Cover 3, quick game and slants vs man, simple doubles in the run game. Starting depths: outs 8-10, digs 10-12.'};
+window.CBP.D=D;const LEVEL={nfl:'NFL: heavy two-high shells (Cover 2/4/6) and light boxes. Run into light boxes, attack intermediate middle (digs, crossers). Starting depths: digs 12-15, outs 10-12.',cfb:'College: match-quarters and Cover 3 with nickel pressure vs RPO/tempo offenses. Put box/overhang defenders in conflict, screen vs pressure, take shots off run action.',highschool:'High school: Cover 3 and Cover 1 most common, little disguise. Flood and curl-flat vs Cover 3, quick game and slants vs man, simple doubles in the run game. Starting depths: outs 8-10, digs 10-12.'};
 const lsDict=()=>LS('cbp_dict')||{};
 function rowsFor(tab){
  const d=lsDict();
@@ -4620,23 +4562,23 @@ function showCard(a){const sp=a.selectedPlayerObj;if(!sp||sp.side!=='offense'||a
  d.onchange=e=>{if(e.target.dataset.a==='more'&&e.target.value){C.build(a,e.target.value);showCard(a)}};
  d.oninput=e=>{if(e.target.dataset.a==='job'){p.assign=e.target.value;a.render()}}}
 function showMenu(a,cx,cy,t){const m=menu();
- m.innerHTML=btn('🗑 Delete','del','bg-rose-700 hover:bg-rose-600')+(t.kind==='route'?btn('Straight','str')+btn('Flip','flip'):'')+`<input type="color" data-a="col" value="${t.kind==='route'?(t.p.routeColor||'#3b82f6'):a.drawnLines[t.i].color}" class="w-7 h-7 bg-transparent">`;
+ m.innerHTML=btn('🗑 Delete','del','bg-rose-700 hover:bg-rose-600')+(t.kind==='route'?btn('Straight','str')+btn('Curve','smooth')+btn('Flip','flip'):'')+`<input type="color" data-a="col" value="${t.kind==='route'?(t.p.routeColor||'#3b82f6'):a.drawnLines[t.i].color}" class="w-7 h-7 bg-transparent">`;
  place(m,cx+8,cy-44);
  m.onclick=e=>{const k=e.target.closest('[data-a]');if(!k)return;const v=k.dataset.a;
   if(v==='del'){a.saveHistoryState();if(t.kind==='route')delete t.p.route;else a.drawnLines.splice(t.i,1);a.routeSel=false;hide();a.render()}
-  else if(v==='str')a.straightenSelectedRoute();else if(v==='flip')a.flipSelectedRouteHorizontally()};
+  else if(v==='smooth')C.smooth(a,t.p);else if(v==='str')a.straightenSelectedRoute();else if(v==='flip')a.flipSelectedRouteHorizontally()};
  m.oninput=e=>{if(e.target.dataset.a==='col'){if(t.kind==='route')t.p.routeColor=e.target.value;else a.drawnLines[t.i].color=e.target.value;a.render()}}}
 const oD=P.handlePointerDown;
 P.handlePointerDown=function(e){
  if(this.interactionMode==='move'){const r=this.canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,w=this.canvas.width,h=this.canvas.height,near=(px,py,d)=>Math.hypot(x-px,y-py)<=d;
   let on=false;const sp=this.selectedPlayerObj;
   if(sp&&sp.side==='offense'&&sp.player.route)sp.player.route.forEach(q=>{if(near(this.getAdjustedX(q.x,w),q.y*h,14))on=true});
-  (this.currentPlay.offense||[]).forEach(p=>{if(near(this.getAdjustedX(p.x,w),p.y*h,22))on=true});
-  (this.currentDefense||[]).forEach(p=>{if(near(this.getAdjustedX(p.x,w),p.y*h,22))on=true});
+  (this.currentPlay.offense||[]).forEach(p=>{if(near(this.getAdjustedX(p.x,w),p.y*h,this.hitR||22))on=true});
+  (this.currentDefense||[]).forEach(p=>{if(near(this.getAdjustedX(p.x,w),p.y*h,this.hitR||22))on=true});
   if(!on){const f=this.findLineNear(x,y,10);
    if(f&&f.kind==='playerRoute'){const p=this.currentPlay.offense.find(q=>q.id===f.playerId);this.inspectPlayer('offense',p);this.routeSel=true;box().style.display='none';showMenu(this,e.clientX,e.clientY,{kind:'route',p});return}
-   if(f&&f.kind==='drawn'){this.routeSel=false;box().style.display='none';showMenu(this,e.clientX,e.clientY,{kind:'drawn',i:f.index});return}}}
- this.routeSel=false;hide();return oD.call(this,e)};
+   if(f&&f.kind==='drawn'){this.routeSel=false;this.selLine=f.index;box().style.display='none';showMenu(this,e.clientX,e.clientY,{kind:'drawn',i:f.index});return}}}
+ this.routeSel=false;this.selLine=null;hide();return oD.call(this,e)};
 const oU=P.handlePointerUp;
 P.handlePointerUp=function(){const was=!!this.draggedPlayer||!!this.pendingDrag;oU.call(this);if(was&&this.selectedPlayerObj)showCard(this)};
 const oM=P.handlePointerMove;P.handlePointerMove=function(e){if(this.draggedPlayer)hide();return oM.call(this,e)};
@@ -4650,9 +4592,348 @@ document.addEventListener('keydown',e=>{const t=document.activeElement&&document
  const a=window.app;if(!a||!a.canvas||a.appScreen.classList.contains('hidden'))return;
  if(e.key==='Escape'){a.deselectPlayer();return}
  if(e.key!=='Delete'&&e.key!=='Backspace')return;e.preventDefault();const sp=a.selectedPlayerObj;
- if(sp&&sp.side==='offense'&&sp.player.route){a.saveHistoryState();delete sp.player.route;a.routeSel=false;hide();a.render()}
- else if(sp)a.deleteSelectedPlayer();
- else if(a.drawnLines.length){a.saveHistoryState();a.drawnLines.pop();a.render()}});
+ if(a.selLine!=null&&a.drawnLines[a.selLine]){a.saveHistoryState();a.drawnLines.splice(a.selLine,1);a.selLine=null;hide();a.render()}else if(sp&&a.routeSel&&sp.player.route){a.saveHistoryState();delete sp.player.route;a.routeSel=false;hide();a.render()}else if(sp)a.deleteSelectedPlayer();});
+})();
+</script>
+<script>
+(function(){
+const P=PlaybookApp.prototype,$=id=>document.getElementById(id),C=window.CBP;
+const LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),clone=o=>JSON.parse(JSON.stringify(o));
+const FR={'4-3':'4-3 Over','3-4':'3-4 Odd','4-2-5':'4-2-5 Nickel','5-3':'5-3 Bear'},typing=()=>['INPUT','TEXTAREA','SELECT'].includes((document.activeElement||{}).tagName);
+const ST=['Kickoff','Kick Return','Punt','Punt Return','Field Goal'];
+Object.assign(ST_TEMPLATES.Kickoff,{category:'Kickoff'});Object.assign(ST_TEMPLATES['Kick Return'],{category:'Kick Return'});Object.assign(ST_TEMPLATES.Punt,{category:'Punt'});Object.assign(ST_TEMPLATES['Punt Return'],{category:'Punt Return'});Object.assign(ST_TEMPLATES['FG Block'],{category:'Field Goal'});Object.assign(ST_TEMPLATES['FG Attack'],{category:'Field Goal'});
+const kids=(a,n)=>a.folders.filter(f=>(a.folderParents[f]||null)===n),total=(a,n)=>a.plays.filter(p=>(p.category||'Custom')===n).length+kids(a,n).reduce((s,k)=>s+total(a,k),0);
+// ---------- modal helpers
+function ask(a,o){return new Promise(res=>{const m=document.createElement('div');m.className='fixed inset-0 z-[80] bg-black/70 flex items-center justify-center p-3';
+ const opts=(arr,v)=>arr.map(x=>`<option value="${esc(x[0])}" ${x[0]===v?'selected':''}>${esc(x[1])}</option>`).join('');
+ m.innerHTML=`<div class="bg-slate-900 border border-slate-600 rounded-xl p-4 w-80 space-y-2 text-xs text-white"><b>${esc(o.title)}</b>${o.name!=null?`<input id="qN" value="${esc(o.name)}" placeholder="Name" class="w-full bg-slate-800 rounded p-1.5">`:''}${o.folder?`<div class="text-slate-400">Folder</div><select id="qF" class="w-full bg-slate-800 rounded p-1.5">${opts([[o.folder,'Keep in '+o.folder]].concat(a.folders.filter(f=>f!==o.folder).map(f=>[f,'Move to '+f])),o.folder)}</select>`:''}${o.front?`<div class="text-slate-400">New defensive front (offense and drawings stay)</div><select id="qT" class="w-full bg-slate-800 rounded p-1.5">${opts(Object.entries(FR),a.selectedFront)}</select>`:''}${o.list?`<select id="qL" class="w-full bg-slate-800 rounded p-1.5">${opts(o.list,'')}</select>`:''}<div class="flex gap-2 justify-end pt-1"><button id="qX" class="px-2 py-1">Cancel</button><button id="qO" class="bg-emerald-600 px-3 py-1 rounded font-bold">${o.ok||'OK'}</button></div></div>`;
+ document.body.appendChild(m);const v=s=>m.querySelector(s)&&m.querySelector(s).value;
+ m.querySelector('#qX').onclick=()=>{m.remove();res(null)};m.querySelector('#qO').onclick=()=>{const r={name:v('#qN'),folder:v('#qF'),front:v('#qT'),pick:v('#qL')};m.remove();res(r)}})}
+function choice(msg,btns){return new Promise(res=>{const m=document.createElement('div');m.className='fixed inset-0 z-[80] bg-black/70 flex items-center justify-center p-3';
+ m.innerHTML=`<div class="bg-slate-900 border border-slate-600 rounded-xl p-4 space-y-3 text-sm text-white"><b>${esc(msg)}</b><div class="flex gap-2">${btns.map((b,i)=>`<button data-i="${i}" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded">${esc(b)}</button>`).join('')}</div></div>`;document.body.appendChild(m);m.onclick=e=>{const b=e.target.closest('[data-i]');if(b){m.remove();res(+b.dataset.i)}}})}
+function snap(a,name,folder){const c=clone(a.currentPlay);c.id='play_'+Date.now()+Math.random().toString(36).slice(2,5);c.name=name;c.category=folder;c.drawnLines=clone(a.drawnLines||[]);c.defense=clone(a.currentDefense||[]);c.front=a.selectedFront;c.coverage=a.selectedCoverage;c.hash=a.selectedHashPosition;c.level=a.selectedLevel;c.stunt=a.selectedStunt;return c}
+function addPlay(a,p){a.plays.push(p);a.savePlays();a.selectedCategoryFilter=p.category;a.populatePlaySelect();a.loadPlay(p.id)}
+// ---------- folders persist their parents; special teams modules always exist
+const oSF=P.saveFoldersForProfile;P.saveFoldersForProfile=function(){oSF.call(this);LS('cbp_fp_'+this.profileKey,this.folderParents)};
+const oLF=P.loadFoldersForProfile;P.loadFoldersForProfile=function(){oLF.call(this);Object.assign(this.folderParents,LS('cbp_fp_'+this.profileKey)||{})};
+const oLP=P.loadPlaysForProfile;P.loadPlaysForProfile=async function(){await oLP.call(this);const m=LS('cbp_mx_'+this.profileKey);if(m)this.matrixData=m};
+const oUT=P.updateTendencies;P.updateTendencies=function(){oUT.call(this);LS('cbp_mx_'+this.profileKey,this.matrixData)};
+// ---------- library: counts, back, search, recent, pins
+function back(a){const p=$('folderPlayListPanel');if(p&&!p.classList.contains('hidden')){a.closeFolderPlayList();libBar(a);return}if(a.currentFolderParent){a.currentFolderParent=a.folderParents[a.currentFolderParent]||null;a.renderFolderGrid()}}
+function hits(a){const q=$('cbpFS').value.toLowerCase().trim(),h=$('cbpHits'),b='block w-full text-left bg-slate-800 text-white text-xs rounded px-2 py-1.5';if(!q){h.innerHTML='';return}
+ h.innerHTML=a.folders.filter(f=>f.toLowerCase().includes(q)).map(f=>`<button data-f="${esc(f)}" class="${b}">📁 ${esc(f)}</button>`).concat(a.plays.filter(p=>((p.name||'')+' '+(p.tags||[]).join(' ')).toLowerCase().includes(q)).map(p=>`<button data-id="${p.id}" class="${b}">${esc(p.name)} <span class="text-slate-400">· ${esc(p.category||'Custom')}</span></button>`)).join('')||'<p class="text-xs text-slate-500">No matches.</p>';
+ h.querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>a.openPlayFromFolder(x.dataset.id));
+ h.querySelectorAll('[data-f]').forEach(x=>x.onclick=()=>{const f=x.dataset.f;$('cbpFS').value='';h.innerHTML='';if(kids(a,f).length){a.currentFolderParent=f;a.renderFolderGrid()}else a.openFolder(f)})}
+function libBar(a){const m=document.querySelector('#folderScreen main');if(!m)return;let bar=$('cbpLib');
+ if(!bar){bar=document.createElement('div');bar.id='cbpLib';bar.className='space-y-2';bar.innerHTML='<div class="flex gap-2"><button id="cbpBack" type="button" class="bg-slate-800 border border-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold">← Back</button><input id="cbpFS" placeholder="Search any play or folder" class="flex-1 bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-1.5 text-xs"></div><div id="cbpHits" class="space-y-1"></div><div id="cbpRec" class="text-xs text-slate-300"></div>';m.prepend(bar);$('cbpBack').onclick=()=>back(a);$('cbpFS').oninput=()=>hits(a)}
+ const r=(LS('cbp_recent')||[]).map(id=>a.plays.find(p=>p.id===id)).filter(Boolean),pl=$('folderPlayListPanel');
+ $('cbpRec').innerHTML=!a.currentFolderParent&&r.length&&pl.classList.contains('hidden')?'<span class="font-bold text-slate-400 mr-2">Recent</span>'+r.map(p=>`<button data-id="${p.id}" class="mr-3 underline text-cyan-300">${esc(p.name)}</button>`).join(''):'';
+ $('cbpRec').querySelectorAll('[data-id]').forEach(x=>x.onclick=()=>a.openPlayFromFolder(x.dataset.id));
+ $('cbpBack').style.display=(a.currentFolderParent||!pl.classList.contains('hidden'))?'':'none'}
+const oRG=P.renderFolderGrid;P.renderFolderGrid=function(){ST.forEach(f=>{if(!this.folders.includes(f))this.folders.push(f);if(!this.folderParents[f])this.folderParents[f]='Special Teams'});oRG.call(this);
+ document.querySelectorAll('#foldersGrid > div').forEach(c=>{const n=c.querySelector('h3').textContent.trim(),k=kids(this,n).length,t=total(this,n),b=c.querySelector('span.rounded-full');if(b)b.textContent=k?`${k} subfolder${k>1?'s':''} · ${t} play${t===1?'':'s'}`:`${t} Play(s)`});libBar(this)};
+const oCL=P.closeFolderPlayList;P.closeFolderPlayList=function(){oCL.call(this);libBar(this)};
+async function fromFormation(a,folder){const fs=a.customOffenseFormations||[];if(!fs.length){alert('Save a formation first (sidebar → Save Formation).');return}
+ const r=await ask(a,{title:'New play from this formation',name:'',list:fs.map(f=>[f.id,f.name]),ok:'Create'});if(!r)return;const f=fs.find(x=>x.id===r.pick);
+ const p={id:'play_'+Date.now(),name:r.name||f.name+' Play',category:folder,desc:'',qbKeys:['Install this play'],coachNotes:'',offense:clone(f.players),hash:f.hash,level:f.level};a.plays.push(p);a.savePlays();a.openPlayFromFolder(p.id)}
+const oSL=P.showFolderPlayList;P.showFolderPlayList=function(f){oSL.call(this,f);const a=this,list=$('folderPlayList'),pins=LS('cbp_pins')||[],ps=a.plays.filter(p=>(p.category||'Custom')===f);
+ if(!ps.length){const b=document.createElement('button');b.type='button';b.className='bg-emerald-700 text-white px-3 py-2 rounded text-xs font-bold ml-2';b.textContent='New play from this formation';b.onclick=()=>fromFormation(a,f);list.appendChild(b)}
+ else{ps.sort((x,y)=>pins.includes(y.id)-pins.includes(x.id));list.innerHTML='';ps.forEach((p,i)=>{const row=document.createElement('div');row.className='flex gap-1';
+  row.innerHTML=`<button data-o class="flex-1 text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2.5 rounded-lg text-sm text-white">${i+1}. ${esc(p.name)}</button><button data-s class="px-2 text-amber-300" title="Pin to top">${pins.includes(p.id)?'★':'☆'}</button><button data-m class="px-2 text-slate-300" title="Move to another folder">⇄</button>`;
+  row.querySelector('[data-o]').onclick=()=>a.openPlayFromFolder(p.id);
+  row.querySelector('[data-s]').onclick=()=>{const n=LS('cbp_pins')||[],j=n.indexOf(p.id);j>=0?n.splice(j,1):n.unshift(p.id);LS('cbp_pins',n);a.showFolderPlayList(f)};
+  row.querySelector('[data-m]').onclick=async()=>{const r=await ask(a,{title:'Move "'+p.name+'"',folder:p.category||'Custom',ok:'Move'});if(r){p.category=r.folder;a.savePlays();a.showFolderPlayList(f)}};list.appendChild(row)})}
+ libBar(a)};
+document.addEventListener('keydown',e=>{const a=window.app;if(e.key==='Backspace'&&a&&!typing()&&!$('folderScreen').classList.contains('hidden')){e.preventDefault();back(a)}});
+// ---------- loading / dirty dot / leaving
+function setDirty(d){const a=window.app;if(a)a.dirty=d;const b=$('btnSavePlay');if(b)b.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save Play'+(d?' <span class="text-amber-300">●</span>':'')}
+const oH=P.saveHistoryState;P.saveHistoryState=function(){oH.call(this);setDirty(1)};
+const oL=P.loadPlay;P.loadPlay=function(id){oL.call(this,id);const f=this.plays.find(p=>p.id===id);
+ if(f){if(f.hash){this.selectedHashPosition=f.hash;if(this.hashPositionSelect)this.hashPositionSelect.value=f.hash}if(f.level){this.selectedLevel=f.level;if(this.levelSelect)this.levelSelect.value=f.level}if(f.stunt&&this.stuntSelect){this.selectedStunt=f.stunt;this.stuntSelect.value=f.stunt}this.render()}
+ this._pn=this.currentPlay&&this.currentPlay.name;setDirty(0);const r=LS('cbp_recent')||[];LS('cbp_recent',[id].concat(r.filter(x=>x!==id)).slice(0,5))};
+const oR=P.render;P.render=function(){oR.call(this);const cp=this.currentPlay;if(cp&&this.canvas){cp.hash=this.selectedHashPosition;cp.level=this.selectedLevel;cp.stunt=this.selectedStunt}};
+const oRT=P.returnToFolderView;P.returnToFolderView=async function(){if(this.dirty){const r=await choice('Save before you go?',['Save & leave','Leave','Stay']);if(r===2||r==null)return;if(r===0)$('btnSavePlay').click()}setDirty(0);oRT.call(this)};
+// ---------- copies, new look, formations
+document.addEventListener('click',async e=>{if(!e.target.closest('#btnSaveAsNewCopy'))return;const a=window.app;if(!a||!a.currentPlay)return;e.preventDefault();e.stopImmediatePropagation();
+ const r=await ask(a,{title:'Save as new copy',name:(a.currentPlay.name||'Play')+' (Copy)',folder:a.currentPlay.category||'Custom',ok:'Save copy'});if(r)addPlay(a,snap(a,r.name||'Copy',r.folder))},true);
+async function newLook(a){const cp=a.currentPlay;if(!cp)return;const r=await ask(a,{title:'Save as new look',name:cp.name+' (new look)',folder:cp.category||'Custom',front:1,ok:'Create look'});if(!r)return;
+ const name=r.name.endsWith('(new look)')?cp.name+' vs '+FR[r.front]:r.name,c=snap(a,name,r.folder);c.defense=clone(DEFENSIVE_FRONTS[r.front]);c.front=r.front;addPlay(a,c);a.selectedFront=r.front;a.frontSelect.value=r.front;a.applyCoverageShell();a.render()}
+async function saveFormation(a){const cp=a.currentPlay;if(!cp)return;const r=await ask(a,{title:'Save formation (alignment only, locked)',name:(cp.name||'')+' formation',folder:cp.category||'Offense',ok:'Save'});if(!r)return;
+ a.customOffenseFormations.push({id:'form_'+Date.now(),name:r.name||'Formation',folder:r.folder,locked:true,hash:a.selectedHashPosition,level:a.selectedLevel,players:clone(cp.offense||[]).map(p=>{delete p.route;delete p.motion;delete p.assign;return p})});a.saveCustomFormations('offense');a.renderSavedFormationsSidebar()}
+const oDF=P.deleteCustomFormation;P.deleteCustomFormation=function(side,id){const f=(side==='offense'?this.customOffenseFormations:this.customDefenseFormations).find(x=>x.id===id);if(f&&f.locked){alert('That formation is locked. Unlock it (🔒 in the sidebar) to delete it.');return}oDF.call(this,side,id)};
+const oRS=P.renderSavedFormationsSidebar;P.renderSavedFormationsSidebar=function(){oRS.call(this);const a=this,c=$('savedFormationsSpawnList');if(!c)return;
+ const all=(a.customOffenseFormations||[]).map(f=>[f,'offense']).concat((a.customDefenseFormations||[]).map(f=>[f,'defense'])),bs=[...c.children].filter(k=>k.tagName==='BUTTON'),pins=LS('cbp_pins')||[];if(bs.length!==all.length)return;
+ bs.forEach((b,i)=>{const [f,side]=all[i],s=document.createElement('span');s.className='ml-1 shrink-0';s.innerHTML=`<i data-s class="px-1 text-amber-300">${pins.includes(f.id)?'★':'☆'}</i><i data-l class="px-1">${f.locked?'🔒':'🔓'}</i><i data-d class="px-1" title="Duplicate">⧉</i>`;b.appendChild(s);b._f=f;
+  s.onclick=async e=>{e.stopPropagation();const k=e.target.dataset;if('s' in k){const n=LS('cbp_pins')||[],j=n.indexOf(f.id);j>=0?n.splice(j,1):n.unshift(f.id);LS('cbp_pins',n)}
+   else if('l' in k){f.locked=!f.locked;a.saveCustomFormations(side)}
+   else if('d' in k){const r=await ask(a,{title:'Duplicate formation',name:f.name+' (copy)',folder:f.folder||'Offense',ok:'Duplicate'});if(!r)return;const g=clone(f);g.id='form_'+Date.now();g.name=r.name;g.folder=r.folder;g.locked=false;(side==='offense'?a.customOffenseFormations:a.customDefenseFormations).push(g);a.saveCustomFormations(side)}
+   a.renderSavedFormationsSidebar()}});
+ bs.sort((x,y)=>pins.includes(y._f.id)-pins.includes(x._f.id)).forEach(b=>c.appendChild(b))};
+// ---------- editor: name = title, arrows, right-click menu, double-click stamp
+const oB=C.build;C.build=function(a,id){LS('cbp_last',id);oB(a,id)};
+let lastArrow=0;
+document.addEventListener('keydown',e=>{const a=window.app;if(!a||!a.canvas||a.appScreen.classList.contains('hidden')||typing())return;const sp=a.selectedPlayerObj,d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
+ if(!d||!sp)return;e.preventDefault();if(Date.now()-lastArrow>800)a.saveHistoryState();lastArrow=Date.now();const k=e.shiftKey?3:1,p=sp.player,cl=v=>Math.max(.02,Math.min(.98,v));
+ p.x=cl(p.x+d[0]*k/53.3);p.y=cl(p.y+d[1]*k/100);a.checkFormationValidity();a.render()});
+function hitAt(a,e){const r=a.canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,w=a.canvas.width,h=a.canvas.height;let hit=null;
+ (a.currentPlay.offense||[]).forEach(p=>{if(Math.hypot(a.getAdjustedX(p.x,w)-x,p.y*h-y)<=(a.hitR||22))hit=['offense',p]});(a.currentDefense||[]).forEach(p=>{if(Math.hypot(a.getAdjustedX(p.x,w)-x,p.y*h-y)<=(a.hitR||22))hit=['defense',p]});return hit}
+function ctx(a,e,side,p){let m=$('cbpCtx');if(!m){m=document.createElement('div');m.id='cbpCtx';m.className='fixed z-[90] bg-slate-900 border border-slate-600 rounded-lg p-1 text-xs text-white flex flex-col w-32 shadow-2xl';document.body.appendChild(m)}
+ const o=side==='offense'?[['route','Route…'],['block','Block'],['hot',(a.currentPlay.hot||{})[p.id]?'Remove hot':'Hot route'],['del','Delete']]:[['blitz',p.isBlitz?'Remove blitz':'Blitz'],['key',p.keyId?'Clear key':'Key a player'],['del','Delete']];
+ m.innerHTML=o.map(x=>`<button data-k="${x[0]}" class="text-left px-2 py-1.5 hover:bg-slate-700 rounded">${x[1]}</button>`).join('');m.style.display='flex';m.style.left=Math.min(e.clientX,innerWidth-140)+'px';m.style.top=Math.min(e.clientY,innerHeight-150)+'px';
+ m.onclick=async ev=>{const k=ev.target.dataset.k;m.style.display='none';if(!k)return;
+  if(k==='route'){const r=await ask(a,{title:'Route for '+p.label,list:a.getRouteLibrary().map(x=>[x.id,x.name]),ok:'Stamp'});if(r)C.build(a,r.pick)}
+  else if(k==='block')a.applyRoutePreset('block');
+  else if(k==='hot'){const cp=a.currentPlay;cp.hot=cp.hot||{};if(cp.hot[p.id])delete cp.hot[p.id];else cp.hot[p.id]=Math.abs(p.x-.5)>.3?'hitch':'slant';a.saveHistoryState();a.render()}
+  else if(k==='key'){if(p.keyId){delete p.keyId;a.render()}else{a.pendingKey=p;C.toast('Click the offensive player this defender keys')}}else if(k==='blitz')a.toggleDefenderBlitz(!p.isBlitz);
+  else if(k==='del')a.deleteSelectedPlayer()}}
+document.addEventListener('click',()=>{const m=$('cbpCtx');if(m)m.style.display='none'});
+document.addEventListener('dblclick',e=>{const a=window.app;if(!a||!a.canvas)return;const c=e.target.closest('#cbpPal [data-d^="r:"]');
+ if(c&&a.selectedPlayerObj)return C.build(a,c.dataset.d.slice(2));
+ if(e.target.id==='fieldCanvas'&&a.selectedPlayerObj&&a.selectedPlayerObj.side==='offense'){const h=hitAt(a,e);if(h&&h[1]===a.selectedPlayerObj.player)C.build(a,LS('cbp_last')||'slant')}});
+document.addEventListener('DOMContentLoaded',()=>{const a=window.app;
+ $('fieldCanvas').addEventListener('contextmenu',e=>{e.preventDefault();if(!a.currentPlay)return;const h=hitAt(a,e);if(!h)return;a.inspectPlayer(h[0],h[1]);ctx(a,e,h[0],h[1])});
+ const pt=$('playTitle');if(pt){pt.style.cursor='text';pt.title='Click to rename';pt.addEventListener('click',()=>{if(a.editPlayDesc.classList.contains('hidden')){a.toggleEditNotes();a.editPlayTitleInput.focus()}})}
+ const ti=a.editPlayTitleInput;if(ti)ti.addEventListener('input',()=>{const cp=a.currentPlay;if(!cp)return;const v=ti.value,old=a._pn||cp.name,e=a.plays.find(p=>p.id===cp.id);if(e)e.name=v;Object.values(a.matrixData).forEach(arr=>arr.forEach((n,i)=>{if(n===old)arr[i]=v}));a._pn=v;a.updateTendencies();setDirty(1)});
+ $('btnSavePlay').addEventListener('click',()=>setDirty(0));
+ const cp=$('btnSaveAsNewCopy');if(cp){const b=document.createElement('button');b.type='button';b.id='btnNewLook';b.className='bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded text-xs font-semibold';b.textContent='New Look';b.onclick=()=>newLook(a);cp.after(b)}
+ const sl=$('savedFormationsSpawnList');if(sl){const b=document.createElement('button');b.type='button';b.className='w-full bg-emerald-700 hover:bg-emerald-600 text-white py-1.5 rounded text-[11px] font-bold';b.textContent='Save Formation (one click)';b.onclick=()=>saveFormation(a);sl.before(b)}
+ const st=document.createElement('style');st.textContent='#appScreen .canvas-container{width:min(100%,calc(76vh*1.3333))!important;height:auto!important;aspect-ratio:4/3!important;max-height:none!important;margin:0 auto;overflow:hidden}';document.head.appendChild(st);
+ new ResizeObserver(()=>a.resizeCanvas&&a.resizeCanvas()).observe(document.querySelector('.canvas-container'))});
+})();
+</script>
+<script>
+(function(){
+const P=PlaybookApp.prototype,$=id=>document.getElementById(id),C=window.CBP;
+const LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+const clone=o=>JSON.parse(JSON.stringify(o)),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const out=t=>{const o=$('cbpOut');if(o)o.textContent=t};
+function toast(t){let d=$('cbpToast');if(!d){d=document.createElement('div');d.id='cbpToast';d.className='fixed bottom-16 left-1/2 -translate-x-1/2 z-[95] bg-slate-800 border border-amber-500 text-white text-xs px-3 py-2 rounded-lg shadow-xl';document.body.appendChild(d)}d.textContent=t;d.style.display='block';clearTimeout(d._t);d._t=setTimeout(()=>d.style.display='none',3000)}C.toast=toast;
+const FR={'4-3':'4-3 Over','3-4':'3-4 Odd','4-2-5':'4-2-5 Nickel','5-3':'5-3 Bear'};
+function modal(html,ok){const m=document.createElement('div');m.className='fixed inset-0 z-[85] bg-black/70 flex items-center justify-center p-3';m.innerHTML=`<div class="bg-slate-900 border border-slate-600 rounded-xl p-4 w-80 max-h-[90vh] overflow-y-auto space-y-2 text-xs text-white">${html}<div class="flex gap-2 justify-end pt-1"><button data-x class="px-2 py-1">Cancel</button><button data-ok class="bg-emerald-600 px-3 py-1 rounded font-bold">Save</button></div></div>`;document.body.appendChild(m);m.querySelector('[data-x]').onclick=()=>m.remove();m.querySelector('[data-ok]').onclick=()=>{ok(m);m.remove()}}
+// ===== Special teams: alignments from your sheet (editable, savable)
+const mk=(l,x,y,role,sd)=>Object.assign({id:sd+'_'+l+'_'+Math.random().toString(36).slice(2,5),label:l,role:role||'ST',shape:sd==='d'?'square':'circle',color:sd==='d'?'#ef4444':'#3b82f6',speed:4.5,release:'none',x,y},sd==='d'?{zone:'none',zoneColor:'#6b7280',isBlitz:false,blitzGap:'A-Gap'}:{});
+const row=(ls,xs,y,sd,r)=>ls.map((l,i)=>mk(l,xs[i],y,r,sd));
+const ko=s=>row(['L1','L2','L3','L4','L5'],[.08,.16,.24,.32,.40],.58,s).concat(row(['R5','R4','R3','R2','R1'],[.60,.68,.76,.84,.92],.58,s),[mk('K',.5,.63,'ST',s)]);
+const kr=s=>row(['LT','LG','C','RG','RT'],[.38,.44,.5,.56,.62],.46,s).concat(row(['LU','RU'],[.36,.64],.38,s),row(['LB','RB'],[.28,.72],.31,s),row(['LKR','RKR'],[.40,.60],.14,s));
+const fk=s=>row(['LE','LT','LG','C','RG','RT','RE'],[.41,.44,.47,.5,.53,.56,.59],.58,s).concat(row(['LW','RW'],[.35,.65],.60,s),[mk('H',.5,.65,'ST',s),mk('K',.45,.66,'ST',s)]);
+const fb=s=>row(['D1','D2','D3','D4','D5','D6','D7'],[.32,.40,.46,.5,.54,.60,.68],.555,s).concat(row(['C1','C2'],[.20,.80],.55,s),[mk('S',.5,.40,'ST',s),mk('KR',.5,.18,'ST',s)]);
+const pt=s=>row(['LE','LT','LG','C','RG','RT','RE'],[.41,.44,.47,.5,.53,.56,.59],.58,s).concat(row(['GL','GR'],[.09,.91],.58,s),[mk('PP',.5,.64,'ST',s),mk('P',.5,.73,'ST',s)]);
+const pr=s=>row(['D1','D2','D3','D4','D5','D6'],[.32,.40,.46,.54,.60,.68],.555,s).concat(row(['J1','J2'],[.10,.90],.54,s),row(['UB1','UB2'],[.40,.60],.32,s),[mk('PR',.5,.14,'ST',s)]);
+const AL={'Kickoff':[ko('o'),kr('d')],'Kick Return':[kr('o'),ko('d')],'Punt':[pt('o'),pr('d')],'Punt Return':[pr('o'),pt('d')],'FG Attack':[fk('o'),fb('d')],'FG Block':[fb('o'),fk('d')],'PAT':[fk('o'),fb('d')]};
+const AF={'Kickoff':()=>[ko('o'),kr('d')],'Kick Return':()=>[kr('o'),ko('d')],'Punt':()=>[pt('o'),pr('d')],'Punt Return':()=>[pr('o'),pt('d')],'FG Attack':()=>[fk('o'),fb('d')],'FG Block':()=>[fb('o'),fk('d')],'PAT':()=>[fk('o'),fb('d')]};
+ST_TEMPLATES.PAT={name:'PAT / Field Goal',category:'Field Goal',desc:'PAT and field-goal unit vs a block look.',qbKeys:['Snap to hold','Kick off the hold'],coachNotes:'Operation time target 1.3 seconds.'};
+P.createSTTemplate=function(key){const t=ST_TEMPLATES[key];if(!t||!AF[key])return;const sv=LS('cbp_stdef_'+key),al=AF[key](),p={id:'st_'+Date.now(),name:t.name,category:t.category,desc:t.desc,qbKeys:t.qbKeys,coachNotes:t.coachNotes,stKey:key,offense:sv?clone(sv.o):al[0],defense:sv?clone(sv.d):al[1],front:'Custom',hash:'middle',spot:({'Kickoff':35,'Kick Return':35,'Punt':35,'Punt Return':35,'FG Attack':75,'FG Block':75,'PAT':97})[key],view:'wide'};this.plays.push(p);this.savePlays();this.selectedCategoryFilter=t.category;this.openPlayFromFolder(p.id)};
+const oCV=P.checkFormationValidity;P.checkFormationValidity=function(){if(this.currentPlay&&this.currentPlay.stKey){this.formationWarningBanner.classList.add('hidden');return}return oCV.call(this)};
+// ===== Personnel groupings
+const PERS=[10,11,12,13,21,22];
+function pers(n){const [rb,te]=String(n).split('').map(Number),wr=5-rb-te,o=[];
+ [['LT',.42],['LG',.46],['C',.5],['RG',.54],['RT',.58]].forEach(([l,x])=>o.push(mk(l,x,.58,'OL','o')));o.push(mk('QB',.5,.68,'QB','o'));
+ [['RB',.44,.70],['FB',.56,.66]].slice(0,rb).forEach(([l,x,y])=>o.push(mk(l,x,y,'RB','o')));
+ [['Y',.63,.58],['F',.37,.63],['H',.66,.64]].slice(0,te).forEach(([l,x,y])=>o.push(mk(l,x,y,'TE','o')));
+ [['X',.08,.58,'WR'],['Z',.92,.63,'WR'],['S',.74,.63,'Slot'],['S',.26,.63,'Slot'],['S',.82,.63,'Slot']].slice(0,wr).forEach(([l,x,y,r])=>o.push(mk(l,x,y,r,'o')));return o}
+PERS.forEach(n=>{OFFENSE_PRESETS['pers'+n]=pers(n)});
+// ===== Tags
+const DT=['Shot Play','Man Beater','Zone Beater','Hurry Up','3rd & Medium','3rd & Long','Red Zone','Goal Line','Screen','Play Action','Blitz Beater','Backed Up'];
+const allTags=a=>[...new Set(DT.concat(...a.plays.map(p=>p.tags||[])))];
+function tagModal(a){const cp=a.currentPlay;if(!cp)return;const cur=cp.tags||[];
+ modal('<b>Tags for this play</b>'+allTags(a).map(t=>`<label class="flex gap-2"><input type="checkbox" value="${esc(t)}" ${cur.includes(t)?'checked':''}> ${esc(t)}</label>`).join('')+'<input id="tgN" placeholder="Add a new tag" class="w-full bg-slate-800 rounded p-1.5">',m=>{const t=[...m.querySelectorAll('input[type=checkbox]:checked')].map(i=>i.value),n=m.querySelector('#tgN').value.trim();if(n)t.push(n);cp.tags=t;const e=a.plays.find(p=>p.id===cp.id);if(e)e.tags=t;a.savePlays();toast('Tags saved')})}
+function tagRow(a){const l=$('cbpLib');if(!l)return;let r=$('cbpTagRow');if(!r){r=document.createElement('div');r.id='cbpTagRow';r.className='text-xs flex flex-wrap gap-1';l.appendChild(r)}
+ const used=[...new Set([].concat(...a.plays.map(p=>p.tags||[])))];r.innerHTML=used.length?'<span class="text-slate-400 mr-1">Tags</span>'+used.map(t=>`<button data-t="${esc(t)}" class="bg-slate-800 border border-slate-700 rounded-full px-2 py-0.5">${esc(t)}</button>`).join(''):'';
+ r.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{$('cbpFS').value=b.dataset.t;$('cbpFS').dispatchEvent(new Event('input'))});
+ if(!$('cbpMaster')){const b=document.createElement('button');b.id='cbpMaster';b.type='button';b.className='bg-slate-800 border border-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold';b.textContent='Master defaults';b.onclick=()=>master(a);l.querySelector('.flex').appendChild(b)}}
+const oRG=P.renderFolderGrid;P.renderFolderGrid=function(){oRG.call(this);tagRow(this)};
+// ===== Master defaults for new plays
+const COV=[['Cover2','Cover 2'],['Cover3','Cover 3'],['Cover4','Cover 4'],['Cover1','Cover 1'],['Cover0','Cover 0']];
+function offOptions(a){(a.customOffenseFormations||[]).forEach(f=>{OFFENSE_PRESETS['sf_'+f.id]=clone(f.players)});return [['spread2x2','2x2 Spread'],['tripsRight','3x1 Trips Right'],['blank','Blank offense']].concat(PERS.map(n=>['pers'+n,n+' Personnel']),(a.customOffenseFormations||[]).map(f=>['sf_'+f.id,'Saved: '+f.name]))}
+const opt=(arr,v)=>arr.map(x=>`<option value="${esc(x[0])}" ${x[0]===v?'selected':''}>${esc(x[1])}</option>`).join('');
+function master(a){const m=LS('cbp_master')||{};modal(`<b>Master defaults for New Play</b><div class="text-slate-400">Offensive formation</div><select id="mO" class="w-full bg-slate-800 rounded p-1.5">${opt(offOptions(a),m.off)}</select><div class="text-slate-400">Defensive front</div><select id="mF" class="w-full bg-slate-800 rounded p-1.5">${opt(Object.entries(FR),m.front)}</select><div class="text-slate-400">Coverage</div><select id="mC" class="w-full bg-slate-800 rounded p-1.5">${opt(COV,m.cov)}</select><div class="text-slate-400">Hash</div><select id="mH" class="w-full bg-slate-800 rounded p-1.5">${opt([['middle','Middle'],['left','Left hash'],['right','Right hash']],m.hash)}</select>`,d=>{LS('cbp_master',{off:d.querySelector('#mO').value,front:d.querySelector('#mF').value,cov:d.querySelector('#mC').value,hash:d.querySelector('#mH').value});toast('Master defaults saved')})}
+function syncNew(a){const m=LS('cbp_master')||{},o=$('modalOffensePreset'),f=$('modalDefensePreset');o.innerHTML=opt(offOptions(a),m.off);f.innerHTML=opt(Object.entries(FR).concat([['blank','Blank (no defense)']]),m.front)}
+// ===== Snap, guides, on/off the ball
+const S={snap:true,grid:false};
+const setBadge=t=>{const b=$('cbpBadge');if(b)b.textContent=t?'['+t+']':''};
+function snapDrag(a){const d=a.draggedPlayer,p=d.player,w=a.canvas.width,h=a.canvas.height,T=10,px=a.getAdjustedX(p.x,w),py=p.y*h;a.guides=[];let b='';
+ if(p.onBall==='on'){p.y=.58;b='On LOS'}else if(p.onBall!=='off'&&Math.abs(py-.58*h)<T){p.y=.58;b='On LOS'}else for(let d=0;d<=100;d+=10){const yy=.58-(d-(a.spot==null?20:a.spot))/100;if(Math.abs(py-yy*h)<T){p.y=yy;b='On the '+(d<=50?d:100-d)+' yd line';break}}
+ const os=(a.currentPlay.offense||[]).concat(a.currentDefense||[]).filter(o=>o!==p);
+ for(const o of os){const ox=a.getAdjustedX(o.x,w);if(Math.abs(px-ox)<T){p.x=o.x;a.guides.push(['v',ox,Math.min(p.y*h,o.y*h)-14,Math.max(p.y*h,o.y*h)+14]);b='Aligned with '+o.label;break}}
+ for(const o of os){if(p.onBall==='on')break;if(Math.abs(p.y*h-o.y*h)<T&&!(p.y===.58)){p.y=o.y;const ox=a.getAdjustedX(o.x,w),qx=a.getAdjustedX(p.x,w);a.guides.push(['h',o.y*h,Math.min(ox,qx)-14,Math.max(ox,qx)+14]);b=b||'Same depth as '+o.label;break}}
+ if(S.grid){p.x=Math.round(p.x*53.3)/53.3;p.y=Math.round(p.y*100)/100}setBadge(b)}
+const oM=P.handlePointerMove;P.handlePointerMove=function(e){oM.call(this,e);if(S.snap&&this.draggedPlayer)snapDrag(this);
+ if(S.grid&&this.draggedRouteNodeIndex!=null&&this.selectedPlayerObj){const q=this.selectedPlayerObj.player.route[this.draggedRouteNodeIndex];if(q){q.x=Math.round(q.x*53.3)/53.3;q.y=Math.round(q.y*100)/100;this.render()}}};
+const oU=P.handlePointerUp;P.handlePointerUp=function(){this.guides=null;oU.call(this);setBadge('')};
+const oI=P.inspectPlayer;P.inspectPlayer=function(sd,p){oI.call(this,sd,p);document.querySelectorAll('#cbpOB [data-ob]').forEach(b=>b.classList.toggle('bg-amber-600',(p.onBall||'auto')===b.dataset.ob));setBadge(p.y===.58?'On LOS':'')};
+// ===== Read lines, guides, key lines (render)
+const oR=P.render;P.render=function(){oR.call(this);if(!this.ctx||!this.canvas)return;const x=this.ctx,w=this.canvas.width,h=this.canvas.height;x.save();
+ if(this.guides)this.guides.forEach(g=>{x.strokeStyle='rgba(96,165,250,.8)';x.lineWidth=1;x.setLineDash([4,4]);x.beginPath();if(g[0]==='v'){x.moveTo(g[1],g[2]);x.lineTo(g[1],g[3])}else{x.moveTo(g[2],g[1]);x.lineTo(g[3],g[1])}x.stroke()});
+ const os=(this.currentPlay&&this.currentPlay.offense)||[];(this.currentDefense||[]).forEach(d=>{if(!d.keyId)return;const o=os.find(q=>q.id===d.keyId);if(!o)return;x.strokeStyle='#f59e0b';x.lineWidth=2;x.setLineDash([7,5]);x.beginPath();x.moveTo(this.getAdjustedX(d.x,w),d.y*h);x.lineTo(this.getAdjustedX(o.x,w),o.y*h);x.stroke();x.setLineDash([]);x.fillStyle='#f59e0b';x.font='bold 9px sans-serif';x.fillText('KEY',(this.getAdjustedX(d.x,w)+this.getAdjustedX(o.x,w))/2+4,(d.y*h+o.y*h)/2)});x.restore()};
+const oD=P.handlePointerDown;P.handlePointerDown=function(e){if(this.pendingKey){const r=this.canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,w=this.canvas.width,h=this.canvas.height,d=this.pendingKey;this.pendingKey=null;
+  const o=(this.currentPlay.offense||[]).find(p=>Math.hypot(this.getAdjustedX(p.x,w)-x,p.y*h-y)<=24);if(o){this.saveHistoryState();d.keyId=o.id;toast(d.label+' now keys '+o.label);this.render()}return}return oD.call(this,e)};
+// ===== Curve a route (Catmull-Rom through its nodes; 2-point routes get a bend first)
+C.smooth=function(a,p){if(!p.route||p.route.length<2)return;a.saveHistoryState();let pts=p.route.filter(q=>!q.rel);
+ if(pts.length===2){const A=pts[0],B=pts[1],dx=B.x-A.x,dy=B.y-A.y;pts=[A,{x:(A.x+B.x)/2-dy*.18,y:(A.y+B.y)/2+dx*.18},B]}
+ const g=i=>pts[Math.max(0,Math.min(pts.length-1,i))],o=[];const f=(a0,a1,a2,a3,t)=>.5*(2*a1+(-a0+a2)*t+(2*a0-5*a1+4*a2-a3)*t*t+(-a0+3*a1-3*a2+a3)*t*t*t);
+ for(let i=0;i<pts.length-1;i++)for(let k=0;k<6;k++){const t=k/6,a0=g(i-1),a1=g(i),a2=g(i+1),a3=g(i+2);o.push({x:f(a0.x,a1.x,a2.x,a3.x,t),y:f(a0.y,a1.y,a2.y,a3.y,t)})}
+ o.push({x:pts[pts.length-1].x,y:pts[pts.length-1].y});p.route=o;a.render()};
+// ===== Voice: "put the slot 7 yards from the left tackle"
+const NW={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,fifteen:15,twenty:20};
+const REF={tackle:p=>/^(LT|RT)$/.test(p.label),guard:p=>/^(LG|RG)$/.test(p.label),center:p=>p.label==='C',quarterback:p=>p.label==='QB',qb:p=>p.label==='QB','tight end':p=>/^(TE|Y)$/.test(p.role)||p.label==='Y','running back':p=>p.role==='RB'};
+function voicePlace(a,t){t=t.toLowerCase().replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty)\b/g,m=>NW[m]);
+ const m=t.match(/(\d+(?:\.\d+)?)\s*(?:yards?|yds?)\s*(outside|inside|behind|off|away)?\s*(?:of|from)?\s*(?:the\s+)?(left|right)?\s*(tackle|guard|center|quarterback|qb|tight end|running back|ball)/);if(!m||!a.currentPlay)return false;
+ const yd=+m[1],dir=m[2]||'outside',side=m[3],word=m[4],os=a.currentPlay.offense||[],sm=t.match(/(?:put|move|line up|align|place|set)\s+(?:the\s+)?(x|z|y|slot|rb|tight end|receiver|\w+)/);
+ let sub=null;if(sm){const w=sm[1];sub=os.find(p=>p.label.toLowerCase()===w||(p.role||'').toLowerCase()===w||(w==='tight end'&&/^(TE|Y)$/.test(p.role)))}
+ if(!sub&&a.selectedPlayerObj&&a.selectedPlayerObj.side==='offense')sub=a.selectedPlayerObj.player;
+ if(!sub){out('Select a player first, or say "move the slot 7 yards from the left tackle".');return true}
+ let ref=word==='ball'?{x:.5,y:.58}:os.filter(p=>p!==sub&&REF[word](p)).sort((u,v)=>Math.abs(u.x-(side==='left'?0:side==='right'?1:sub.x))-Math.abs(v.x-(side==='left'?0:side==='right'?1:sub.x)))[0];
+ if(!ref){out('I could not find a '+word+' on the field.');return true}
+ const s=side?(side==='left'?-1:1):(ref.x<.5?-1:1),cl=v=>Math.max(.02,Math.min(.98,v));a.saveHistoryState();
+ if(dir==='behind'){sub.x=cl(ref.x);sub.y=cl(ref.y+yd/100)}else{sub.x=cl(ref.x+(dir==='inside'?-s:s)*yd/53.3);if(Math.abs(sub.y-.58)<.03)sub.y=.58}
+ a.checkFormationValidity();a.render();out(`${sub.label} placed ${yd} yds ${dir==='behind'?'behind':dir} ${ref.label||'the ball'}`);return true}
+const oSay=P.sayCall;P.sayCall=function(t){if(voicePlace(this,t))return;return oSay.call(this,t)};
+// ===== AI helper: football knowledge base (routes, defense calls, zones, techniques, positions)
+Object.assign(C.D.pos,{DE:['DE','Defensive end: sets the edge, rushes the passer, contains the run.'],DT:['DT / NT','Interior lineman: controls gaps; the nose tackle lines up head-up on the center in odd fronts.'],MLB:['MLB / Mike','Middle linebacker: communicates the defense, fills the A/B gaps, covers hooks.'],OLB:['OLB / SAM / WILL','Outside linebacker: edge setter, flat coverage, blitzer.'],CB:['CB','Cornerback: covers the outside receiver in man or zone.'],FS:['FS / SS','Safeties: deep help and run support. Free safety plays the middle; strong safety plays toward the strength.'],K:['K / P / LS / H','Kicker, punter, long snapper, holder.'],Gun:['Gunner','Wide punt-coverage player who releases past the jammer to the returner.'],Jam:['Jammer','Return-team player who disrupts the gunner at the line.'],KR:['Returner','Receives kicks or punts. Two deep on kickoff returns (LKR, RKR).']});
+Object.assign(C.D.tech,{stalk:['Stalk block','Receiver blocks a defensive back by staying square and sustaining.'],reach:['Reach block','Lineman steps to get outside leverage on a shaded defender.'],combo:['Combo block','Two linemen double a defender, then one climbs to the linebacker.'],trap:['Pull and trap','Guard pulls and blocks a defender who was left unblocked.'],zr:['Zone read','QB reads the backside end: hand off if he crashes, keep if he squeezes.'],rpo:['RPO','Run-pass option: QB reads a defender to choose handoff or quick pass.'],boot:['Bootleg','QB fakes the handoff and rolls out opposite the run flow.'],bump:['Bump and run','Press corner jams at the line then runs with the receiver.'],match:['Match coverage','Zone that converts to man once receivers declare their routes.'],kyx:['Keying','A defender reads one offensive player (guard, back, tight end) and reacts to his movement.']});
+function kb(){const d=LS('cbp_dict')||{},o=[];Object.entries(C.R).forEach(([id,r])=>{const e=d['r_'+id]||[];o.push([e[0]||r[0],(e[1]||r[3])+' Best vs: '+(e[3]||r[4])+' Typical break depth: '+(e[2]||r[1])+' yds.'])});['defense','personnel','zones','tech','pos'].forEach(t=>Object.entries(C.D[t]).forEach(([k,v])=>{const e=d[t+'_'+k]||v;o.push([e[0],e[1]])}));return o}
+const oAI=P.getAIMentorReply;P.getAIMentorReply=function(q){const ql=q.toLowerCase(),stop=['the','what','does','how','who','and','for','are','you','can','mean','with','explain','define','tell','about','which','when'],toks=ql.replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>2&&!stop.includes(w));
+ const sc=kb().map(([n,def])=>{const nl=n.toLowerCase();let s=0;if(ql.includes(nl))s+=10;toks.forEach(w=>{if(nl.includes(w))s+=3;else if(def.toLowerCase().includes(w))s+=1});return[s,n,def]}).filter(x=>x[0]>=3).sort((a,b)=>b[0]-a[0]).slice(0,2);
+ const strat=/attack|beat|against|\bvs\b|stop|counter|install/.test(ql);if(sc.length&&!(strat&&sc[0][0]<10))return sc.map(x=>`<strong>${x[1]}:</strong> ${x[2]}`).join('<br><br>');
+ const r=oAI.call(this,q);return r.startsWith('I can help')?'I know routes, defensive calls and fronts, zones, techniques and positions. Try "what is a sluggo", "what is a 3 technique", or "what does a nickel do".':r};
+// ===== wiring
+document.addEventListener('DOMContentLoaded',()=>{const a=window.app,cv=$('fieldCanvas');
+ let pen=0,palm=false;cv.addEventListener('pointerdown',e=>{if(e.pointerType==='pen')pen=Date.now()},true);
+ cv.addEventListener('touchstart',e=>{const t=e.changedTouches[0];if(t.touchType==='stylus'){pen=Date.now();palm=false;return}if(e.touches.length>1){e.stopImmediatePropagation();e.preventDefault();return}
+  palm=a.interactionMode==='draw'&&(Date.now()-pen<15000||(t.radiusX||0)>=25);if(palm){e.stopImmediatePropagation();e.preventDefault()}},true);
+ cv.addEventListener('touchmove',e=>{if(palm){e.stopImmediatePropagation();e.preventDefault()}},true);cv.addEventListener('touchend',e=>{if(palm)e.stopImmediatePropagation();if(!e.touches.length)palm=false},true);
+ const bar=$('cbpSay')&&$('cbpSay').parentNode;
+ if(bar){bar.insertAdjacentHTML('beforeend','<select id="cbpPers" class="bg-slate-800 rounded px-1 py-1"><option value="">Personnel…</option>'+PERS.map(n=>`<option value="${n}">${n} personnel</option>`).join('')+'</select><label><input id="cbpSnap" type="checkbox" checked> snap</label><label><input id="cbpGrid" type="checkbox"> grid</label>');
+  $('cbpPers').onchange=e=>{const n=e.target.value;if(!n||!a.currentPlay)return;a.saveHistoryState();a.currentPlay.offense=pers(n);a.currentPlay.personnel=n;a.deselectPlayer();a.checkFormationValidity();a.render();e.target.value=''};
+  $('cbpSnap').onchange=e=>S.snap=e.target.checked;$('cbpGrid').onchange=e=>S.grid=e.target.checked;
+  $('cbpMic').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){out('Voice needs Chrome or Safari. Type the call instead.');return}const r=new SR();r.lang='en-US';r.interimResults=false;r.onstart=()=>out('Listening…');
+   r.onresult=e=>{const t=e.results[0][0].transcript;$('cbpSay').value=t;out('Heard: '+t);a.sayCall(t)};r.onerror=e=>out(e.error==='not-allowed'||e.error==='service-not-allowed'?'Mic blocked. Voice needs https or localhost (not a file opened from Downloads) plus mic permission.':'Voice error: '+e.error);r.start()}}
+ const pn=$('playerInspectorPanel'),h3=pn&&pn.querySelector('h3');if(h3){const d=document.createElement('div');d.id='cbpOB';d.className='space-y-1';d.innerHTML='<div id="cbpBadge" class="text-[10px] text-sky-300 min-h-[14px]"></div><div class="flex gap-1">'+[['on','On the Ball (LOS)'],['off','Off the Ball'],['auto','Auto']].map(x=>`<button type="button" data-ob="${x[0]}" class="flex-1 bg-slate-800 border border-slate-700 rounded text-[10px] py-1">${x[1]}</button>`).join('')+'</div>';h3.after(d);
+  d.onclick=e=>{const b=e.target.closest('[data-ob]');if(!b||!a.selectedPlayerObj)return;const p=a.selectedPlayerObj.player;a.saveHistoryState();p.onBall=b.dataset.ob==='auto'?undefined:b.dataset.ob;if(p.onBall==='on')p.y=.58;a.inspectPlayer(a.selectedPlayerObj.side,p);a.render()}}
+ const nl=$('btnNewLook')||$('btnSaveAsNewCopy');if(nl){const b=document.createElement('button');b.type='button';b.className='bg-sky-700 hover:bg-sky-600 text-white px-3 py-1.5 rounded text-xs font-semibold';b.textContent='Tags';b.onclick=()=>tagModal(a);nl.after(b)}
+ const sl=$('savedFormationsSpawnList');if(sl){const b=document.createElement('button');b.type='button';b.className='w-full bg-slate-700 hover:bg-slate-600 text-white py-1.5 rounded text-[11px] font-bold';b.textContent='Save this alignment as my default (special teams)';
+  b.onclick=()=>{const cp=a.currentPlay;if(!cp||!cp.stKey){toast('Open a Special Teams module first');return}LS('cbp_stdef_'+cp.stKey,{o:clone(cp.offense).map(p=>{delete p.route;return p}),d:clone(a.currentDefense)});toast('Saved. New '+cp.stKey+' plays start from this alignment.')};sl.before(b)}
+ $('btnOpenNewPlayModal').addEventListener('click',()=>syncNew(a));
+ $('btnCreatePlaySubmit').addEventListener('click',()=>setTimeout(()=>{const m=LS('cbp_master')||{};if(m.hash){a.selectedHashPosition=m.hash;a.hashPositionSelect.value=m.hash}if(m.cov){a.selectedCoverage=m.cov;a.coverageSelect.value=m.cov;a.applyCoverageShell()}a.render()},0));
+ const c=document.querySelector('#folderScreen');c&&0});
+})();
+</script>
+<script>
+(function(){
+const P=PlaybookApp.prototype,$=id=>document.getElementById(id);
+const SIT={'1st & 10':[20,10],'Backed Up':[5,10],'2nd & Short':[35,2],'2nd & Long':[30,9],'3rd & Medium':[45,5],'3rd & Long':[40,9],'4th & Short':[55,1],'Red Zone':[80,10],'Goal Line':[97,3],'2-Minute Drill':[40,10]};
+const VIEW={focus:[40,.72],wide:[70,.78],full:[100,.5]};
+// field marks are drawn from the ball spot (yards from your own goal line) so Red Zone / Backed Up / 3rd & Long really move the field
+P.drawFieldMarks=function(w,h){const x=this.ctx,spot=this.spot==null?20:this.spot,dist=this.dist||10,ppy=h/100,Y=d=>h*.58-(d-spot)*ppy;
+ const hx=this.selectedLevel==='highschool'?[.33,.67]:this.selectedLevel==='college'?[.40,.60]:[.465,.535];x.save();
+ x.fillStyle='rgba(100,116,139,.38)';if(Y(110)>0)x.fillRect(0,0,w,Y(110));if(Y(-10)<h)x.fillRect(0,Y(-10),w,h-Y(-10));
+ x.fillStyle='rgba(100,116,139,.13)';x.fillRect(0,Y(110),w,Y(100)-Y(110));x.fillRect(0,Y(0),w,Y(-10)-Y(0));
+ x.setLineDash([]);for(let d=0;d<=100;d+=5){const y=Y(d);if(y<-4||y>h+4)continue;x.strokeStyle=d%100===0?'#6b7280':d%10===0?'#d1d5db':'#e5e7eb';x.lineWidth=d%100===0?3:d%10===0?2:1;x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke()}
+ x.strokeStyle='#9ca3af';x.lineWidth=1.2;for(let d=1;d<100;d++){if(d%5===0)continue;const y=Y(d);if(y<0||y>h)continue;[hx[0]*w,hx[1]*w].forEach(c=>{x.beginPath();x.moveTo(c-5,y);x.lineTo(c+5,y);x.stroke()});[.03*w,.97*w].forEach(c=>{x.beginPath();x.moveTo(c-4,y);x.lineTo(c+4,y);x.stroke()})}
+ if(!document.getElementById('chkShowYardNumbers')||document.getElementById('chkShowYardNumbers').checked){x.font='bold 18px system-ui';x.textBaseline='middle';x.lineWidth=1.5;x.strokeStyle='#9ca3af';
+  for(let d=10;d<=90;d+=10){const y=Y(d);if(y<0||y>h)continue;const t=String(d<=50?d:100-d);x.textAlign='left';x.strokeText(t,w*.05,y);x.textAlign='right';x.strokeText(t,w*.95,y)}
+  x.fillStyle='rgba(75,85,99,.5)';x.font='bold 13px system-ui';x.textAlign='center';[[-5,'END ZONE'],[105,'END ZONE']].forEach(([d,t])=>{const y=Y(d);if(y>0&&y<h)x.fillText(t,w/2,y)})}
+ const los=h*.58;x.strokeStyle='#3b82f6';x.lineWidth=3;x.beginPath();x.moveTo(0,los);x.lineTo(w,los);x.stroke();
+ if(spot+dist<100){x.strokeStyle='#f59e0b';x.lineWidth=3;x.setLineDash([6,6]);x.beginPath();x.moveTo(0,Y(spot+dist));x.lineTo(w,Y(spot+dist));x.stroke();x.setLineDash([])}
+ x.fillStyle='#1d4ed8';x.font='bold 11px system-ui';x.textAlign='left';x.textBaseline='alphabetic';x.fillText('Ball: '+(spot<=50?'own '+spot:'opp '+(100-spot))+(spot+dist>=100?' · goal to go':' · '+dist+' to go'),8,los-6);x.restore()};
+// the canvas is the full true-scale field; the box only shows a window of it (like JustPlay)
+P.applyView=function(){const cv=this.canvas,box=cv.parentElement,r=box.getBoundingClientRect(),v=VIEW[this.view||'focus'],los=.58*cv.height;
+ const base=v[0]===100?0:r.height*v[1]-los,top=Math.min(0,Math.max(r.height-cv.height,base+(this.panY||0)));cv.style.top=top+'px';cv.style.left=Math.max(0,(r.width-cv.width)/2)+'px'};
+P.resizeCanvas=function(){const cv=this.canvas;if(!cv)return;const box=cv.parentElement,r=box.getBoundingClientRect();if(!r.height)return;
+ const ppy=r.height/VIEW[this.view||'focus'][0],ow=this._cw;cv.width=Math.round(53.3*ppy);cv.height=Math.round(100*ppy);cv.style.width=cv.width+'px';cv.style.height=cv.height+'px';
+ if(ow&&ow!==cv.width){const k=cv.width/ow;(this.drawnLines||[]).forEach(l=>l.points.forEach(p=>{p.x*=k;p.y*=k}))}this._cw=cv.width;this.applyView();this.render()};
+P.drawCanvasToCard=function(c,X,Y,W,H){const cv=this.canvas,b=cv.parentElement.getBoundingClientRect(),sx=Math.max(0,-(parseFloat(cv.style.left)||0)),sy=Math.max(0,-(parseFloat(cv.style.top)||0)),sw=Math.min(cv.width-sx,b.width),sh=Math.min(cv.height-sy,b.height),k=Math.min(W/sw,H/sh);c.drawImage(cv,sx,sy,sw,sh,X+(W-sw*k)/2,Y+(H-sh*k)/2,sw*k,sh*k)};
+// remember spot / distance / view per play; keep drawn lines in sync with the field size
+const oR=P.render;P.render=function(){oR.call(this);const cp=this.currentPlay;if(cp&&this.canvas){cp.spot=this.spot;cp.dist=this.dist;cp.view=this.view;cp.lw=this.canvas.width}};
+const oL=P.loadPlay;P.loadPlay=function(id){oL.call(this,id);const f=this.plays.find(p=>p.id===id);if(!f)return;
+ this.spot=f.spot!=null?f.spot:20;this.dist=f.dist||10;this.view=f.view||(f.stKey?'wide':'focus');this.panY=0;
+ if(f.lw&&this.canvas&&this.canvas.width&&f.lw!==this.canvas.width){const k=this.canvas.width/f.lw;(this.drawnLines||[]).forEach(l=>l.points.forEach(p=>{p.x*=k;p.y*=k}))}
+ if($('cbpSpot'))$('cbpSpot').value=this.spot;if($('cbpView'))$('cbpView').value=this.view;this.resizeCanvas()};
+document.addEventListener('DOMContentLoaded',()=>{const a=window.app,sel=$('situationDownSelect');a.spot=20;a.dist=10;a.view='focus';
+ if(![...sel.options].some(o=>o.value==='Backed Up'))sel.insertBefore(new Option('Backed Up (own 5)','Backed Up'),sel.options[1]);
+ const row=$('situationQuarterSelect').parentElement.parentElement;
+ row.insertAdjacentHTML('beforeend','<div><span class="text-slate-400 mr-1">Ball on:</span><input id="cbpSpot" type="number" min="1" max="99" value="20" title="Yards from your own goal line: 20 = own 20, 80 = opponent 20" class="w-14 bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs"></div><div><span class="text-slate-400 mr-1">View:</span><select id="cbpView" class="bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs"><option value="focus">Focus (40 yds)</option><option value="wide">Wide (70 yds)</option><option value="full">Full field</option></select></div>');
+ const set=(s,d)=>{a.spot=s;a.dist=d;$('cbpSpot').value=s;a.saveHistoryState();a.render()};
+ sel.addEventListener('change',()=>{const m=SIT[sel.value];if(m)set(m[0],m[1])});
+ $('cbpSpot').addEventListener('change',e=>{const v=Math.max(1,Math.min(99,+e.target.value||20));set(v,Math.min(a.dist||10,100-v))});
+ $('cbpView').addEventListener('change',e=>{a.view=e.target.value;a.panY=0;a.resizeCanvas()});
+ const box=document.querySelector('.canvas-container');box.addEventListener('wheel',e=>{if(a.view==='full')return;e.preventDefault();a.panY=(a.panY||0)-e.deltaY;a.applyView()},{passive:false})});
+})();
+</script>
+<script>
+(function(){
+const P=PlaybookApp.prototype,$=id=>document.getElementById(id),CC=()=>window.ChalkboardCloud;
+const LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const SKIP=['updatedAt','updatedBy','updatedByName'],sig=p=>JSON.stringify(p,(k,v)=>SKIP.includes(k)?undefined:v),COL=['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2'];
+const toast=t=>window.CBP.toast(t);
+const ov=h=>{const m=document.createElement('div');m.className='fixed inset-0 z-[90] bg-black/75 flex items-center justify-center p-3 text-xs text-white';m.innerHTML=h;document.body.appendChild(m);return m};
+function askTeam(){return new Promise(res=>{const m=ov('<div class="bg-slate-900 border border-slate-600 rounded-xl p-4 w-80 space-y-2"><b>Join or create your team</b><div class="text-slate-400">Everyone on staff types the same Team ID. Pick something hard to guess, e.g. spc-varsity-2026.</div><input id="tI" class="w-full bg-slate-800 rounded p-2" placeholder="team id"><div class="flex justify-end gap-2"><button data-x>Skip (local only)</button><button data-ok class="bg-emerald-600 px-3 py-1 rounded font-bold">Join</button></div></div>');
+ m.querySelector('[data-x]').onclick=()=>{m.remove();res(null)};m.querySelector('[data-ok]').onclick=()=>{const v=m.querySelector('#tI').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,'');if(v.length<4){toast('Use at least 4 letters or numbers');return}m.remove();res(v)}})}
+function pick(a){return new Promise(res=>{const m=ov('');m.className=m.className.replace('bg-black/75','bg-slate-950').replace('items-center','flex-col items-center gap-6');
+ const draw=()=>{const ps=a.profiles||[];m.innerHTML=`<h2 class="text-2xl font-black">Who's coaching?</h2><div class="flex flex-wrap gap-6 justify-center">${ps.map(p=>`<button data-id="${p.id}" class="w-28 text-center"><div class="w-24 h-24 rounded-xl mx-auto flex items-center justify-center text-4xl font-black" style="background:${p.color||COL[0]}">${esc((p.name||'?')[0])}</div><div class="mt-2 text-sm">${esc(p.name)}</div><div class="text-[10px] text-slate-400">${p.role==='head'?'Head coach':'Coach'}</div></button>`).join('')}<button data-add class="w-28 text-center"><div class="w-24 h-24 rounded-xl mx-auto flex items-center justify-center text-4xl text-slate-400 border-2 border-dashed border-slate-600">+</div><div class="mt-2 text-sm text-slate-300">Add profile</div></button></div>`};draw();
+ m.onclick=async e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.add!==undefined){const n=prompt('Coach name (e.g. Head Coach, Coach Baxter)');if(!n||!n.trim())return;const ps=a.profiles||[],p={id:'pf_'+Date.now(),name:n.trim(),role:ps.length?'coach':'head',color:COL[ps.length%COL.length]};try{await CC().saveProfile(a.teamId,p)}catch(x){toast('Could not save profile: '+x.code);return}a.profiles=ps.concat(p);draw();return}
+  const p=(a.profiles||[]).find(x=>x.id===b.dataset.id);if(p){a.profile=p;LS('cbp_prof_'+a.me,p.id);m.remove();res(p)}}})}
+const vis=(a,r)=>r.scope!=='personal'||r.owner===(a.profile||{}).id||((a.profile||{}).role==='head'&&r.submit&&r.submit.status==='pending');
+function fix(a,p){if(!p.scope&&p.category==='Sandbox'){p.scope='personal';p.owner=a.profile.id;p.author=a.profile.name}if(!p.scope)p.scope='team';if(p.scope==='personal'&&p.category!=='Sandbox')p.category='Sandbox'}
+function refresh(a){if(!$('folderScreen').classList.contains('hidden')){a.renderFolderGrid();const pl=$('folderPlayListPanel');if(pl&&!pl.classList.contains('hidden'))a.showFolderPlayList(a.selectedCategoryFilter)}if(a.populatePlaySelect&&a.playSelect)a.populatePlaySelect()}
+function rebuild(a){const local=new Map(a.plays.map(p=>[p.id,p])),next=[];
+ a.cloud.forEach(r=>{if(!vis(a,r))return;const l=local.get(r.id);if(l&&a.sent[r.id]!==undefined&&sig(l)!==a.sent[r.id]){next.push(l);return}next.push(JSON.parse(JSON.stringify(r)));a.sent[r.id]=sig(r)});
+ local.forEach((l,id)=>{if(!a.cloud.has(id)&&a.sent[id]===undefined)next.push(l)});
+ Object.keys(a.sent).forEach(id=>{const r=a.cloud.get(id);if(r&&!vis(a,r))delete a.sent[id]});
+ a.plays=next;if(!a.folders.includes('Sandbox'))a.folders.push('Sandbox');a.plays.forEach(p=>{if(p.category&&!a.folders.includes(p.category))a.folders.push(p.category)});a.updateCategoryDropdowns&&a.updateCategoryDropdowns();
+ const cp=a.currentPlay;if(cp&&a.canvas&&!a.appScreen.classList.contains('hidden')){const r=a.plays.find(p=>p.id===cp.id);a._seen=a._seen||{};
+  if(r&&r.updatedBy&&r.updatedBy!==a.me&&sig(r)!==a._seen[r.id]&&Date.now()-(a._edit||0)>3000){a.loadPlay(r.id);toast('Updated live by '+(r.updatedByName||'another coach'))}}
+ refresh(a);badge(a)}
+function flush(a){if(!a.syncOn)return;const C=CC();
+ a.plays.forEach(p=>{fix(a,p);const s=sig(p);if(a.sent[p.id]===s)return;a.sent[p.id]=s;const o=JSON.parse(JSON.stringify(p));o.updatedAt=Date.now();o.updatedBy=a.me;o.updatedByName=a.profile.name;C.savePlay(a.teamId,o).catch(e=>{delete a.sent[p.id];toast('Save failed: '+(e.code||e.message))})});
+ Object.keys(a.sent).forEach(id=>{if(!a.plays.some(p=>p.id===id)&&a.cloud.has(id)){delete a.sent[id];C.deletePlay(a.teamId,id).catch(()=>{})}})}
+const schedule=a=>{clearTimeout(a._ct);a._ct=setTimeout(()=>flush(a),500)};
+const oSP=P.savePlays;P.savePlays=function(){if(!this.syncOn)return oSP.call(this);try{localStorage.setItem('chalkboard_plays_store_'+this.profileKey,JSON.stringify(this.plays))}catch(e){}schedule(this)};
+const oH=P.saveHistoryState;P.saveHistoryState=function(){this._edit=Date.now();return oH.call(this)};
+const oLP=P.loadPlay;P.loadPlay=function(id){oLP.call(this,id);const e=this.plays.find(p=>p.id===id);this._seen=this._seen||{};if(e)this._seen[id]=sig(e)};
+function badge(a){if(!a.profile)return;const t=`${a.profile.name} · Team ${a.teamId}`,s=$('folderScreenSubtitle'),c=$('coachTeamSubtext');if(s)s.textContent=t+' · live';if(c)c.textContent=t;const b=$('cbpTeam');if(b){const n=[...a.cloud.values()].filter(p=>p.submit&&p.submit.status==='pending'&&vis(a,p)).length;b.textContent='Team'+(n?` (${n})`:'')}}
+async function teamStart(a,user){const C=CC();if(!C||!user)return;let tid=await C.userTeam(user.uid).catch(()=>null);
+ if(!tid){tid=await askTeam();if(!tid)return;await C.joinTeam(user.uid,user.email,tid)}
+ a.teamId=tid;a.me=user.uid;a.cloud=new Map();a.sent={};a.profiles=[];
+ await new Promise(res=>{let f=true;a._unP=C.listenProfiles(tid,l=>{a.profiles=l;if(f){f=false;res()}},e=>{toast('Profiles: '+e.code);res()})});
+ const last=LS('cbp_prof_'+a.me);a.profile=null;await pick(a);
+ await new Promise(res=>{let f=true;a._unT=C.listenPlays(tid,l=>{a.cloud=new Map(l.map(p=>[p.id,p]));if(f){f=false;if(!l.length&&a.plays.length&&confirm('Your team playbook is empty. Upload your '+a.plays.length+' existing plays as team plays?')){a.plays.forEach(p=>{if(!p.scope)p.scope='team'})}else a.plays=[];a.syncOn=true;rebuild(a);schedule(a);res()}else rebuild(a)},e=>{toast('Sync error: '+(e.code||e.message));res()})});
+ a.renderFolderGrid()}
+const oLF=P.launchFolderScreen;P.launchFolderScreen=async function(n,l,t,u){await oLF.call(this,n,l,t,u);if(u){try{await teamStart(this,u)}catch(e){toast('Team sync unavailable: '+(e.code||e.message))}}};
+const oLO=P.logout;P.logout=function(){clearTimeout(this._ct);try{this._unT&&this._unT();this._unP&&this._unP()}catch(e){}this.syncOn=false;this.profile=null;return oLO.call(this)};
+function panel(a){const m=ov('');const draw=()=>{const head=a.profile.role==='head',pend=[...a.cloud.values()].filter(p=>p.submit&&p.submit.status==='pending'&&vis(a,p));
+ m.innerHTML=`<div class="bg-slate-900 border border-slate-600 rounded-xl p-4 w-96 max-h-[90vh] overflow-y-auto space-y-2"><b>Team ${esc(a.teamId)}</b><div class="text-slate-400">You are ${esc(a.profile.name)} (${a.profile.role==='head'?'head coach':'coach'})</div><button data-sw class="bg-slate-700 px-2 py-1 rounded">Switch profile</button><div class="font-bold pt-2">Waiting for approval</div>${pend.length?pend.map(p=>`<div class="flex gap-1 items-center"><span class="flex-1 truncate">${esc(p.name)} <span class="text-slate-400">· ${esc(p.submit.by)}</span></span>${head?`<button data-ap="${p.id}" class="bg-emerald-700 px-2 py-0.5 rounded">Approve</button><button data-rj="${p.id}" class="bg-slate-700 px-2 py-0.5 rounded">Return</button>`:''}</div>`).join(''):'<div class="text-slate-500">Nothing waiting.</div>'}<div class="font-bold pt-2">Coaches</div>${(a.profiles||[]).map(p=>`<div class="flex justify-between"><span>${esc(p.name)}</span>${head&&p.id!==a.profile.id?`<button data-hd="${p.id}" class="text-amber-300">${p.role==='head'?'Make coach':'Make head'}</button>`:`<span class="text-slate-500">${p.role}</span>`}</div>`).join('')}<div class="text-right pt-2"><button data-x>Close</button></div></div>`};draw();
+ m.onclick=async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;if(d.x!==undefined){m.remove();return}if(d.sw!==undefined){m.remove();await pick(a);rebuild(a);schedule(a);return}
+  const pl=a.plays.find(p=>p.id===(d.ap||d.rj));
+  if(d.ap&&pl){const f=prompt('Move into which team folder?\n'+a.folders.filter(x=>x!=='Sandbox').join(', '),'Passing');if(!f)return;if(!a.folders.includes(f))a.folders.push(f);pl.scope='team';pl.category=f.trim();pl.approvedBy=a.profile.name;delete pl.submit;a.savePlays();rebuild(a);toast('Approved: now on the team playbook')}
+  else if(d.rj&&pl){pl.submit.status='returned';a.savePlays();toast('Returned to '+pl.submit.by)}
+  else if(d.hd){const p=(a.profiles||[]).find(x=>x.id===d.hd);if(p){p.role=p.role==='head'?'coach':'head';await CC().saveProfile(a.teamId,p)}}
+  draw()}}
+const oRG=P.renderFolderGrid;P.renderFolderGrid=function(){oRG.call(this);const l=$('cbpLib');if(this.syncOn&&l&&!$('cbpTeam')){const b=document.createElement('button');b.id='cbpTeam';b.type='button';b.className='bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold';b.textContent='Team';b.onclick=()=>panel(this);l.querySelector('.flex').appendChild(b);badge(this)}};
+document.addEventListener('DOMContentLoaded',()=>{const a=window.app,c=$('btnSaveAsNewCopy');
+ if(c){const b=document.createElement('button');b.type='button';b.className='bg-teal-700 hover:bg-teal-600 text-white px-3 py-1.5 rounded text-xs font-semibold';b.textContent='Push to Master Team Playbook';
+  b.onclick=()=>{const cp=a.currentPlay;if(!a.syncOn){toast('Sign in and join a team first');return}if(!cp)return;const e=a.plays.find(p=>p.id===cp.id);
+   if(!e||e.scope!=='personal'){toast(e&&e.scope==='team'?'This play is already on the team playbook':'Save it in your Sandbox folder first');return}
+   e.submit={status:'pending',by:a.profile.name,at:Date.now()};cp.submit=e.submit;a.savePlays();toast('Sent to the head coach for approval')};c.after(b)}
+ $('btnOpenNewPlayModal').addEventListener('click',()=>{if(a.syncOn&&$('modalCategory'))$('modalCategory').value='Sandbox'})});
+})();
+</script>
+<script>
+(function(){
+const P=PlaybookApp.prototype,$=id=>document.getElementById(id);
+const LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+const S=Object.assign({scale:100,auto:true},LS('cbp_icon')||{}),AUTO={focus:1,wide:.78,full:.58};
+const k=a=>(S.scale/100)*(S.auto?AUTO[a.view||'focus']:1);
+const o=P.renderPlayerIcon;
+P.renderPlayerIcon=function(x,y,l,sh,c,sel){const f=k(this);this.hitR=Math.max(10,22*f);if(Math.abs(f-1)<.01)return o.call(this,x,y,l,sh,c,sel);
+ this.ctx.save();this.ctx.translate(x,y);this.ctx.scale(f,f);this.ctx.translate(-x,-y);o.call(this,x,y,l,sh,c,sel);this.ctx.restore()};
+document.addEventListener('DOMContentLoaded',()=>{const a=window.app,b=document.querySelector('button[onclick*="saveDefaultPlayerSettings"]');if(!b)return;
+ const d=document.createElement('div');d.className='space-y-1 pt-1';
+ d.innerHTML=`<label class="block text-[10px] text-slate-400">Icon size: <span id="cbpIsv">${S.scale}</span>%</label><input id="cbpIs" type="range" min="50" max="160" step="5" value="${S.scale}" class="w-full accent-amber-500"><label class="flex items-center gap-2 text-[10px] text-slate-300"><input id="cbpIa" type="checkbox" ${S.auto?'checked':''}> Shrink automatically in Wide / Full view</label>`;
+ b.before(d);const save=()=>{LS('cbp_icon',S);a.render()};
+ $('cbpIs').oninput=e=>{S.scale=+e.target.value;$('cbpIsv').textContent=S.scale;save()};$('cbpIa').onchange=e=>{S.auto=e.target.checked;save()}});
 })();
 </script>
 </body>
