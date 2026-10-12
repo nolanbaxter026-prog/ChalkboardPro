@@ -2428,7 +2428,7 @@ applyExpandedRoute(id) {
                     this.formationWarningBanner.classList.add('hidden');
                     return;
                 }
-                const losPlayers = offense.filter(p => p.y <= 0.61 && p.y >= 0.55);
+                const losPlayers = offense.filter(p => p.y <= 0.592 && p.y >= 0.55);
                 let warnings = [];
                 if (losPlayers.length < 7 && offense.length >= 7) {
                     warnings.push(`Illegal Formation: Fewer than 7 players on Line of Scrimmage (${losPlayers.length}/7).`);
@@ -2478,13 +2478,15 @@ applyExpandedRoute(id) {
                     Cover3: { fsY: 0.15, ssY: 0.40, cbY: 0.16, cbX: [0.10, 0.90] },
                     Cover4: { fsY: 0.20, ssY: 0.20, cbY: 0.20, safetyX: [0.32, 0.68], cbX: [0.08, 0.92] }
                 };
-                const shell = shells[this.selectedCoverage];
-                if (!shell) return;
+                const raw = shells[this.selectedCoverage];
+                if (!raw) return;
+                const sc = v => 0.58 - (0.58 - v) * 0.33;
+                const shell = Object.assign({}, raw, { fsY: sc(raw.fsY), ssY: sc(raw.ssY), cbY: sc(raw.cbY) });
                 if (fs) { fs.y = shell.fsY; if (shell.safetyX) fs.x = shell.safetyX[0]; }
                 if (ss) { ss.y = shell.ssY; if (shell.safetyX) ss.x = shell.safetyX[1]; }
                 if (cb1) { cb1.y = shell.cbY; if (shell.cbX) cb1.x = shell.cbX[0]; }
                 if (cb2) { cb2.y = shell.cbY; if (shell.cbX) cb2.x = shell.cbX[1]; }
-                if (nb) { nb.y = Math.max(shell.cbY - 0.04, 0.30); }
+                if (nb) { nb.y = Math.max(shell.cbY, 0.53); }
                 this.autoAlignCoverageIfNeeded();
             }
             addOffenseFormation(presetKey) {
@@ -3641,7 +3643,7 @@ if (this.pendingDrag && !this.pendingDrag.dragging) {
                     if (this.selectedHashPosition === 'right') hashOffset = 0.15;
                     const p = this.selectedPlayerObj.player;
                     const idx = this.draggedRouteNodeIndex;
-                    p.route[idx].x = Math.max(0.02, Math.min(0.98, (x / w) - hashOffset));
+                    p.route[idx].x = Math.max(0.01 - hashOffset, Math.min(0.99 - hashOffset, (x / w) - hashOffset));
                     p.route[idx].y = Math.max(0.02, Math.min(0.98, y / h));
                     this.render();
                 } else if (this.draggedPlayer) {
@@ -3650,7 +3652,7 @@ if (this.pendingDrag && !this.pendingDrag.dragging) {
                     if (this.selectedHashPosition === 'right') hashOffset = 0.15;
                     const targetNormX = (x - this.dragOffset.x) / w - hashOffset;
                     const targetNormY = (y - this.dragOffset.y) / h;
-                    const clampedX = Math.max(0.02, Math.min(0.98, targetNormX));
+                    const clampedX = Math.max(0.01 - hashOffset, Math.min(0.99 - hashOffset, targetNormX));
                     const clampedY = Math.max(0.02, Math.min(0.98, targetNormY));
                     // Smooth damping (lerp) - further reduced sensitivity
                     this.draggedPlayer.player.x += (clampedX - this.draggedPlayer.player.x) * this.dragSmoothing;
@@ -4238,6 +4240,16 @@ this.pendingDrag = null;
     </script>
 <script>
 (function(){
+// The field is now true scale (1 yard = .01), but the built-in alignments were drawn for a squeezed field. Convert them once.
+const LOS=.58,D=y=>LOS-(LOS-y)*.33,B=y=>y>LOS+.02?LOS+(y-LOS)*.55:y;
+Object.values(DEFENSIVE_FRONTS).forEach(a=>a.forEach(p=>{p.y=D(p.y)}));
+Object.values(STUNT_CONFIGS).forEach(c=>Object.values(c.tracks||{}).forEach(t=>t.forEach(q=>{q.y=D(q.y)})));
+const fixO=list=>list.forEach(p=>{if(p.role==='QB'||p.role==='RB'){p.y=B(p.y);(p.route||[]).forEach(q=>{if(q.y>LOS+.02)q.y=B(q.y)})}});
+Object.values(OFFENSE_PRESETS).forEach(fixO);DEFAULT_PLAYS.forEach(p=>fixO(p.offense));
+})();
+</script>
+<script>
+(function(){
 const P=PlaybookApp.prototype,$=id=>document.getElementById(id);
 const LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 // ROUTES: [name, default break depth (yds), steps(D)->[[outToSideline,upfield]...], definition, best vs / against]. Edit depth, text in Settings > Routes.
@@ -4378,7 +4390,7 @@ const oLoad=P.loadPlay;P.loadPlay=function(id){oLoad.call(this,id);const f=this.
 const oMove=P.handlePointerMove;P.handlePointerMove=function(e){if(e.buttons===0&&(this.draggedPlayer||this.pendingDrag||this.draggedRouteNodeIndex!==null)){this.handlePointerUp();return}return oMove.call(this,e)};
 window.addEventListener('mouseup',()=>{const a=window.app;if(a)a.handlePointerUp()});window.addEventListener('touchcancel',()=>{const a=window.app;if(a)a.handlePointerUp()});
 window.addEventListener('blur',()=>{const a=window.app;if(a)a.handlePointerUp()});
-document.addEventListener('DOMContentLoaded',()=>{const a=window.app;
+window.addEventListener('DOMContentLoaded',()=>{const a=window.app;
  const st=document.createElement('style');st.textContent='html.light{filter:invert(1) hue-rotate(180deg)}html.light canvas,html.light img,html.light video{filter:invert(1) hue-rotate(180deg)}';document.head.appendChild(st);
  const ai=document.querySelector('button[onclick*="toggleAIMentor"]');if(ai){const g=document.createElement('button');g.type='button';g.title='Settings & Dictionary';g.className='bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1.5 rounded-lg text-xs';g.innerHTML='<i class="fa-solid fa-gear"></i>';g.onclick=()=>open(a,'settings');ai.before(g)}
  const bar=document.createElement('div');bar.className='fixed bottom-2 left-2 z-40 bg-slate-900/95 border border-slate-700 rounded-lg p-2 text-xs flex flex-wrap items-center gap-1 max-w-[95vw]';
@@ -4429,7 +4441,7 @@ const DEFPICK=[['Over','Over'],['Under','Under'],['Okie','Okie'],['Tite','Tite']
 const DK=['O','U','OK','TI','BE','BU','MU','C0','C1','C2','C3S','C3W','C4','C24','C42','C3B','C3Z'];
 function fillPick(){const s=$('cbpPick');if(!s)return;const d=LS('cbp_dict')||{},base={O:1,U:1};const h='<option value="">Defense ID call…</option>'+DEFPICK.map((p,i)=>{const e=d['defense_'+DK[i]];return`<option value="${p[1]}">${(e&&e[0])||p[0]}</option>`}).join('');if(s.dataset.h!==h){s.dataset.h=h;s.innerHTML=h}}
 function fillConcepts(){const s=$('cbpCon');if(!s)return;s.innerHTML='<option value="">Concepts…</option>'+Object.keys(LS('cbp_concepts')||{}).map(k=>`<option>${k}</option>`).join('')}
-document.addEventListener('DOMContentLoaded',()=>{const a=window.app;
+window.addEventListener('DOMContentLoaded',()=>{const a=window.app;
  const st=document.createElement('style');st.textContent='.cbp-off{display:none!important}';document.head.appendChild(st);
  const asd=document.querySelector('aside');
  if(asd){const bar=document.createElement('div');bar.className='space-y-1 shrink-0';bar.innerHTML='<div id="cbpModes" class="flex flex-wrap gap-1">'+Object.entries(MODES).map(([k,v])=>`<button data-m="${k}">${v[0]}</button>`).join('')+'</div><div id="cbpTabs" class="flex flex-wrap gap-1"></div>';asd.prepend(bar);
@@ -4501,7 +4513,7 @@ function drop(a,e){e.preventDefault();const t=e.dataTransfer.getData('text/plain
  else if(t[0]==='b'){a.saveHistoryState();const sc=C.S[k];if(hit)hit.assign=schemeFor(hit,sc);else a.applyBlockScheme(k);a.render()}
  else if(t[0]==='c'){const c=(LS('cbp_concepts')||{})[k];if(!c)return;if(hit&&!['OL','QB'].includes(hit.role)){a.saveHistoryState();const r=c[recv(a).indexOf(hit)],s=hit.x>.5?1:-1;if(r&&r.length>1)hit.route=r.map(q=>({x:cl(hit.x+s*q.o),y:cl(hit.y-q.u)}));a.render()}else a.applyConcept(k)}
  palette(a)}
-document.addEventListener('DOMContentLoaded',()=>{const a=window.app;palette(a);document.addEventListener('dragover',e=>{if(e.target.id==='fieldCanvas')e.preventDefault()});document.addEventListener('drop',e=>{if(e.target.id==='fieldCanvas')drop(a,e)});setInterval(()=>{if(!window.__cbpDrag)palette(a)},4000)});
+window.addEventListener('DOMContentLoaded',()=>{const a=window.app;palette(a);document.addEventListener('dragover',e=>{if(e.target.id==='fieldCanvas')e.preventDefault()});document.addEventListener('drop',e=>{if(e.target.id==='fieldCanvas')drop(a,e)});setInterval(()=>{if(!window.__cbpDrag)palette(a)},4000)});
 })();
 </script>
 <script>
@@ -4513,7 +4525,7 @@ const oF=P.flipPlay;P.flipPlay=function(){oF.call(this);const w=this.canvas&&thi
 <script>
 (function(){
 const $=id=>document.getElementById(id);
-document.addEventListener('DOMContentLoaded',()=>{
+window.addEventListener('DOMContentLoaded',()=>{
  const st=document.createElement('style');
  st.textContent='body.cbp-hide-tools #cbpPal,body.cbp-hide-tools .cbp-bar,body.cbp-noapp #cbpPal,body.cbp-noapp .cbp-bar{display:none!important}#cbpPal{opacity:.92}';
  document.head.appendChild(st);
@@ -4674,8 +4686,8 @@ const oRS=P.renderSavedFormationsSidebar;P.renderSavedFormationsSidebar=function
 const oB=C.build;C.build=function(a,id){LS('cbp_last',id);oB(a,id)};
 let lastArrow=0;
 document.addEventListener('keydown',e=>{const a=window.app;if(!a||!a.canvas||a.appScreen.classList.contains('hidden')||typing())return;const sp=a.selectedPlayerObj,d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
- if(!d||!sp)return;e.preventDefault();if(Date.now()-lastArrow>800)a.saveHistoryState();lastArrow=Date.now();const k=e.shiftKey?3:1,p=sp.player,cl=v=>Math.max(.02,Math.min(.98,v));
- p.x=cl(p.x+d[0]*k/53.3);p.y=cl(p.y+d[1]*k/100);a.checkFormationValidity();a.render()});
+ if(!d||!sp)return;e.preventDefault();if(Date.now()-lastArrow>800)a.saveHistoryState();lastArrow=Date.now();const k=e.shiftKey?3:1,p=sp.player,off=a.selectedHashPosition==='left'?-.15:a.selectedHashPosition==='right'?.15:0,cl=v=>Math.max(.02,Math.min(.98,v)),cx=v=>Math.max(.01-off,Math.min(.99-off,v));
+ p.x=cx(p.x+d[0]*k/53.3);p.y=cl(p.y+d[1]*k/100);a.checkFormationValidity();a.render()});
 function hitAt(a,e){const r=a.canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,w=a.canvas.width,h=a.canvas.height;let hit=null;
  (a.currentPlay.offense||[]).forEach(p=>{if(Math.hypot(a.getAdjustedX(p.x,w)-x,p.y*h-y)<=(a.hitR||22))hit=['offense',p]});(a.currentDefense||[]).forEach(p=>{if(Math.hypot(a.getAdjustedX(p.x,w)-x,p.y*h-y)<=(a.hitR||22))hit=['defense',p]});return hit}
 function ctx(a,e,side,p){let m=$('cbpCtx');if(!m){m=document.createElement('div');m.id='cbpCtx';m.className='fixed z-[90] bg-slate-900 border border-slate-600 rounded-lg p-1 text-xs text-white flex flex-col w-32 shadow-2xl';document.body.appendChild(m)}
@@ -4691,7 +4703,7 @@ document.addEventListener('click',()=>{const m=$('cbpCtx');if(m)m.style.display=
 document.addEventListener('dblclick',e=>{const a=window.app;if(!a||!a.canvas)return;const c=e.target.closest('#cbpPal [data-d^="r:"]');
  if(c&&a.selectedPlayerObj)return C.build(a,c.dataset.d.slice(2));
  if(e.target.id==='fieldCanvas'&&a.selectedPlayerObj&&a.selectedPlayerObj.side==='offense'){const h=hitAt(a,e);if(h&&h[1]===a.selectedPlayerObj.player)C.build(a,LS('cbp_last')||'slant')}});
-document.addEventListener('DOMContentLoaded',()=>{const a=window.app;
+window.addEventListener('DOMContentLoaded',()=>{const a=window.app;
  $('fieldCanvas').addEventListener('contextmenu',e=>{e.preventDefault();if(!a.currentPlay)return;const h=hitAt(a,e);if(!h)return;a.inspectPlayer(h[0],h[1]);ctx(a,e,h[0],h[1])});
  const pt=$('playTitle');if(pt){pt.style.cursor='text';pt.title='Click to rename';pt.addEventListener('click',()=>{if(a.editPlayDesc.classList.contains('hidden')){a.toggleEditNotes();a.editPlayTitleInput.focus()}})}
  const ti=a.editPlayTitleInput;if(ti)ti.addEventListener('input',()=>{const cp=a.currentPlay;if(!cp)return;const v=ti.value,old=a._pn||cp.name,e=a.plays.find(p=>p.id===cp.id);if(e)e.name=v;Object.values(a.matrixData).forEach(arr=>arr.forEach((n,i)=>{if(n===old)arr[i]=v}));a._pn=v;a.updateTendencies();setDirty(1)});
@@ -4728,10 +4740,10 @@ const oCV=P.checkFormationValidity;P.checkFormationValidity=function(){if(this.c
 // ===== Personnel groupings
 const PERS=[10,11,12,13,21,22];
 function pers(n){const [rb,te]=String(n).split('').map(Number),wr=5-rb-te,o=[];
- [['LT',.42],['LG',.46],['C',.5],['RG',.54],['RT',.58]].forEach(([l,x])=>o.push(mk(l,x,.58,'OL','o')));o.push(mk('QB',.5,.68,'QB','o'));
- [['RB',.44,.70],['FB',.56,.66]].slice(0,rb).forEach(([l,x,y])=>o.push(mk(l,x,y,'RB','o')));
- [['Y',.63,.58],['F',.37,.63],['H',.66,.64]].slice(0,te).forEach(([l,x,y])=>o.push(mk(l,x,y,'TE','o')));
- [['X',.08,.58,'WR'],['Z',.92,.63,'WR'],['S',.74,.63,'Slot'],['S',.26,.63,'Slot'],['S',.82,.63,'Slot']].slice(0,wr).forEach(([l,x,y,r])=>o.push(mk(l,x,y,r,'o')));return o}
+ [['LT',.42],['LG',.46],['C',.5],['RG',.54],['RT',.58]].forEach(([l,x])=>o.push(mk(l,x,.58,'OL','o')));o.push(mk('QB',.5,.645,'QB','o'));
+ [['RB',.44,.645],['FB',.56,.62]].slice(0,rb).forEach(([l,x,y])=>o.push(mk(l,x,y,'RB','o')));
+ [['Y',.63,.58],['F',.37,.60],['H',.66,.60]].slice(0,te).forEach(([l,x,y])=>o.push(mk(l,x,y,'TE','o')));
+ [['X',.08,.58,'WR'],['Z',.92,.60,'WR'],['S',.74,.60,'Slot'],['S',.26,.60,'Slot'],['S',.82,.60,'Slot']].slice(0,wr).forEach(([l,x,y,r])=>o.push(mk(l,x,y,r,'o')));return o}
 PERS.forEach(n=>{OFFENSE_PRESETS['pers'+n]=pers(n)});
 // ===== Tags
 const DT=['Shot Play','Man Beater','Zone Beater','Hurry Up','3rd & Medium','3rd & Long','Red Zone','Goal Line','Screen','Play Action','Blitz Beater','Backed Up'];
@@ -4798,7 +4810,7 @@ const oAI=P.getAIMentorReply;P.getAIMentorReply=function(q){const ql=q.toLowerCa
  const strat=/attack|beat|against|\bvs\b|stop|counter|install/.test(ql);if(sc.length&&!(strat&&sc[0][0]<10))return sc.map(x=>`<strong>${x[1]}:</strong> ${x[2]}`).join('<br><br>');
  const r=oAI.call(this,q);return r.startsWith('I can help')?'I know routes, defensive calls and fronts, zones, techniques and positions. Try "what is a sluggo", "what is a 3 technique", or "what does a nickel do".':r};
 // ===== wiring
-document.addEventListener('DOMContentLoaded',()=>{const a=window.app,cv=$('fieldCanvas');
+window.addEventListener('DOMContentLoaded',()=>{const a=window.app,cv=$('fieldCanvas');
  let pen=0,palm=false;cv.addEventListener('pointerdown',e=>{if(e.pointerType==='pen')pen=Date.now()},true);
  cv.addEventListener('touchstart',e=>{const t=e.changedTouches[0];if(t.touchType==='stylus'){pen=Date.now();palm=false;return}if(e.touches.length>1){e.stopImmediatePropagation();e.preventDefault();return}
   palm=a.interactionMode==='draw'&&(Date.now()-pen<15000||(t.radiusX||0)>=25);if(palm){e.stopImmediatePropagation();e.preventDefault()}},true);
@@ -4823,7 +4835,7 @@ document.addEventListener('DOMContentLoaded',()=>{const a=window.app,cv=$('field
 (function(){
 const P=PlaybookApp.prototype,$=id=>document.getElementById(id);
 const SIT={'1st & 10':[20,10],'Backed Up':[5,10],'2nd & Short':[35,2],'2nd & Long':[30,9],'3rd & Medium':[45,5],'3rd & Long':[40,9],'4th & Short':[55,1],'Red Zone':[80,10],'Goal Line':[97,3],'2-Minute Drill':[40,10]};
-const VIEW={focus:[40,.72],wide:[70,.78],full:[100,.5]};
+const VIEW={focus:[40,.66],wide:[70,.74],full:[100,.5]};
 // field marks are drawn from the ball spot (yards from your own goal line) so Red Zone / Backed Up / 3rd & Long really move the field
 P.drawFieldMarks=function(w,h){const x=this.ctx,spot=this.spot==null?20:this.spot,dist=this.dist||10,ppy=h/100,Y=d=>h*.58-(d-spot)*ppy;
  const hx=this.selectedLevel==='highschool'?[.33,.67]:this.selectedLevel==='college'?[.40,.60]:[.465,.535];x.save();
@@ -4835,8 +4847,8 @@ P.drawFieldMarks=function(w,h){const x=this.ctx,spot=this.spot==null?20:this.spo
   for(let d=10;d<=90;d+=10){const y=Y(d);if(y<0||y>h)continue;const t=String(d<=50?d:100-d);x.textAlign='left';x.strokeText(t,w*.05,y);x.textAlign='right';x.strokeText(t,w*.95,y)}
   x.fillStyle='rgba(75,85,99,.5)';x.font='bold 13px system-ui';x.textAlign='center';[[-5,'END ZONE'],[105,'END ZONE']].forEach(([d,t])=>{const y=Y(d);if(y>0&&y<h)x.fillText(t,w/2,y)})}
  const los=h*.58;x.strokeStyle='#3b82f6';x.lineWidth=3;x.beginPath();x.moveTo(0,los);x.lineTo(w,los);x.stroke();
- if(spot+dist<100){x.strokeStyle='#f59e0b';x.lineWidth=3;x.setLineDash([6,6]);x.beginPath();x.moveTo(0,Y(spot+dist));x.lineTo(w,Y(spot+dist));x.stroke();x.setLineDash([])}
- x.fillStyle='#1d4ed8';x.font='bold 11px system-ui';x.textAlign='left';x.textBaseline='alphabetic';x.fillText('Ball: '+(spot<=50?'own '+spot:'opp '+(100-spot))+(spot+dist>=100?' · goal to go':' · '+dist+' to go'),8,los-6);x.restore()};
+ const st=this.currentPlay&&this.currentPlay.stKey;if(!st&&spot+dist<100){x.strokeStyle='#f59e0b';x.lineWidth=3;x.setLineDash([6,6]);x.beginPath();x.moveTo(0,Y(spot+dist));x.lineTo(w,Y(spot+dist));x.stroke();x.setLineDash([])}
+ x.fillStyle='#1d4ed8';x.font='bold 11px system-ui';x.textAlign='left';x.textBaseline='alphabetic';x.fillText('Ball: '+(spot<=50?'own '+spot:'opp '+(100-spot))+(st?'':spot+dist>=100?' · goal to go':' · '+dist+' to go'),8,los-6);x.restore()};
 // the canvas is the full true-scale field; the box only shows a window of it (like JustPlay)
 P.applyView=function(){const cv=this.canvas,box=cv.parentElement,r=box.getBoundingClientRect(),v=VIEW[this.view||'focus'],los=.58*cv.height;
  const base=v[0]===100?0:r.height*v[1]-los,top=Math.min(0,Math.max(r.height-cv.height,base+(this.panY||0)));cv.style.top=top+'px';cv.style.left=Math.max(0,(r.width-cv.width)/2)+'px'};
@@ -4850,7 +4862,7 @@ const oL=P.loadPlay;P.loadPlay=function(id){oL.call(this,id);const f=this.plays.
  this.spot=f.spot!=null?f.spot:20;this.dist=f.dist||10;this.view=f.view||(f.stKey?'wide':'focus');this.panY=0;
  if(f.lw&&this.canvas&&this.canvas.width&&f.lw!==this.canvas.width){const k=this.canvas.width/f.lw;(this.drawnLines||[]).forEach(l=>l.points.forEach(p=>{p.x*=k;p.y*=k}))}
  if($('cbpSpot'))$('cbpSpot').value=this.spot;if($('cbpView'))$('cbpView').value=this.view;this.resizeCanvas()};
-document.addEventListener('DOMContentLoaded',()=>{const a=window.app,sel=$('situationDownSelect');a.spot=20;a.dist=10;a.view='focus';
+window.addEventListener('DOMContentLoaded',()=>{const a=window.app,sel=$('situationDownSelect');a.spot=20;a.dist=10;a.view='focus';
  if(![...sel.options].some(o=>o.value==='Backed Up'))sel.insertBefore(new Option('Backed Up (own 5)','Backed Up'),sel.options[1]);
  const row=$('situationQuarterSelect').parentElement.parentElement;
  row.insertAdjacentHTML('beforeend','<div><span class="text-slate-400 mr-1">Ball on:</span><input id="cbpSpot" type="number" min="1" max="99" value="20" title="Yards from your own goal line: 20 = own 20, 80 = opponent 20" class="w-14 bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs"></div><div><span class="text-slate-400 mr-1">View:</span><select id="cbpView" class="bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs"><option value="focus">Focus (40 yds)</option><option value="wide">Wide (70 yds)</option><option value="full">Full field</option></select></div>');
@@ -4912,7 +4924,7 @@ function panel(a){const m=ov('');const draw=()=>{const head=a.profile.role==='he
   else if(d.hd){const p=(a.profiles||[]).find(x=>x.id===d.hd);if(p){p.role=p.role==='head'?'coach':'head';await CC().saveProfile(a.teamId,p)}}
   draw()}}
 const oRG=P.renderFolderGrid;P.renderFolderGrid=function(){oRG.call(this);const l=$('cbpLib');if(this.syncOn&&l&&!$('cbpTeam')){const b=document.createElement('button');b.id='cbpTeam';b.type='button';b.className='bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold';b.textContent='Team';b.onclick=()=>panel(this);l.querySelector('.flex').appendChild(b);badge(this)}};
-document.addEventListener('DOMContentLoaded',()=>{const a=window.app,c=$('btnSaveAsNewCopy');
+window.addEventListener('DOMContentLoaded',()=>{const a=window.app,c=$('btnSaveAsNewCopy');
  if(c){const b=document.createElement('button');b.type='button';b.className='bg-teal-700 hover:bg-teal-600 text-white px-3 py-1.5 rounded text-xs font-semibold';b.textContent='Push to Master Team Playbook';
   b.onclick=()=>{const cp=a.currentPlay;if(!a.syncOn){toast('Sign in and join a team first');return}if(!cp)return;const e=a.plays.find(p=>p.id===cp.id);
    if(!e||e.scope!=='personal'){toast(e&&e.scope==='team'?'This play is already on the team playbook':'Save it in your Sandbox folder first');return}
@@ -4929,12 +4941,22 @@ const k=a=>(S.scale/100)*(S.auto?AUTO[a.view||'focus']:1);
 const o=P.renderPlayerIcon;
 P.renderPlayerIcon=function(x,y,l,sh,c,sel){const f=k(this);this.hitR=Math.max(10,22*f);if(Math.abs(f-1)<.01)return o.call(this,x,y,l,sh,c,sel);
  this.ctx.save();this.ctx.translate(x,y);this.ctx.scale(f,f);this.ctx.translate(-x,-y);o.call(this,x,y,l,sh,c,sel);this.ctx.restore()};
-document.addEventListener('DOMContentLoaded',()=>{const a=window.app,b=document.querySelector('button[onclick*="saveDefaultPlayerSettings"]');if(!b)return;
+window.addEventListener('DOMContentLoaded',()=>{const a=window.app,b=document.querySelector('button[onclick*="saveDefaultPlayerSettings"]');if(!b)return;
  const d=document.createElement('div');d.className='space-y-1 pt-1';
  d.innerHTML=`<label class="block text-[10px] text-slate-400">Icon size: <span id="cbpIsv">${S.scale}</span>%</label><input id="cbpIs" type="range" min="50" max="160" step="5" value="${S.scale}" class="w-full accent-amber-500"><label class="flex items-center gap-2 text-[10px] text-slate-300"><input id="cbpIa" type="checkbox" ${S.auto?'checked':''}> Shrink automatically in Wide / Full view</label>`;
  b.before(d);const save=()=>{LS('cbp_icon',S);a.render()};
  $('cbpIs').oninput=e=>{S.scale=+e.target.value;$('cbpIsv').textContent=S.scale;save()};$('cbpIa').onchange=e=>{S.auto=e.target.checked;save()}});
 })();
 </script>
+<style>
+@media (min-width:1024px){
+ #appScreen:not(.hidden){height:100vh!important;max-height:100vh!important;overflow:hidden!important}
+ #appScreen > .flex-1.flex{min-height:0!important}
+ #appScreen aside{height:100%!important;overflow-y:auto!important;overscroll-behavior:contain}
+ #appScreen main{min-height:0!important;overflow-y:auto!important;overscroll-behavior:contain}
+ #appScreen main > .flex-1{flex:none!important;align-items:flex-start!important}
+ #appScreen .canvas-container{width:min(100%,calc(64vh*1.3333))!important}
+}
+</style>
 </body>
 </html>
