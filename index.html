@@ -1873,6 +1873,21 @@ function posLabels(side){
   Object.keys(src).forEach(l => { if (out.indexOf(l) < 0) out.push(l); });
   return out;
 }
+function posEditHTML(shapes){
+  const S = db.settings; S.pos = S.pos || {}; v.posSel = v.posSel || {o:'all', d:'all'};
+  const one = sd => {
+    const labels = posLabels(sd), sel = (v.posSel[sd] && labels.indexOf(v.posSel[sd]) > -1) ? v.posSel[sd] : 'all', side = sd === 'o' ? S.off : S.def, nm = sd === 'o' ? 'Offense' : 'Defense';
+    const k = sd + ':' + sel, c = sel === 'all' ? {} : (S.pos[k] || {});
+    const shapeVal = sel === 'all' ? (side.shape || '') : (c.shape || ''), colorVal = sel === 'all' ? (side.color || colorOf({label:labels[0], role:roleOf(labels[0])}, sd)) : (c.color || colorOf({label:sel, role:roleOf(sel)}, sd));
+    return '<div class="pe" style="margin-bottom:14px"><label for="pePick_' + sd + '">' + nm + ' position</label>' +
+      '<select id="pePick_' + sd + '"><option value="all"' + (sel === 'all' ? ' selected' : '') + '>All ' + nm.toLowerCase() + '</option>' + labels.map(l => '<option value="' + esc(l) + '"' + (sel === l ? ' selected' : '') + '>' + esc(l) + '</option>').join('') + '</select>' +
+      (sel === 'all' ? '<div class="note">Changing the shape or color here sets it for every ' + nm.toLowerCase() + ' position. Pick a single position to rename it.</div>' : '<label for="peName_' + sd + '">Name</label><input id="peName_' + sd + '" value="' + esc(c.name || '') + '" placeholder="' + esc(sel) + '" maxlength="4">') +
+      '<div class="two"><div><label for="peShape_' + sd + '">Shape</label><select id="peShape_' + sd + '">' + (sel === 'all' ? '' : '<option value="">Default shape</option>') + shapes.map(a => '<option value="' + a[0] + '"' + (shapeVal === a[0] ? ' selected' : '') + '>' + a[1] + '</option>').join('') + '</select></div>' +
+      '<div><label for="peColor_' + sd + '">Color</label><input type="color" id="peColor_' + sd + '" value="' + colorVal + '"></div></div>' +
+      '<div class="row"><button class="btn sm" data-act="peReset" data-id="' + sd + '">↺ Reset ' + (sel === 'all' ? 'all ' + nm.toLowerCase() : esc(sel)) + '</button></div></div>';
+  };
+  return '<div class="card" id="posEd"><h3 style="margin-top:0">Edit positions</h3><div class="note" style="margin-bottom:10px">Pick All or one position, then change its name, shape and color. Every change saves and shows on all your plays.</div>' + one('o') + one('d') + '</div>';
+}
 function posCardHTML(shapes){
   const S = db.settings; S.pos = S.pos || {};
   const row = (side, l) => {
@@ -1916,7 +1931,7 @@ function renderSettings(){
     '<label for="setDefColor">Defense color</label><input type="color" id="setDefColor" value="' + (S.def.color || '#ef4444') + '">' +
     '<label for="setIcon">Icon size: <span id="iconLab">' + S.icon + '</span>%</label><input type="range" id="setIcon" min="50" max="160" step="5" value="' + S.icon + '">' +
     '<label class="chk"><input type="checkbox" id="setSnap"' + (S.snap ? ' checked' : '') + '> Snap dragged players to the line of scrimmage</label></div>' +
-    posCardHTML(shapes) + imgSetHTML() + dnsHTML() +
+    posEditHTML(shapes) + posCardHTML(shapes) + imgSetHTML() + dnsHTML() +
     '<div class="card"><h3 style="margin-top:0">Field color</h3><label>Field background</label><div class="row"><button class="btn sm" data-act="fieldColor" data-id="#ffffff">White</button><button class="btn sm" data-act="fieldColor" data-id="">Chalkboard</button><button class="btn sm" data-act="fieldColor" data-id="#064e3b">Turf green</button><input type="color" id="setField" value="' + (S.fieldColor || '#ffffff') + '" aria-label="Custom field color"></div>' +
         '<div class="row" style="margin-top:10px"><button class="btn sm" data-act="look" data-id="jp">JustPlay look</button><button class="btn sm" data-act="look" data-id="color">Color look</button></div>' +
     '<label for="setTheme">App theme</label><select id="setTheme"><option value="system">Match device</option><option value="light">Light</option><option value="dark">Dark</option></select></div>' +
@@ -2021,6 +2036,10 @@ function act(a, id, el){
     case 'delForm': db.formations = db.formations.filter(f => f.id !== id); save(); { const sf = $('#savedForms'); if (sf) sf.innerHTML = savedFormsHTML(); const fs = $('#fSel'); if (fs) fs.innerHTML = formOptions(); } break;
     case 'deselect': deselect(); break;
     case 'dnsReset': S.noteStyle = {}; save(); renderSettings(); draw(); break;
+    case 'peReset': { const sd = id, labels = posLabels(sd), sel = (v.posSel && v.posSel[sd]) || 'all';
+      if (sel === 'all' || labels.indexOf(sel) < 0){ labels.forEach(l => { delete S.pos[sd + ':' + l]; }); if (sd === 'o'){ S.off.color = ''; } }
+      else delete S.pos[sd + ':' + sel];
+      save(); { const st = main.scrollTop; renderSettings(); main.scrollTop = st; } toast('Reset'); break; }
     case 'posReset': if (S.pos) delete S.pos[id]; save(); renderSettings(); break;
     case 'posResetAll': S.pos = {}; save(); renderSettings(); break;
     case 'addVidLink': { const i = $('#vidUrl'), x = mkLink(i && i.value); if (!x){ toast('Paste a full link, like https://youtu.be/…'); break; } ed.videos.push(x); i.value = ''; renderVids(); touch(); break; }
@@ -2123,6 +2142,23 @@ main.addEventListener('input', e => {
 });
 main.addEventListener('change', e => {
   const t = e.target, id = t.id, S = db.settings, o = selObj();
+  const pm = /^pe(Pick|Name|Shape|Color)_([od])$/.exec(id || '');
+  if (pm){
+    const kind = pm[1], sd = pm[2], labels = posLabels(sd), side = sd === 'o' ? S.off : S.def; S.pos = S.pos || {}; v.posSel = v.posSel || {o:'all', d:'all'};
+    const sel = (v.posSel[sd] && labels.indexOf(v.posSel[sd]) > -1) ? v.posSel[sd] : 'all';
+    if (kind === 'Pick'){ v.posSel[sd] = t.value; }
+    else if (sel === 'all'){
+      if (kind === 'Shape'){ side.shape = t.value; labels.forEach(l => { const c = S.pos[sd + ':' + l] = S.pos[sd + ':' + l] || {}; c.shape = t.value; }); }
+      else if (kind === 'Color'){ side.color = t.value; labels.forEach(l => { const c = S.pos[sd + ':' + l] = S.pos[sd + ':' + l] || {}; c.color = t.value; }); }
+    } else {
+      const k = sd + ':' + sel, c = S.pos[k] = S.pos[k] || {};
+      if (kind === 'Name'){ const nv = t.value.trim().slice(0, 4); if (nv) c.name = nv; else delete c.name; }
+      else if (kind === 'Shape'){ if (t.value) c.shape = t.value; else delete c.shape; }
+      else if (kind === 'Color') c.color = t.value;
+      if (!Object.keys(c).length) delete S.pos[k];
+    }
+    save(); const st = main.scrollTop; renderSettings(); main.scrollTop = st; return;
+  }
   const pk = t.dataset.pn || t.dataset.ps || t.dataset.pc;
   if (pk){ S.pos = S.pos || {}; const c = S.pos[pk] = S.pos[pk] || {};
     if (t.dataset.pn !== undefined){ const nv = t.value.trim().slice(0, 4); if (nv) c.name = nv; else delete c.name; }
